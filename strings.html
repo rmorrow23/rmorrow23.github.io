@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="main.css">
+    <script src="stringCode.js"></script>
+    <link rel="icon" type="image/x-icon" href="icon.ico">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Validation</title>
+</head>
+<nav class="navbar">
+    <div class="column">
+        <a href="index.html"><i class="material-icons">home</i>Home</a>
+        <br>
+        <br>
+        <a href="boards.html"><i class="material-icons">school</i>Course</a>
+        <br>
+        <br>
+        <a href="games.html"><i class="material-icons">games</i>Games</a>
+        <br>
+        <br>
+        <a href="strings.html"><i class="material-icons">verified</i>Strings</a>
+    </div>
+
+
+</nav>
+<body>
+<div id="container">
+    <h1> Welcome to My Strings Page</h1>
+    <div id="loginStatus">
+        <h2>Input Validation Section</h2>
+        <h2>Press Submit To Validate Data</h2>
+        <p>Please Submit The Following Data For Validation!</p>
+    </div>
+    <form id="creditSubmit" onsubmit="return false">
+        First Name: <input type="text" id="fName"> &nbsp;
+        Last Name: <input type="text" id="lName"> &nbsp;
+        Zip Code: <input type="text" id="zipCode"> &nbsp;
+        <input type="submit" onclick="checkCreds();">
+    </form>
+</div>
+<div id="container">
+       <h2>Palindrome Checker</h2>
+    <br>
+    <div id="palinStatus">Palindrome Status</div>
+    <br>
+    <form id="palinSubmit" onsubmit="return false">
+        Enter possible Palindrome: <input type="text" id="palinInput">
+        <input type="submit" onclick="checkPalin();">
+    </form>
+    </div>
+    <div id="container">
+        <h2>Play Audio</h2>
+        <button onclick="playAudio();" class="styleButton"> Press to Listen to audio! </button>
+        <button onclick="stopAudio();" class="styleButton"> Press to Stop audio! </button>
+    </div>
+</body>
+</html>
