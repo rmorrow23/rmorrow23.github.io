@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Randal Morrow - Games Assignment-->
+
+<head>
+    <script src="gamecode.js"></script>
+    <link rel="stylesheet" href="main.css" />
+    <link rel="icon" type="image/x-icon" href="icon.ico">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Craps</title>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="column">
+            <a href="index.html"><i class="material-icons">home</i>Home</a>
+            <br>
+            <br>
+            <a href="boards.html"><i class="material-icons">school</i>Course</a>
+            <br>
+            <br>
+            <a href="games.html"><i class="material-icons">games</i>Games</a>
+            <br>
+            <br>
+            <a href="strings.html"><i class="material-icons">verified</i>Strings</a>
+        </div>
+    
+    
+    </nav>
+
+    <div id="container">
+        <!-- Header text-->
+        <h2>Welcome to Craps!</h2>
+        <h2>Roll The Dice to See If You Can Win!</h2>
+        <!-- Displays the dice-->
+        <div width="100%">
+            <img src="dice_1.png" id="stay" width="30%" onclick="roll()">
+            <img src="dice_1.png" id="Roll" width="30%" onclick="roll()">
+            <img src="dice_2.png" id="stay2" width="30%" onclick="roll()">
+            <img src="dice_2.png" id="Roll2" width="30%" onclick="roll()">
+        </div>
+        <div width="100%">
+            <img src="dice_1.png" id="die1Res" width="30%" onclick="roll()">
+            <img src="dice_1.png" id="die2Res" width="30%" onclick="roll()">
+        </div>
+        <br>
+        <!--These are the results of the game-->
+        <div id="Results">
+            Sum result: <div id="sumRes"></div>
+            <br>
+            Game result: <div id="gameRes"><br> Press Play Craps to start game.></div>
+        </div>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,137 @@
+#container {
+  background: #fbfbfb8f;
+  border-radius: 12px;
+  box-shadow: 5px 8px 12px rgba(0, 0, 0, 0.65);
+  height: auto;
+  margin: 2% auto auto auto;
+  width: 80%;
+  padding-left: 2%;
+  padding-right: 2%;
+  padding-top: 2%;
+  padding-bottom: 2%;
+
+}
+#container {
+  background: #fbfbfb8f;
+  border-radius: 12px;
+  box-shadow: 5px 8px 12px rgba(0, 0, 0, 0.65);
+  height: auto;
+  margin: 2% auto auto auto;
+  width: 80%;
+  padding-left: 2%;
+  padding-right: 2%;
+  padding-top: 2%;
+  padding-bottom: 2%;
+
+}
+
+#nav {
+  background: #fbfbfb8f;
+  border-radius: 12px;
+  box-shadow: 5px 8px 12px rgba(0, 0, 0, 0.65);
+  height: 6000px;
+  margin: auto auto auto auto;
+  width: auto;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  color: blue;
+  line-height: 30px;
+  float: left;
+}
+
+#h1 {
+  text-align: center;
+}
+
+nav {
+  background: #fbfbfb8f;
+  border-radius: 12px;
+  box-shadow: 5px 8px 12px rgba(0, 0, 0, 0.65);
+  height: auto;
+  width: 5.75%;
+  padding: 5px;
+  color: blue;
+  line-height: 30px;
+  float: left;
+  font-size: 25px;
+  display: block;
+  position: fixed;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
+
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/materialicons/v140/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 48px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+.navbar a {
+  float: left;
+  text-align: center;
+  padding: 12px;
+  color: rgb(60, 13, 230);
+  text-decoration: none;
+  font-size: 25px;
+
+}
+
+/* Navbar links on mouse-over */
+.navbar a:hover {
+  background-color: #f5eeee4f;
+}
+
+
+/* Current/active navbar link */
+.active {
+  background-color: #04AA6D;
+}
+
+/* Add responsiveness - will automatically display the navbar vertically instead of horizontally on screens less than 500 pixels */
+@media screen and (max-width: 500px) {
+  .navbar a {
+    float: none;
+    display: block;
+  }
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888; 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}

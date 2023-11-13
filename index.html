@@ -1,0 +1,88 @@
+<!-- Randal Morrow 11/12/2023 -->
+<html>
+
+<head>
+    <!-- This formats the webpage-->
+    <link rel="stylesheet" href="main.css" />
+    <link rel="icon" type="image/x-icon" href="icon.ico">
+    <script src="code.js"></script>
+</head>
+<nav class="navbar">
+    <div class="column">
+        <a href="index.html"><i class="material-icons">home</i>Home</a>
+        <br>
+        <br>
+        <a href="boards.html"><i class="material-icons">school</i>Course</a>
+        <br>
+        <br>
+        <a href="games.html"><i class="material-icons">games</i>Games</a>
+        <br>
+        <br>
+        <a href="strings.html"><i class="material-icons">verified</i>Strings</a>
+    </div>
+
+
+</nav>
+<!-- This is the title of the page -->
+<title> Intro To Programming</title>
+<!-- This section includes a nice message and meme -->
+
+
+<body>
+    <h1>Welcome to The World of Programming!</h1>
+    <marquee id="myMarquee" direction="left">
+        <img id="memeImage" src="meme.jpg" height="65%">
+    </marquee>
+    <div class="container">
+        <button onclick="startFun();" id="startButton" disabled="disabled">Start</button> <button onclick="stopFun();"
+            id="stopButton">Stop</button>
+    </div>
+    <br>
+    <br>
+    <br>
+    <div id="container">
+        <!--This is a table that contains all the info-->
+        <table width="100%">
+            <!--This is a row-->
+            <h2>Top 3 Computer Programmers in the World</h2>
+            <tr>
+                <!--This is the headers-->
+                <th>Number</th>
+                <th>Name</th>
+                <th>Greatest Achievement</th>
+            </tr>
+            <tr>
+                <!--This is the data that goes into the cells-->
+                <td>1</td>
+                <td>Charles Babbage</td>
+                <td>Invented the Mechanical Computer</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Brendan Eich</td>
+                <td>The Co-Founder of The Mozilla Project</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Tim Berners-Lee</td>
+                <td>Invented The Three Magical Words "WORLD WIDE WEB"</td>
+            </tr>
+        </table>
+        <h3>Sources:</h3>
+        <br>
+        <a href="https://en.wikipedia.org/wiki/Charles_Babbage">Charles Babbage</a>
+        <br>
+        <a href="https://en.wikipedia.org/wiki/Brendan_Eich">Brendan Eich</a>
+        <br>
+        <a href="https://en.wikipedia.org/wiki/Tim_Berners-Lee">Tim Berners-Lee</a>
+    </div>
+    <br>
+    <footer>
+        Randal Morrow<br>
+        University of Advancing Technology<br>
+        2625 W Baseline Rd<br>
+        Tempe, AZ 85283<br>
+    </footer>
+</body>
+
+</html>
