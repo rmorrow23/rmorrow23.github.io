@@ -68,23 +68,12 @@ nav {
     padding: 20px;
     max-width: 80%;
     margin: 30px auto;
-    background-color: rgba(0, 0, 0, 0.1);
+    background: rgba(40,40,40,0.9);
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
-
-/* Container for Objectives */
-.container {
-    padding: 20px;
-    max-width: 80%;
-    margin: 30px auto;
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
 
 h2 {
 
@@ -188,7 +177,7 @@ button:hover {
 
     padding: 10px 0;
 
-    background: #fff;
+    background: rgba(40,40,40,0.9);
 
     border-radius: 5px;
 
@@ -237,7 +226,7 @@ button:hover {
 
 .project-card {
 
-    background: #f4f4f4;
+    background: rgba(40,40,40,0.9);
 
     padding: 20px;
 
@@ -304,7 +293,7 @@ button:hover {
 /* Footer Styles */
 footer {
 
-    background: rgba(255, 255, 255, 5);
+    background: rgba(40,40,40,0.9);
 
     color: #ff7e5f;
 
