@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+         <link rel="icon" type="image/x-icon" href="/icon.ico">
+    <title>Contact | Randal Morrow</title>
+</head>
+<body>
+    <header>
+        <h1>Randal Morrow</h1>
+        <nav>
+            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="sip.html">SIP</a></li>
+                <li><a href="boards.html">Boards</a></li>
+                <li><a href="projects.html">Projects</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h2>Contact Me</h2>
+        <p>Email: <a href="mailto:rmorrow77600@uat.edu">rmorrow77600@uat.edu</a></p>
+        <form action="#" method="post" style= "display: none;">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            <label for="message">Message:</label>
+            <textarea id="message" name="message" rows="5" required></textarea>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <footer>
+        <p>© 2024 Randal Morrow | All rights reserved</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

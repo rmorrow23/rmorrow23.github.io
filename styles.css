@@ -1,0 +1,363 @@
+/* General Page Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: url('Tech.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #333;
+}
+
+/* Header Styles */
+header {
+    background: linear-gradient(90deg, #ff7e5f, #feb47b);
+    color: #fff;
+    padding: 15px 30px;
+    height: 20px;
+    display: flex;
+    font-size: 8px;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    margin: 0;
+}
+
+nav {
+    position: relative;
+}
+
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    border-radius: 5px;
+    font-size: 24px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-links li {
+    margin: 0 10px;
+}
+
+.nav-links a {
+    color: #fff;
+    font-size: 15px;
+    text-decoration: none;
+    padding: 8px 15px;
+    transition: background 0.3s ease;
+    border-radius: 5px;
+}
+
+.nav-links a:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Container for Objectives */
+.container {
+    padding: 20px;
+    max-width: 80%;
+    margin: 30px auto;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+
+/* Container for Objectives */
+.container {
+    padding: 20px;
+    max-width: 80%;
+    margin: 30px auto;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+h2 {
+
+    text-align: center;
+
+    color: #ff7e5f;
+
+    margin-bottom: 20px;
+
+}
+
+form {
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+label {
+
+    margin: 10px 0 5px;
+
+    font-weight: bold;
+
+}
+
+input, textarea {
+
+    padding: 10px;
+
+    margin-bottom: 15px;
+
+    border: 2px solid #ccc;
+
+    border-radius: 5px;
+
+    font-size: 16px;
+
+    transition: border-color 0.3s;
+
+}
+
+input:focus, textarea:focus {
+
+    border-color: #ff7e5f;
+
+    outline: none;
+
+}
+
+button {
+
+    padding: 12px 20px;
+
+    border: none;
+
+    background-color: #ff7e5f;
+
+    color: #fff;
+
+    font-size: 16px;
+
+    border-radius: 5px;
+
+    cursor: pointer;
+
+    transition: background-color 0.3s ease;
+
+}
+
+button:hover {
+
+    background-color: #e06a4d;
+
+}
+
+
+/* Profile Card and Image Styles */
+.profile-card {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.profile-pic {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 3px solid #ff7e5f;
+    object-fit: cover;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}.project {
+
+    max-width: 90%;
+
+    margin-top: 50px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 0;
+
+    padding: 10px 0;
+
+    background: #fff;
+
+    border-radius: 5px;
+
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+
+    text-align: center;
+
+}
+.projectCont {
+
+    max-width: 100%;
+
+    margin: 0;
+
+    padding: 0px 0;
+
+    background: rgba(0,0,0,0);
+
+    border-radius: 5px;
+
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0);
+
+    text-align: center;
+
+}
+
+.projects-scroll {
+
+    display: flex;
+
+    flex-direction: row;
+
+    gap: 20px;
+
+    align-items: center;
+
+    padding: 10px 0;
+
+    max-height: 500px;
+
+    overflow-x: auto;
+
+    margin-top: 0;
+
+}
+
+.project-card {
+
+    background: #f4f4f4;
+
+    padding: 20px;
+
+    margin: 10px;
+
+    width: 25%;
+
+    border-radius: 10px;
+
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+    cursor: pointer;
+
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+}
+
+.project-card:hover {
+
+    transform: translateY(-5px);
+
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+
+}
+
+.project-card h4 {
+
+    margin: 0 0 10px;
+
+    color: #ff7e5f;
+
+}
+
+/* Objective Card Styles */
+.objective-card {
+    background: #fff; /* Matches container background */
+    padding: 20px;
+    margin: 20px 0; /* Provides spacing between each card */
+    border-left: 6px solid #ff7e5f; /* Distinctive left border to match the theme */
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Slight shadow for depth */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.objective-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
+}
+
+.objective-card h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #ff7e5f; /* Consistent color for headings */
+}
+
+.objective-card p {
+    margin: 0;
+    color: #333; /* Darker text for better readability */
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Footer Styles */
+footer {
+
+    background: rgba(255, 255, 255, 5);
+
+    color: #ff7e5f;
+
+    text-align: center;
+
+    padding: 2px 0;
+
+    position: fixed;
+
+    font-size: 15px;
+
+    bottom: 0;
+
+    width: 100%;
+
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.5);
+
+}
+
+/* Responsive Navigation for Mobile */
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: block;
+    }
+
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        background-color: #ff7e5f;
+        width: 120px;
+        border-radius: 10px;
+        box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease-in-out;
+        overflow: hidden;
+    }
+
+    .nav-links.active {
+        display: flex;
+        transform: translateY(0);
+    }
+
+    .nav-links li {
+        margin: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-links a {
+        padding: 10px 15px;
+        color: #fff;
+        font-size: 14px;
+        text-align: center;
+    }
+}
