@@ -170,7 +170,7 @@ button:hover {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }.project {
 
-    max-width: 90%;
+    max-width: 1000%;
 
     margin-top: 50px;
     margin-left: auto;
