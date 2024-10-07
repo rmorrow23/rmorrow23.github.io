@@ -434,3 +434,55 @@ footer {
         text-align: center;
     }
 }
+/* Contact Form Styles */
+form {
+    background: rgba(40, 40, 40, 0.9);
+    padding: 20px;
+    border-radius: 8px;
+    border: 3px solid #ff7e5f;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+form label {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ff7e5f;
+    display: block;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+form input, form textarea {
+    width: 95%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.2);
+    font-size: 16px;
+    color: #fff;
+    transition: border-color 0.3s ease;
+}
+
+form input:focus, form textarea:focus {
+    border-color: #ff7e5f;
+    outline: none;
+}
+
+form button {
+    width: 100%;
+    padding: 15px;
+    background-color: #ff7e5f;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+form button:hover {
+    background-color: #e06a4d;
+}
