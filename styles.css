@@ -192,7 +192,7 @@ button:hover {
 
     width: 100%;
 
-    margin: 30px auto;
+    margin: 50px auto;
 
     padding: 0px 5%;
 
@@ -273,7 +273,7 @@ button:hover {
 
 /* Adjust content so it doesn't overlap with the image */
 .project-card p {
-    padding-top: 70px; /* Adjust this to match the size of the image */
+    padding-top: 120px; /* Adjust this to match the size of the image */
 }
 
 
