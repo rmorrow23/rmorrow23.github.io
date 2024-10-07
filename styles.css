@@ -227,41 +227,55 @@ button:hover {
 
 }
 
+/* Recent Project Cards */
 .project-card {
-
-    background: rgba(40,40,40,0.9);
-
+    background: rgba(40, 40, 40, 0.9);
     padding: 20px;
-
     margin: 10px;
-
     width: 25%;
-
     border-radius: 10px;
-
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-
     cursor: pointer;
-
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-
+    position: relative; /* For positioning the image */
 }
 
 .project-card:hover {
-
     transform: translateY(-5px);
-
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-
 }
 
 .project-card h4 {
-
     margin: 0 0 10px;
-
     color: #ff7e5f;
-
 }
+
+/* Project Image Style */
+.project-image {
+    position: absolute;
+    top: -40px; /* Adjust this to control how much of the image is above the card */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 120px;
+    background: #fff;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #ff7e5f;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.project-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Adjust content so it doesn't overlap with the image */
+.project-card p {
+    padding-top: 70px; /* Adjust this to match the size of the image */
+}
+
 
 /* Objective Card Styles */
 .objective-card {
