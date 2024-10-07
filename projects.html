@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-         <link rel="icon" type="image/x-icon" href="/icon.ico">
+    <link rel="icon" type="image/x-icon" href="/icon.ico">
     <title>Projects | Randal Morrow</title>
 </head>
 <body>
@@ -25,12 +25,32 @@
 
     <div class="container">
         <h2>Projects</h2>
-        <p> The following projects showcase what I have learned so far at UAT, as well as some personal projects the I created on my own. I will continue to update this page as I progress on these projects as well as start new ones.</p>
+        <p>The following projects showcase what I have learned so far at UAT, as well as some personal projects that I created on my own. I will continue to update this page as I progress on these projects as well as start new ones.</p>
     </div>
+
+    <!-- Full Size Project Cards -->
+    <div class="project-card-fullSize" id="project1">
+        <div class="project-image">
+            <img src="Expensify.ico" alt="Project 1">
+        </div>
+        <h4>Project 1: <br> Expensify - Expense Tracker</h4>
+        <p>This was my final project for Python Programming 1. I have updated it a little since I submitted the assignment. I improved the user interface as well as added a few features!</p>
+        <div class="visuals">
+            <img class="project-visual" src="original-expensify.jpg" alt="Original Expensify">
+            <img class="project-visual" src="expensify-current.jpg" alt="Current Expensify">
+        </div>
+        <p class="details">Code will be available soon!</p>
+        <button id="button1" class="toggle-details" onclick="toggleDetails('project1', 'button1')">Click to Expand</button>
+    </div>
+    <div class="container">
+        <h2>More Projects Coming Soon</h2>
+    </div>
+    
 
     <footer>
         <p>© 2024 Randal Morrow | All rights reserved</p>
     </footer>
-        <script src="script.js"></script>
+
+    <script src="script.js"></script>
 </body>
 </html>
