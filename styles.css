@@ -2,7 +2,7 @@
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
-    padding: 0;
+    padding-bottom: 50px;
     background: url('Tech.jpg') no-repeat center center fixed;
     background-size: cover;
     color: #fff;
@@ -71,6 +71,7 @@ nav {
     max-width: 90%;
     margin: 30px auto;
     background: rgba(40,40,40,0.9);
+    border: 3px solid #ff7e5f;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
@@ -175,13 +176,14 @@ button:hover {
     margin-top: 50px;
     margin-left: auto;
     margin-right: auto;
-    margin-bottom: 0;
+    margin-bottom: 10px;
 
     padding: 10px 0;
 
     background: rgba(40,40,40,0.9);
 
     border-radius: 5px;
+    border: 3px solid #ff7e5f;
 
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 
@@ -189,55 +191,41 @@ button:hover {
 
 }
 .projectCont {
-
-    width: 100%;
-
-    margin: 50px auto;
-
-    padding: 0px 5%;
-
-    background: rgba(0,0,0,0);
-  	
+    display: flex;               /* Flexbox to handle layout */
+    justify-content: center;     /* Center the content horizontally */
+    align-items: center;         /* Optionally, center vertically too */
+    width: 100%;                 /* Full width for flex container */
+    margin: 0 auto;              /* Horizontal centering */
+    padding: 0;
+    background: rgba(0, 0, 0, 0); /* Transparent background */
     border-radius: 5px;
-
     box-shadow: 0 8px 20px rgba(255, 255, 255, 0);
-
     text-align: center;
-
 }
 
 .projects-scroll {
-
     display: flex;
-
-    flex-direction: row;
-
-    gap: 20px;
-    width: 100%
-
+    justify-content: center;     /* Centering items inside the scroll container */
+    gap: 20px;                   /* Space between the project cards */
+    width: auto;                 /* Allow scroll container to resize naturally */
     align-items: center;
-
     padding: 10px 0;
-
-    max-height: 500px;
-
-    overflow-x: auto;
-
+    overflow-x: auto;            /* Horizontal scrolling for overflow */
     margin-top: 0;
-
 }
 
-/* Recent Project Cards */
 .project-card {
     background: rgba(40, 40, 40, 0.9);
     padding: 20px;
-    margin: 10px;
-    width: 25%;
+    width: 25%;                /* Set fixed width for cards */
     border-radius: 10px;
+    margin-top: 50px;
+    border: 3px solid #ff7e5f;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    position: relative; /* For positioning the image */
+    position: relative;          /* For positioning the image */
+    text-align: center;          /* Ensure content is centered */
 }
 
 .project-card:hover {
@@ -246,19 +234,19 @@ button:hover {
 }
 
 .project-card h4 {
-    margin: 0 0 10px;
+    margin: 40px 0 10px;
     color: #ff7e5f;
 }
 
 /* Project Image Style */
 .project-image {
     position: absolute;
-    top: -40px; /* Adjust this to control how much of the image is above the card */
+    top: -60px; /* Adjust this to control how much of the image is above the card */
     left: 50%;
     transform: translateX(-50%);
-    width: 120px;
-    height: 120px;
-    background: #fff;
+    width: 100px;
+    height: 100px;
+    background: rgba(0,0,0,1);
     border-radius: 50%;
     overflow: hidden;
     border: 3px solid #ff7e5f;
@@ -273,9 +261,88 @@ button:hover {
 
 /* Adjust content so it doesn't overlap with the image */
 .project-card p {
-    padding-top: 120px; /* Adjust this to match the size of the image */
+    padding-top: 20px; /* Adjust this to match the size of the image */
 }
 
+/* Full-Size Project Card Styles */
+.project-card-fullSize {
+    background: rgba(40, 40, 40, 0.9);
+    padding: 20px;
+    margin-top: 75px;
+    margin-left: 10%;
+    width: 75%;
+    border-radius: 10px;
+    border: 3px solid #ff7e5f;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    justify-content: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+
+.project-card-fullSize:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.project-card-fullSize h4 {
+    margin: 40px 0 10px;
+    color: #ff7e5f;
+}
+
+.project-card-fullSize p.details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+}
+
+.project-card-fullSize.expanded p.details {
+    max-height: 200px; /* Adjust based on content length */
+    opacity: 1;
+    margin-top: 10px;
+}
+
+.visuals {
+    display: none;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.visuals img {
+    margin: 10px;
+    width: 45%;
+    height: auto;
+    border-radius: 5px;
+    border: 2px solid #ff7e5f;
+}
+
+.project-card-fullSize.expanded .visuals {
+    display: flex;
+    justify-content: center;
+}
+
+/* Button Styling */
+.toggle-details {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #ff7e5f;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-details:hover {
+    background-color: #e06a4d;
+}
+
+
+/* Adjust content so it doesn't overlap with the image */
+.project-card-fullSize p {
+    padding-top: 20px; /* Adjust this to match the size of the image */
+}
 
 /* Objective Card Styles */
 .objective-card {
