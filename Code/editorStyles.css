@@ -1,0 +1,132 @@
+/* General Page Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: url('Tech.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Editor Container Styles */
+.editor-container {
+    display: flex;
+    gap: 10px;
+    padding: 0;
+    background: rgba(0, 0, 0, 0); /* Fully transparent to match the background */
+    border-radius: 8px;
+    margin: 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+/* Individual Editor Pane */
+.editor {
+    flex: 1;
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Light border to match transparency */
+    background: rgba(0, 0, 0, 0); /* Transparent to match overall theme */
+    border-radius: 5px;
+    margin: 0;
+    overflow: hidden;
+    height: 100%;
+}
+
+/* Iframe (Preview) Styles */
+iframe {
+    flex: 1;
+    margin: 0;
+    border: none;
+    background: rgba(0, 0, 0, 0.7); /* Ensure iframe matches the dark theme */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+/* CodeMirror Custom Styles */
+.CodeMirror {
+    height: 100%;
+    font-size: 14px;
+    background-color: rgba(0, 0, 0, 0.7) !important; /* Ensures transparency of the editors */
+    color: #f4f4f4;
+    border-radius: 5px;
+}
+
+/* Additional adjustment for scroll area to ensure transparency */
+.CodeMirror-scroll {
+    background-color: transparent !important; /* Ensure the scroll area does not override transparency */
+}
+
+/* Gutter and line numbers */
+.CodeMirror-gutters {
+    background: rgba(0, 0, 0, 0.7) !important; /* Match the semi-transparent background */
+    border-right: 1px solid rgba(255, 255, 255, 0.2); /* Light border for gutter separation */
+    color: #858585; /* Line number color */
+}
+
+/* Cursor */
+.CodeMirror-cursor {
+    border-left: 1px solid #dcdcdc; /* Cursor color */
+}
+
+/* Selected text */
+.CodeMirror-selected {
+    background: #264f78; /* Selection background color */
+}
+
+/* Syntax Highlighting */
+.cm-keyword {
+    color: #c586c0; /* Keywords */
+}
+
+.cm-string {
+    color: #ce9178; /* Strings */
+}
+
+.cm-variable {
+    color: #9cdcfe; /* Variables */
+}
+
+.cm-comment {
+    color: #6a9955; /* Comments */
+}
+
+.cm-number {
+    color: #b5cea8; /* Numbers */
+}
+
+.cm-attribute {
+    color: #dcdcaa; /* HTML/CSS attributes */
+}
+
+.cm-tag {
+    color: #569cd6; /* HTML tags */
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ff7e5f;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #e06a4d;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .editor-container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    iframe {
+        height: 300px;
+    }
+}
