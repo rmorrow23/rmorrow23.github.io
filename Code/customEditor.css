@@ -1,0 +1,57 @@
+/* Custom CodeMirror Theme */
+.cm-s-custom-theme .CodeMirror {
+    background-color: rgba(0, 0, 0, 0.2) !important; /* Ensure editor background is semi-transparent */
+    color: #d4d4d4; /* Default text color */
+    font-family: 'Roboto Mono', monospace; /* Font style */
+}
+
+/* Additional adjustment for scroll area to ensure transparency */
+.cm-s-custom-theme .CodeMirror-scroll {
+    background-color: transparent !important; /* Ensure the scroll area does not override transparency */
+}
+
+/* Gutter and line numbers */
+.cm-s-custom-theme .CodeMirror-gutters {
+    background-color: rgba(0, 0, 0, 0.7) !important; /* Match the semi-transparent background */
+    border-right: 1px solid #454545; /* Gutter border */
+    color: #858585; /* Line number color */
+}
+
+/* Cursor */
+.cm-s-custom-theme .CodeMirror-cursor {
+    border-left: 1px solid #dcdcdc; /* Cursor color */
+}
+
+/* Selected text */
+.cm-s-custom-theme .CodeMirror-selected {
+    background: #264f78; /* Selection background color */
+}
+
+/* Syntax Highlighting */
+.cm-s-custom-theme .cm-keyword {
+    color: #c586c0; /* Keywords */
+}
+
+.cm-s-custom-theme .cm-string {
+    color: #ce9178; /* Strings */
+}
+
+.cm-s-custom-theme .cm-variable {
+    color: #9cdcfe; /* Variables */
+}
+
+.cm-s-custom-theme .cm-comment {
+    color: #6a9955; /* Comments */
+}
+
+.cm-s-custom-theme .cm-number {
+    color: #b5cea8; /* Numbers */
+}
+
+.cm-s-custom-theme .cm-attribute {
+    color: #dcdcaa; /* HTML/CSS attributes */
+}
+
+.cm-s-custom-theme .cm-tag {
+    color: #569cd6; /* HTML tags */
+}
