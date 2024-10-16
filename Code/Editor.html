@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Code Editor</title>
+    <!-- Link to CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <!-- Link to Custom Stylesheet -->
+    <link rel="stylesheet" href="editorStyles.css">
+        
+    <style>
+        /* Container styling to organize the editor sections */
+        .editor-pane {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 25px;
+            transition: flex 0.3s ease;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin: 5px;
+            overflow: hidden;
+        }
+
+        .editor-label {
+            padding: 5px;
+            background: #ff7e5f;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .editor-container {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+            height: 90%; /* Default height when active */
+            transition: height 0.3s ease;
+        }
+
+        .preview-container {
+            height: 90%; /* Default height when inactive */
+            transition: height 0.3s ease;
+            margin: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: rgba(0, 0, 0, 0);
+        }
+
+        .active {
+            flex: 4; /* The active editor takes up more space */
+        }
+
+        .inactive {
+            flex: 1; /* Inactive editors are minimized */
+        }
+
+        /* Classes to adjust heights */
+        .container-active {
+            height: 75%;
+        }
+
+        .container-inactive {
+            height: 25%;
+        }
+
+        /* Button Styles */
+        .file-buttons {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            justify-content: center;
+        }
+
+        .file-buttons button {
+            padding: 10px 15px;
+            background-color: #ff7e5f;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .file-buttons button:hover {
+            background-color: #e06a4d;
+        }
+    </style>
+</head>
+<body>
+
+<!-- File buttons for open and save functionality -->
+<div class="file-buttons">
+    <!-- Use an input of type file to handle file opening on mobile -->
+    <input type="file" id="fileInput" style="display: none;">
+    <button id="openFileButton">Open File</button>
+    <button id="saveFile">Save File</button>
+</div>
+
+<div class="editor-container" id="editor-container">
+    <div class="editor-pane" id="html-pane">
+        <div class="editor-label">HTML</div>
+        <textarea id="html-editor" class="editor" placeholder="HTML Code"></textarea>
+    </div>
+    <div class="editor-pane" id="css-pane">
+        <div class="editor-label">CSS</div>
+        <textarea id="css-editor" class="editor" placeholder="CSS Code"></textarea>
+    </div>
+    <div class="editor-pane" id="js-pane">
+        <div class="editor-label">JavaScript</div>
+        <textarea id="js-editor" class="editor" placeholder="JavaScript Code"></textarea>
+    </div>
+</div>
+
+<div class="preview-container" id="preview-container">
+    <div class="editor-label">Preview</div>
+    <iframe id="preview" title="Live Preview"></iframe>
+</div>
+
+<!-- CodeMirror Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+
+<script>
+    let fileHandle;
+
+    // Initialize CodeMirror Editors with the custom theme if defined in your CSS
+    const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html-editor'), {
+        mode: 'xml',
+        lineNumbers: true,
+        lineWrapping: true,
+        tabSize: 2,
+        theme: 'custom-theme' // Change this to match your custom theme name in customEditor.css
+    });
+
+    const cssEditor = CodeMirror.fromTextArea(document.getElementById('css-editor'), {
+        mode: 'css',
+        lineNumbers: true,
+        lineWrapping: true,
+        tabSize: 2,
+        theme: 'custom-theme'
+    });
+
+    const jsEditor = CodeMirror.fromTextArea(document.getElementById('js-editor'), {
+        mode: 'javascript',
+        lineNumbers: true,
+        lineWrapping: true,
+        tabSize: 2,
+        theme: 'custom-theme'
+    });
+
+    // Function to update the live preview iframe with current editor values
+    function updatePreview() {
+        const previewFrame = document.getElementById('preview');
+        const preview = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        preview.open();
+        preview.write(`
+            <html>
+                <head>
+                    <style>${cssEditor.getValue()}</style>
+                </head>
+                <body>
+                    ${htmlEditor.getValue()}
+                    <script>${jsEditor.getValue()}<\/script>
+                </body>
+            </html>
+        `);
+        preview.close();
+    }
+
+    // Update the preview whenever the editors' content changes
+    htmlEditor.on('change', updatePreview);
+    cssEditor.on('change', updatePreview);
+    jsEditor.on('change', updatePreview);
+
+    // Initial preview update
+    updatePreview();
+
+    // Function to handle click events to adjust the height of containers
+    function activateContainer(containerId) {
+        const editorContainer = document.getElementById('editor-container');
+        const previewContainer = document.getElementById('preview-container');
+
+        if (containerId === 'editor-container') {
+            editorContainer.classList.add('container-active');
+            editorContainer.classList.remove('container-inactive');
+            previewContainer.classList.add('container-inactive');
+            previewContainer.classList.remove('container-active');
+        } else if (containerId === 'preview-container') {
+            editorContainer.classList.add('container-inactive');
+            editorContainer.classList.remove('container-active');
+            previewContainer.classList.add('container-active');
+            previewContainer.classList.remove('container-inactive');
+        }
+    }
+
+    // Function to handle click events on editor panes to make only one full size at a time
+    function activateEditor(paneId) {
+        const panes = ['html-pane', 'css-pane', 'js-pane'];
+        panes.forEach(pane => {
+            const paneElement = document.getElementById(pane);
+            if (pane === paneId) {
+                paneElement.classList.add('active');
+                paneElement.classList.remove('inactive');
+            } else {
+                paneElement.classList.add('inactive');
+                paneElement.classList.remove('active');
+            }
+        });
+    }
+
+    // Set click event listeners for each pane
+    document.getElementById('html-pane').addEventListener('click', () => activateEditor('html-pane'));
+    document.getElementById('css-pane').addEventListener('click', () => activateEditor('css-pane'));
+    document.getElementById('js-pane').addEventListener('click', () => activateEditor('js-pane'));
+
+    // Set initial active state
+    activateEditor('html-pane');
+
+    // Set click event listeners for the editor and preview containers
+    document.getElementById('editor-container').addEventListener('click', () => activateContainer('editor-container'));
+    document.getElementById('preview-container').addEventListener('click', () => activateContainer('preview-container'));
+
+    // Set initial active state to the editor
+    activateContainer('editor-container');
+
+    // Mobile-compatible file open functionality
+    document.getElementById('openFileButton').addEventListener('click', () => {
+        document.getElementById('fileInput').click();
+    });
+
+    // Handle file selection
+    document.getElementById('fileInput').addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            htmlEditor.setValue(e.target.result); // Load the file content into the HTML editor
+            updatePreview();
+        };
+        reader.readAsText(file);
+    });
+
+    // File System Access API: Save File
+    document.getElementById('saveFile').addEventListener('click', async () => {
+        try {
+            if (!fileHandle) {
+                alert('No file opened. Please open a file first.');
+                return;
+            }
+            const writable = await fileHandle.createWritable();
+            await writable.write(htmlEditor.getValue()); // Save HTML editor content back to file
+            await writable.close();
+            alert('File saved successfully.');
+        } catch (error) {
+            console.error('Error saving file:', error);
+        }
+    });
+</script>
+
+</body>
+</html>
