@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gesture Detection</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+
+        video {
+            width: 80%;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .message-container {
+            width: 80%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <video id="video" autoplay playsinline muted controls></video>
+    <div class="message-container" id="message-container"></div>
+
+    <script>
+        // Function to add messages to the message box
+        function addMessage(type, text) {
+            const messageContainer = document.getElementById('message-container');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            messageContainer.appendChild(message);
+        }
+
+        // Override console.log and console.error to capture and display messages
+        (function () {
+            const originalConsoleLog = console.log;
+            const originalConsoleError = console.error;
+
+            console.log = function (message) {
+                addMessage('success', 'Log: ' + message);
+                originalConsoleLog.apply(console, arguments);
+            };
+
+            console.error = function (message) {
+                addMessage('error', 'Error: ' + message);
+                originalConsoleError.apply(console, arguments);
+            };
+
+            // Global error listener to capture uncaught errors
+            window.onerror = function (message, source, lineno, colno, error) {
+                addMessage('error', `Uncaught Error: ${message} at ${source}:${lineno}:${colno}`);
+            };
+
+            // Listen for unhandled promise rejections
+            window.addEventListener('unhandledrejection', event => {
+                addMessage('error', `Unhandled Promise Rejection: ${event.reason}`);
+            });
+        })();
+
+        async function main() {
+            const video = document.getElementById('video');
+
+            try {
+                // Request camera access
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user' }
+                });
+                video.srcObject = stream;
+                console.log('Camera initialized.');
+
+                // Load Handpose model
+                const model = await handpose.load();
+                console.log('Handpose model loaded.');
+
+                // Gesture detection function
+                const detectGesture = (landmarks) => {
+                    const thumbTip = landmarks[4];
+                    const indexTip = landmarks[8];
+                    const middleTip = landmarks[12];
+
+                    const thumbIndexDist = Math.hypot(
+                        thumbTip[0] - indexTip[0],
+                        thumbTip[1] - indexTip[1]
+                    );
+                    const swipeDist = Math.abs(indexTip[0] - middleTip[0]);
+
+                    if (thumbIndexDist < 30) {
+                        return 'Fist detected';
+                    } else if (swipeDist > 50) {
+                        return 'Swipe gesture detected';
+                    } else {
+                        return 'No gesture detected';
+                    }
+                };
+
+                // Detection loop
+                async function detect() {
+                    const predictions = await model.estimateHands(video);
+                    if (predictions.length > 0) {
+                        const gesture = detectGesture(predictions[0].landmarks);
+                        console.log(gesture);
+                    } else {
+                        console.log('No hand detected');
+                    }
+                    requestAnimationFrame(detect);
+                }
+
+                detect();
+            } catch (error) {
+                console.error('Error accessing camera: ' + error.message);
+                if (error.name === 'NotAllowedError') {
+                    addMessage('error', 'Camera access denied. Please allow permissions.');
+                } else if (error.name === 'NotFoundError') {
+                    addMessage('error', 'No camera found on this device.');
+                } else {
+                    addMessage('error', 'Error: ' + error.message);
+                }
+            }
+        }
+
+        main();
+    </script>
+</body>
+</html>
