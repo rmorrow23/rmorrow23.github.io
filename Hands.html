@@ -29,13 +29,21 @@
             width: 80%;
             max-width: 400px;
             margin-top: 20px;
+            overflow-y: auto;
+            max-height: 300px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
         }
 
         .message {
             padding: 10px;
-            margin: 10px 0;
+            margin: 5px 0;
             border-radius: 5px;
             font-size: 14px;
+            display: flex;
+            justify-content: space-between;
         }
 
         .message.success {
@@ -50,40 +58,49 @@
     </style>
 </head>
 <body>
-    <video id="video" autoplay playsinline muted controls></video>
+    <video id="video" autoplay playsinline muted></video>
     <div class="message-container" id="message-container"></div>
 
     <script>
-        // Function to add messages to the message box
+        const messageCounts = {};
+
         function addMessage(type, text) {
             const messageContainer = document.getElementById('message-container');
-            const message = document.createElement('div');
-            message.className = `message ${type}`;
-            message.textContent = text;
-            messageContainer.appendChild(message);
+
+            // Check if the message already exists
+            if (messageCounts[text]) {
+                messageCounts[text].count++;
+                messageCounts[text].element.querySelector('.count').textContent = `(${messageCounts[text].count})`;
+            } else {
+                const message = document.createElement('div');
+                message.className = `message ${type}`;
+                message.innerHTML = `
+                    <span>${text}</span>
+                    <span class="count">(1)</span>
+                `;
+                messageContainer.appendChild(message);
+                messageCounts[text] = { count: 1, element: message };
+            }
         }
 
-        // Override console.log and console.error to capture and display messages
         (function () {
             const originalConsoleLog = console.log;
             const originalConsoleError = console.error;
 
             console.log = function (message) {
-                addMessage('success', 'Log: ' + message);
+                addMessage('success', message);
                 originalConsoleLog.apply(console, arguments);
             };
 
             console.error = function (message) {
-                addMessage('error', 'Error: ' + message);
+                addMessage('error', message);
                 originalConsoleError.apply(console, arguments);
             };
 
-            // Global error listener to capture uncaught errors
             window.onerror = function (message, source, lineno, colno, error) {
                 addMessage('error', `Uncaught Error: ${message} at ${source}:${lineno}:${colno}`);
             };
 
-            // Listen for unhandled promise rejections
             window.addEventListener('unhandledrejection', event => {
                 addMessage('error', `Unhandled Promise Rejection: ${event.reason}`);
             });
@@ -93,18 +110,15 @@
             const video = document.getElementById('video');
 
             try {
-                // Request camera access
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: 'user' }
                 });
                 video.srcObject = stream;
                 console.log('Camera initialized.');
 
-                // Load Handpose model
                 const model = await handpose.load();
                 console.log('Handpose model loaded.');
 
-                // Gesture detection function
                 const detectGesture = (landmarks) => {
                     const thumbTip = landmarks[4];
                     const indexTip = landmarks[8];
@@ -125,7 +139,6 @@
                     }
                 };
 
-                // Detection loop
                 async function detect() {
                     const predictions = await model.estimateHands(video);
                     if (predictions.length > 0) {
