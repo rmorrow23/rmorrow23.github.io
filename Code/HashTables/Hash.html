@@ -1,0 +1,623 @@
+<!--Some of the hashfunction code was found at https://medium.com/@ryan_forrester_/hash-table-in-javascript-how-to-guide-8b0e82dbb26d -->
+<!--Most of it was modified a little to fit the needs of this project -->
+<!DOCTYPE html>
+<!-- Declares the document type as HTML5 -->
+<html lang="en">
+<!-- The root element of the page, specifies the language as English -->
+
+<head>
+    <!-- Contains meta-information about the HTML document -->
+    <meta charset="UTF-8">
+    <!-- Sets the character encoding for the document to UTF-8 -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Specifies the document compatibility mode for IE -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Configures the viewport for responsiveness -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Links to an external stylesheet named styles.css -->
+    <link rel="icon" type="image/x-icon" href="/icon.ico">
+    <!-- Links to the favicon, the small icon that appears in the browser tab -->
+    <title>Hash | Randal Morrow</title>
+    <!-- Sets the title of the document that appears in the browser tab -->
+    <style>
+        /* CSS styles for the page */
+        body {
+            /* Styles for the body element */
+            height: 100%;
+            /* Sets the body's height to 100% of the viewport height */
+            margin-top: 6%;
+            /* Adds a margin at the top of the body */
+            display: flex;
+            /* Configures the body to be a flex container */
+            align-items: center;
+            /* Centers items vertically within the body */
+            justify-content: center;
+            /* Centers items horizontally within the body */
+            font-family: Arial, sans-serif;
+            /* Sets the default font for the page */
+            background-color: #f0f0f0;
+            /* Sets the background color of the body */
+        }
+
+        body {
+            /* Additional styles for the body element */
+             flex-direction: column;
+              /* Arranges flex items in a column */
+              width: 100%;
+              /* Sets the width of the body element to the full screen width */
+            line-height: 1.6;
+             /* Sets the line height for text */
+
+        }
+
+
+        #output {
+            /* Styles for the output area */
+            white-space: pre-wrap;
+            /* Allows text to wrap to the next line */
+            font-family: monospace;
+            /* Sets the font to monospace */
+            height: 400px;
+            /* Sets a fixed height for the output area */
+            font-size: 20px;
+            /* Sets the font size of the output text */
+            background-color: rgba(0, 0, 0, 0.7);
+            /* Sets the background color of the output area with transparency */
+            color: #f4f4f4;
+            /* Sets the text color of the output area */
+            padding: 35px;
+            /* Adds padding inside the output area */
+            width: 95%;
+            /* Sets the width of the output area to 95% */
+            overflow-y: scroll;
+            /* Adds a vertical scrollbar if content overflows */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            /* Adds a subtle shadow to the output area */
+        }
+
+        .output-label {
+            /* Styles for the label of the output area */
+            background: #ff7e5f;
+            /* Sets the background color of the label */
+            color: #fff;
+            /* Sets the text color of the label */
+            font-weight: bold;
+            /* Sets the font weight of the label to bold */
+            text-align: center;
+            /* Centers the text in the label */
+            font-size: xx-large;
+            /* Sets the font size of the label */
+            width: 100%;
+            /* Sets the width of the label to 100% */
+            border-bottom: 1px solid #ccc;
+            /* Adds a bottom border to the label */
+        }
+
+        #outContainer {
+             /* Styles for the container of the output area */
+            flex: 1;
+            /* Allows the container to grow and shrink */
+            width: 90%;
+            /* Sets the width of the container to 90% */
+             max-width: 1500px; /* Optional: Set a maximum width */
+             /* Sets the maximum width for the container */
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            /* Adds a border to the container */
+            background: rgba(0, 0, 0, 0);
+            /* Sets the background to transparent */
+            border-radius: 30px;
+            /* Adds a border radius to the container */
+            margin: 0% 15px 15px 15px;
+            /* Adds margin around the container */
+            overflow: hidden;
+            /* Hides content that overflows the container */
+            box-shadow: 0px 10px 10px 8px rgba(0, 0, 0, 0.8);
+            /* Adds a shadow to the container */
+            height: 100%;
+            /* Sets the height of the container to 100% */
+        }
+
+        button {
+            /* Styles for the buttons */
+            margin: 15px 0 -20px 0;
+            /* Adds margin around the button */
+            padding: 5px 15px 20px 15px;
+            /* Adds padding inside the button */
+            cursor: pointer;
+            /* Sets the cursor to pointer */
+            width: 25%;
+            /* Sets the width of the button */
+            height: 10%;
+            /* Sets the height of the button */
+            border: none;
+            /* Removes the border */
+            border-radius: 30px;
+            /* Adds border radius to the button */
+            border-top: 1px solid rgba(255, 255, 255, 0.9);
+            /* Adds a top border to the button */
+            background-color: rgba(0, 0, 0, 0);
+            /* Sets the background color of the button to transparent */
+            color: white;
+            /* Sets the text color of the button */
+            font-size: 20px;
+            /* Sets the font size of the button text */
+        }
+
+        button:hover {
+            /* Styles for the button when hovered */
+            background-color: rgba(255, 255, 255, 0.1);
+             /* Changes the background color on hover */
+        }
+
+        button:active {
+            /* Styles for the button when active */
+            background-color: #449d44;
+            /* Changes the background color on click */
+        }
+
+        #inputDiv {
+            /* Styles for the container of the input */
+            width: 100%;
+            /* Sets the width of the container to 100% */
+            border: none;
+            /* Removes the border */
+            border-radius: 0px;
+            /* Removes any border radius */
+            background-color: rgba(0, 0, 0, 0.7);
+            /* Sets the background color with transparency */
+            margin-bottom: -15px;
+            /* Adds a margin at the bottom of the container */
+        }
+
+        #inputDiv input[type="text"] {
+            /* Styles for the input text field */
+            width: 95%;
+            /* Sets the width of the input text field */
+            border: none;
+            /* Removes the border */
+            font-size: larger;
+            /* Sets the font size of the input text */
+            border-radius: 30px;
+            /* Adds border radius to the input field */
+            background-color: rgba(0, 0, 0, 0);
+            /* Sets the background color of the input field to transparent */
+            padding-left: 4%;
+            /* Adds padding to the left of the input field */
+            color: #fff;
+            /* Sets the text color of the input field */
+        }
+
+        label {
+             /* Styles for the labels */
+            font-weight: bold;
+            /* Sets the font weight of the labels to bold */
+            display: block;
+            /* Displays the label as a block element */
+            margin: 0;
+            /* Removes any margin from the labels */
+        }
+
+        .button-container {
+            /* Styles for the container of the buttons */
+            margin: 0px;
+             /* Removes any margin from the container */
+            flex: 1;
+            /* Allows the container to grow and shrink */
+            gap: 8%;
+            /* Sets a gap between the buttons */
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            /* Adds a top border to the container */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+             /* Adds a bottom border to the container */
+            background: rgba(0, 0, 0, 0.7);
+             /* Sets the background color of the container with transparency */
+            border-bottom-left-radius: 30px;
+            /* Adds a bottom left border radius to the container */
+            border-bottom-right-radius: 30px;
+            /* Adds a bottom right border radius to the container */
+            padding-left: 5%;
+            /* Adds padding to the left of the container */
+            padding-right: 5%;
+            /* Adds padding to the right of the container */
+            overflow: hidden;
+            /* Hides content that overflows */
+            display: inline-flex;
+             /* Displays the container as an inline flex element */
+            width: 90%;
+            /* Sets the width of the container */
+             height: auto;
+            /* Sets height to auto to adjust to content */
+        }
+
+         .inContainer {
+            /* Styles for the container of the input section */
+            flex: 1;
+            /* Allows the container to grow and shrink */
+           	width: 95%;
+            /* Sets the width of the container to 95% */
+             max-width: 1700px; /* Optional: Set a maximum width */
+            /* Sets the max width of the container */
+            border: none;
+            /* Removes the border */
+            background: rgba(0, 0, 0, .9);
+            /* Sets the background color with transparency */
+            border-radius: 30px;
+            /* Adds border radius to the container */
+            margin-top: -50px;
+            /* Adds a top margin to the container */
+            overflow: hidden;
+            /* Hides content that overflows */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            /* Adds a border to the container */
+            box-shadow: 0px 3px 8px 4px rgba(0, 0, 0, 0.8);
+            /* Adds a shadow to the container */
+             height: auto;
+             /* Sets height to auto to adjust to content */
+        }
+
+        .input-label {
+            /* Styles for the label of the input area */
+            background: #ff7e5f;
+            /* Sets the background color of the label */
+            color: #fff;
+            /* Sets the text color of the label */
+            font-weight: bold;
+            /* Sets the font weight of the label to bold */
+            text-align: center;
+             /* Centers the text in the label */
+            font-size: xx-large;
+             /* Sets the font size of the label */
+            width: 100%;
+            /* Sets the width of the label */
+            border-bottom: 1px solid #ccc;
+             /* Adds a bottom border to the label */
+        }
+
+        .modern-checkbox {
+            /* Styles for the modern checkbox container */
+            display: flex;
+            /* Configures the container as a flex container */
+            align-items: center;
+            /* Centers items vertically within the container */
+            gap: 10px;
+            /* Sets a gap between items */
+            margin: 10px 0;
+            /* Adds a margin at the top and bottom of the container */
+        }
+
+        .modern-checkbox input[type="checkbox"] {
+            /* Styles for the checkbox input field */
+            appearance: none;
+            /* Removes default checkbox styles */
+            width: 20px;
+            /* Sets the width of the checkbox */
+            height: 20px;
+            /* Sets the height of the checkbox */
+            border: 2px solid #5cb85c;
+            /* Adds a border to the checkbox */
+            border-radius: 4px;
+            /* Adds border radius to the checkbox */
+            outline: none;
+            /* Removes the outline */
+            cursor: pointer;
+            /* Sets the cursor to pointer */
+            margin-left: 20px;
+             /* Adds a left margin to the checkbox */
+            margin-top: 12px;
+            /* Adds a top margin to the checkbox */
+            position: relative;
+            /* Sets the positioning */
+        }
+
+        .modern-checkbox input[type="checkbox"]:checked {
+             /* Styles for the checkbox input field when checked */
+            background-color: #5cb85c;
+             /* Sets the background color */
+        }
+
+        .modern-checkbox input[type="checkbox"]:checked::before {
+            /* Styles for the custom checkmark when the checkbox is checked */
+            content: '\2713';
+             /* Sets the content to a checkmark character */
+            color: #fff;
+             /* Sets the text color of the checkmark */
+            font-size: 16px;
+             /* Sets the font size of the checkmark */
+            position: absolute;
+             /* Positions the checkmark relative to its container */
+            top: 50%;
+            /* Aligns the checkmark vertically in the center */
+            left: 50%;
+            /* Aligns the checkmark horizontally in the center */
+            transform: translate(-50%, -50%);
+            /* Centers the checkmark exactly */
+        }
+
+        #time {
+            /* Styles for the elapsed time label */
+            margin-left: 200px;
+             /* Adds a left margin to the label */
+        }
+
+        ::-webkit-scrollbar {
+            /* Styles for the custom scrollbar */
+            width: 10px;
+             /* Sets the width of the scrollbar */
+        }
+
+        ::-webkit-scrollbar-track {
+             /* Styles for the track of the scrollbar */
+            background: rgba(0, 0, 0, 0);
+            /* Sets the background to transparent */
+        }
+
+        ::-webkit-scrollbar-thumb {
+            /* Styles for the thumb of the scrollbar */
+            background: #ff7e5f;
+             /* Sets the background color of the thumb */
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+             /* Styles for the thumb of the scrollbar when hovered */
+            background: #555;
+            /* Changes the background color on hover */
+        }
+    </style>
+    <!-- End of CSS styles -->
+
+</head>
+<!-- End of head section -->
+
+<body>
+    <!-- Start of body content -->
+    <div id="outContainer">
+        <!-- Container for the output -->
+        <div class="output-label">Hash Table</div>
+        <!-- Label for the output -->
+        <div id="output">Output will appear here...</div>
+        <!-- Output area where hash table display will be shown -->
+    </div>
+     <!-- End of output container -->
+
+    <div class="inContainer">
+         <!-- Container for the input and buttons -->
+        <div id="inputDiv">
+            <!-- Container for the input field -->
+            <input type="text" id="dataInput" placeholder="Enter text (separate multiple entries with commas)">
+            <!-- Text input field for entering data -->
+        </div>
+         <!-- End of input field container -->
+
+        <div class="button-container">
+            <!-- Container for the buttons -->
+            <button onclick="insertData()">Insert</button>
+             <!-- Button to insert data -->
+            <button onclick="findValue()">Find</button>
+             <!-- Button to find data -->
+            <button onclick="deleteData()">Delete</button>
+             <!-- Button to delete data -->
+            <button onclick="displayHashTable()">Display</button>
+            <!-- Button to display the hash table -->
+        </div>
+         <!-- End of button container -->
+
+        <div class="modern-checkbox">
+            <!-- Container for the modern checkbox -->
+            <input type="checkbox" id="optCheckbox">
+            <!-- Checkbox input for optional settings -->
+            <label for="optCheckbox">Initialize 'hash' as Prime Number</label>
+            <!-- Label for the checkbox -->
+            <label id="time">Elapsed Time:</label>
+             <!-- Label to show the elapsed time -->
+        </div>
+        <!-- End of modern checkbox container -->
+    </div>
+     <!-- End of input section container -->
+
+    <script>
+        // Start of JavaScript code
+         class HashTable {
+            // JavaScript class for the Hash Table
+            constructor(numKeys) {
+                 // Constructor of the HashTable class
+                this.numKeys = numKeys;
+                 // Initialize the number of keys
+                this.hashT = Array.from({ length: numKeys }, () => []);
+                // Initialize the hash table as an array of empty arrays
+            }
+
+            hashKey(data) {
+                // Method to calculate the hash key for the given data
+                var isChecked = document.getElementById('optCheckbox').checked;
+                // Check if the checkbox to use a prime number is checked
+                let hash = isChecked ? 5381 : 5380;
+                 // Initialize the hash value (either prime number or regular)
+                for (let char of data) {
+                    // Loop through each character in the data
+                    hash = (hash * 33) + hash + char.charCodeAt(0);
+                    // Compute the hash by multiplying by 33, adding itself, and adding the set value of each character
+                }
+                return hash;
+                 // Return the final computed hash
+            }
+
+            insertData(data) {
+                 // Method to insert data into the hash table
+                const start = performance.now();
+                // Record the start time before inserting the data
+                if (Array.isArray(data)) {
+                     // Check if the input is an array of data
+                    data.forEach(item => this._insertSingleData(item));
+                     // If the input is an array, insert each item individually
+                } else {
+                     // If the input is not an array, insert the single data item
+                    this._insertSingleData(data);
+                }
+                const end = performance.now();
+                 // Record the end time after insertion
+                document.getElementById('time').textContent = `Elapsed time: ${(end - start).toFixed(3)} ms`;
+                // Display the elapsed time in milliseconds
+            }
+
+            _insertSingleData(data) {
+                // Method to insert a single data item into the hash table
+                const hashedData = this.hashKey(data).toString();
+                // Calculate the hash of the data and convert to string
+                const dataKey = parseInt(hashedData) % this.numKeys;
+                // Calculate the array index from the hash
+                this.hashT[dataKey].push({ original: data, hashed: hashedData });
+                // Store both original data and its hash in the hash table at the computed index
+            }
+
+            displayHashTable() {
+                 // Method to display the hash table
+                let output = "";
+                // Initialize an empty string to hold the output
+                this.hashT.forEach((bucket, index) => {
+                    // Loop through each bucket in the hash table
+                    const items = bucket.map(item => `${item.original} (${item.hashed})`).join(" --> ");
+                    // Map each item in the bucket to a string, showing its original and hashed value
+                    output += `${index}: ${items}\n_______________________________________________________________________________________\n`;
+                     // Append the current bucket's content and index to the output string
+                });
+                return output || "Hash Table is empty.";
+                // Return the generated output or a message if the table is empty
+            }
+
+            findValue(data) {
+                // Method to find a given value in the hash table
+                const hashedData = this.hashKey(data).toString();
+                 // Calculate the hash of the data and convert it to a string
+                const dataKey = parseInt(hashedData) % this.numKeys;
+                 // Calculate the index from the hash
+                return this.hashT[dataKey].some(item => item.original === data);
+                 // Check if the given value exists in the bucket corresponding to the hash and return the boolean value
+            }
+
+            deleteData(data) {
+                 // Method to delete a given value from the hash table
+                const hashedData = this.hashKey(data).toString();
+                // Calculate the hash of the data and convert it to a string
+                const dataKey = parseInt(hashedData) % this.numKeys;
+                 // Calculate the index from the hash
+                const bucket = this.hashT[dataKey];
+                 // Get the bucket where the item is supposed to be
+                const dataIndex = bucket.findIndex(item => item.original === data);
+                 // Find the index of the item in the bucket
+                if (dataIndex !== -1) {
+                     // If the item is found
+                    bucket.splice(dataIndex, 1)
+                    // Remove the item from the bucket
+                    return true;
+                    // Return true if the item was successfully deleted
+                }
+                return false;
+                 // Return false if the item was not found
+            }
+        }
+        // End of Hash Table class
+
+        const hashTable = new HashTable(10);
+         // Create a new HashTable with 10 keys
+
+         const defaultNames = [
+            "Alice", "Bob", "Charlie", "David", "Eve",
+            "Fiona", "George", "Hannah", "Ivy", "Jack",
+            "Kate", "will", "Mia", "Noah", "Olivia",
+            "Peter", "Quinn", "Ryan", "Sophia", "Tom"
+        ];
+
+
+           // Insert default names when the page loads
+        defaultNames.forEach(name => hashTable.insertData(name));
+
+
+
+        function getInputValue() {
+            // Function to get input from the text field
+            const input = document.getElementById('dataInput');
+             // Get the input text field
+            const value = input.value.trim();
+             // Get the text field value and trim whitespace
+            return value.includes(",") ? value.split(",").map(v => v.trim()) : value;
+             // If comma separated values are entered, split and map them
+        }
+
+       function insertData(data) { // Modified to accept a parameter
+             // Function to insert data into the hash table
+            const inputData = data || getInputValue(); // use parameter or input value
+            if (inputData && inputData.length > 0) {
+                 // If the input is valid
+                hashTable.insertData(inputData);
+                // Insert the data into the hash table
+                document.getElementById('output').textContent = Array.isArray(inputData) ?
+                    // Show the message of the inserted data, checking if the inserted data is array
+                    `Inserted values for: ${inputData.join(", ")}` :
+                    // If not array show message for inserted value
+                    `Inserted value for: ${inputData}`;
+            } else {
+                 // If no valid input is provided
+                document.getElementById('output').textContent = "Please enter valid text.";
+                // Display an error message
+            }
+        }
+
+        function findValue() {
+            // Function to find a value in the hash table
+             const data = getInputValue();
+            // Get input value
+            if (typeof data === "string") {
+                // Check if data is a string
+                const found = hashTable.findValue(data);
+                 // Check if the value is found in the hash table
+                const hashVal = hashTable.hashKey(data);
+                // Get the hash value of the input data
+                document.getElementById('output').textContent = found
+                   // Display message based on whether the value is found or not
+                    ? `Value "${data}" (Hash ${hashVal}) found in the hash table.`
+                    // Output message if found
+                    : `Value "${data}" (Hash ${hashVal}) not found in the hash table.`;
+                     // Output message if not found
+            } else {
+                document.getElementById('output').textContent = "Enter a single value to find.";
+                 // Display an error message if the input is not a single value
+            }
+        }
+
+        function deleteData() {
+            // Function to delete a data from the hash table
+             const data = getInputValue();
+             // Get the input value
+            if (typeof data === "string") {
+                // Check if the input is a string
+                const deleted = hashTable.deleteData(data);
+                // Delete the data from the hash table
+                document.getElementById('output').textContent = deleted ?
+                    // Display message based on if data was deleted
+                    `Value "${data}" deleted from the hash table.` :
+                    // Output message if data deleted
+                    `Value "${data}" not found.`;
+                     // Output message if data was not found
+            } else {
+                document.getElementById('output').textContent = "Enter a single value to delete.";
+                // Display an error message if the input is not a single value
+            }
+        }
+
+
+        function displayHashTable() {
+             // Function to display the hash table in the output div
+            const output = hashTable.displayHashTable();
+             // Call the hash table class function to display the output
+            document.getElementById('output').textContent = output;
+             // Update the output div with the hash table output
+        }
+
+        // End of JavaScript functions
+    </script>
+     <!-- End of JavaScript code -->
+
+</body>
+<!-- End of body section -->
+</html>
+<!-- End of HTML document -->
