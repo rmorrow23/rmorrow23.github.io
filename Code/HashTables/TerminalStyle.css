@@ -1,0 +1,342 @@
+ /* CSS styles for the page */
+ body {
+    /* Styles for the body element */
+    height: 100%;
+    /* Sets the body's height to 100% of the viewport height */
+    margin-top: 6%;
+    /* Adds a margin at the top of the body */
+    display: flex;
+    /* Configures the body to be a flex container */
+    align-items: center;
+    /* Centers items vertically within the body */
+    justify-content: center;
+    /* Centers items horizontally within the body */
+    font-family: Arial, sans-serif;
+    /* Sets the default font for the page */
+    background-color: #f0f0f0;
+    /* Sets the background color of the body */
+}
+
+body {
+    /* Additional styles for the body element */
+     flex-direction: column;
+      /* Arranges flex items in a column */
+      width: 100%;
+      /* Sets the width of the body element to the full screen width */
+    line-height: 1.6;
+     /* Sets the line height for text */
+
+}
+
+
+#output {
+    /* Styles for the output area */
+    white-space: pre-wrap;
+    /* Allows text to wrap to the next line */
+    font-family: monospace;
+    /* Sets the font to monospace */
+    height: 400px;
+    /* Sets a fixed height for the output area */
+    font-size: 20px;
+    /* Sets the font size of the output text */
+    background-color: rgba(0, 0, 0, 0.7);
+    /* Sets the background color of the output area with transparency */
+    color: #f4f4f4;
+    /* Sets the text color of the output area */
+    padding: 35px;
+    /* Adds padding inside the output area */
+    width: 95%;
+    /* Sets the width of the output area to 95% */
+    overflow-y: scroll;
+    /* Adds a vertical scrollbar if content overflows */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    /* Adds a subtle shadow to the output area */
+}
+
+.output-label {
+    /* Styles for the label of the output area */
+    background: #ff7e5f;
+    /* Sets the background color of the label */
+    color: #fff;
+    /* Sets the text color of the label */
+    font-weight: bold;
+    /* Sets the font weight of the label to bold */
+    text-align: center;
+    /* Centers the text in the label */
+    font-size: xx-large;
+    /* Sets the font size of the label */
+    width: 100%;
+    /* Sets the width of the label to 100% */
+    border-bottom: 1px solid #ccc;
+    /* Adds a bottom border to the label */
+}
+
+#outContainer {
+     /* Styles for the container of the output area */
+    flex: 1;
+    /* Allows the container to grow and shrink */
+    width: 90%;
+    /* Sets the width of the container to 90% */
+     max-width: 1500px; /* Optional: Set a maximum width */
+     /* Sets the maximum width for the container */
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    /* Adds a border to the container */
+    background: rgba(0, 0, 0, 0);
+    /* Sets the background to transparent */
+    border-radius: 30px;
+    /* Adds a border radius to the container */
+    margin: 0% 15px 15px 15px;
+    /* Adds margin around the container */
+    overflow: hidden;
+    /* Hides content that overflows the container */
+    box-shadow: 0px 10px 10px 8px rgba(0, 0, 0, 0.8);
+    /* Adds a shadow to the container */
+    height: 100%;
+    /* Sets the height of the container to 100% */
+}
+
+button {
+    /* Styles for the buttons */
+    margin: 15px 0 -20px 0;
+    /* Adds margin around the button */
+    padding: 5px 15px 20px 15px;
+    /* Adds padding inside the button */
+    cursor: pointer;
+    /* Sets the cursor to pointer */
+    width: 25%;
+    /* Sets the width of the button */
+    height: 10%;
+    /* Sets the height of the button */
+    border: none;
+    /* Removes the border */
+    border-radius: 30px;
+    /* Adds border radius to the button */
+    border-top: 1px solid rgba(255, 255, 255, 0.9);
+    /* Adds a top border to the button */
+    background-color: rgba(0, 0, 0, 0);
+    /* Sets the background color of the button to transparent */
+    color: white;
+    /* Sets the text color of the button */
+    font-size: 20px;
+    /* Sets the font size of the button text */
+}
+
+button:hover {
+    /* Styles for the button when hovered */
+    background-color: rgba(255, 255, 255, 0.1);
+     /* Changes the background color on hover */
+}
+
+button:active {
+    /* Styles for the button when active */
+    background-color: #449d44;
+    /* Changes the background color on click */
+}
+
+#inputDiv {
+    /* Styles for the container of the input */
+    width: 100%;
+    /* Sets the width of the container to 100% */
+    border: none;
+    /* Removes the border */
+    border-radius: 0px;
+    /* Removes any border radius */
+    background-color: rgba(0, 0, 0, 0.7);
+    /* Sets the background color with transparency */
+    margin-bottom: -15px;
+    /* Adds a margin at the bottom of the container */
+}
+
+#inputDiv input[type="text"] {
+    /* Styles for the input text field */
+    width: 95%;
+    /* Sets the width of the input text field */
+    border: none;
+    /* Removes the border */
+    font-size: larger;
+    /* Sets the font size of the input text */
+    border-radius: 30px;
+    /* Adds border radius to the input field */
+    background-color: rgba(0, 0, 0, 0);
+    /* Sets the background color of the input field to transparent */
+    padding-left: 4%;
+    /* Adds padding to the left of the input field */
+    color: #fff;
+    /* Sets the text color of the input field */
+}
+
+label {
+     /* Styles for the labels */
+    font-weight: bold;
+    /* Sets the font weight of the labels to bold */
+    display: block;
+    /* Displays the label as a block element */
+    margin: 0;
+    /* Removes any margin from the labels */
+}
+
+.button-container {
+    /* Styles for the container of the buttons */
+    margin: 0px;
+     /* Removes any margin from the container */
+    flex: 1;
+    /* Allows the container to grow and shrink */
+    gap: 8%;
+    /* Sets a gap between the buttons */
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    /* Adds a top border to the container */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+     /* Adds a bottom border to the container */
+    background: rgba(0, 0, 0, 0.7);
+     /* Sets the background color of the container with transparency */
+    border-bottom-left-radius: 30px;
+    /* Adds a bottom left border radius to the container */
+    border-bottom-right-radius: 30px;
+    /* Adds a bottom right border radius to the container */
+    padding-left: 5%;
+    /* Adds padding to the left of the container */
+    padding-right: 5%;
+    /* Adds padding to the right of the container */
+    overflow: hidden;
+    /* Hides content that overflows */
+    display: inline-flex;
+     /* Displays the container as an inline flex element */
+    width: 90%;
+    /* Sets the width of the container */
+     height: auto;
+    /* Sets height to auto to adjust to content */
+}
+
+ .inContainer {
+    /* Styles for the container of the input section */
+    flex: 1;
+    /* Allows the container to grow and shrink */
+       width: 95%;
+    /* Sets the width of the container to 95% */
+     max-width: 1700px; /* Optional: Set a maximum width */
+    /* Sets the max width of the container */
+    border: none;
+    /* Removes the border */
+    background: rgba(0, 0, 0, .9);
+    /* Sets the background color with transparency */
+    border-radius: 30px;
+    /* Adds border radius to the container */
+    margin-top: -50px;
+    /* Adds a top margin to the container */
+    overflow: hidden;
+    /* Hides content that overflows */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Adds a border to the container */
+    box-shadow: 0px 3px 8px 4px rgba(0, 0, 0, 0.8);
+    /* Adds a shadow to the container */
+     height: auto;
+     /* Sets height to auto to adjust to content */
+}
+
+.input-label {
+    /* Styles for the label of the input area */
+    background: #ff7e5f;
+    /* Sets the background color of the label */
+    color: #fff;
+    /* Sets the text color of the label */
+    font-weight: bold;
+    /* Sets the font weight of the label to bold */
+    text-align: center;
+     /* Centers the text in the label */
+    font-size: xx-large;
+     /* Sets the font size of the label */
+    width: 100%;
+    /* Sets the width of the label */
+    border-bottom: 1px solid #ccc;
+     /* Adds a bottom border to the label */
+}
+
+.modern-checkbox {
+    /* Styles for the modern checkbox container */
+    display: flex;
+    /* Configures the container as a flex container */
+    align-items: center;
+    /* Centers items vertically within the container */
+    gap: 10px;
+    /* Sets a gap between items */
+    margin: 10px 0;
+    /* Adds a margin at the top and bottom of the container */
+}
+
+.modern-checkbox input[type="checkbox"] {
+    /* Styles for the checkbox input field */
+    appearance: none;
+    /* Removes default checkbox styles */
+    width: 20px;
+    /* Sets the width of the checkbox */
+    height: 20px;
+    /* Sets the height of the checkbox */
+    border: 2px solid #5cb85c;
+    /* Adds a border to the checkbox */
+    border-radius: 4px;
+    /* Adds border radius to the checkbox */
+    outline: none;
+    /* Removes the outline */
+    cursor: pointer;
+    /* Sets the cursor to pointer */
+    margin-left: 20px;
+     /* Adds a left margin to the checkbox */
+    margin-top: 12px;
+    /* Adds a top margin to the checkbox */
+    position: relative;
+    /* Sets the positioning */
+}
+
+.modern-checkbox input[type="checkbox"]:checked {
+     /* Styles for the checkbox input field when checked */
+    background-color: #5cb85c;
+     /* Sets the background color */
+}
+
+.modern-checkbox input[type="checkbox"]:checked::before {
+    /* Styles for the custom checkmark when the checkbox is checked */
+    content: '\2713';
+     /* Sets the content to a checkmark character */
+    color: #fff;
+     /* Sets the text color of the checkmark */
+    font-size: 16px;
+     /* Sets the font size of the checkmark */
+    position: absolute;
+     /* Positions the checkmark relative to its container */
+    top: 50%;
+    /* Aligns the checkmark vertically in the center */
+    left: 50%;
+    /* Aligns the checkmark horizontally in the center */
+    transform: translate(-50%, -50%);
+    /* Centers the checkmark exactly */
+}
+
+#time {
+    /* Styles for the elapsed time label */
+    margin-left: 200px;
+     /* Adds a left margin to the label */
+}
+
+::-webkit-scrollbar {
+    /* Styles for the custom scrollbar */
+    width: 10px;
+     /* Sets the width of the scrollbar */
+}
+
+::-webkit-scrollbar-track {
+     /* Styles for the track of the scrollbar */
+    background: rgba(0, 0, 0, 0);
+    /* Sets the background to transparent */
+}
+
+::-webkit-scrollbar-thumb {
+    /* Styles for the thumb of the scrollbar */
+    background: #ff7e5f;
+     /* Sets the background color of the thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+     /* Styles for the thumb of the scrollbar when hovered */
+    background: #555;
+    /* Changes the background color on hover */
+}
