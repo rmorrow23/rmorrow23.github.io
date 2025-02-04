@@ -1,0 +1,6 @@
+id,name,description,quantity,location,sku
+1,Product A,Description A,50,Warehouse A,A123456789
+2,Product B,Description B,10,Shelf 3,B987654321
+3,Product C,Description C,75,Storage Room,C123789456
+4,Product D very long name here,Description D,2,Backroom,D456987123
+5,KATIE,Fun Person,1,Living Room,KM2003

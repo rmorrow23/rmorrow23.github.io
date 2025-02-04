@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+      #qr-reader {
+        width: 100%;
+        max-width: 600px; /* Adjust as needed */
+        margin: 0 auto;
+      }
+      #qr-reader__dashboard_section_swaplink {
+        display: none !important; /* Hide camera swap button */
+      }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="menu-btn" aria-label="Open Menu">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E0E0E0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='3' y1='12' x2='21' y2='12'%3E%3C/line%3E%3Cline x1='3' y1='6' x2='21' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='18' x2='21' y2='18'%3E%3C/line%3E%3C/svg%3E" alt="Menu Icon">
+        </button>
+            <div class="import-export-btns">
+             <button id="export-btn">Export</button>
+          </div>
+        <div class="search-bar">
+             <button class="scan-barcode-btn" aria-label="Scan Barcode" id="scan-barcode-btn">
+                   <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E0E0E0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E" alt="Search Icon">
+             </button>
+
+        </div>
+
+        <button class="filter-btn" aria-label="Filter Items">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E0E0E0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3'%3E%3C/polygon%3E%3C/svg%3E" alt="Filter Icon">
+        </button>
+
+    </div>
+
+    <div class="inventory-list" id="inventory-list">
+
+
+    </div>
+
+    <div class="fab" id="add-item-fab">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='5' x2='12' y2='19'%3E%3C/line%3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3C/svg%3E" alt="Add Icon">
+    </div>
+
+    <!-- Item Details Modal -->
+    <div class="modal" id="item-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-item-name"></h2>
+                <button class="close-modal-btn" aria-label="close modal" id="close-modal-btn">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E0E0E0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E" alt="close modal">
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <p>Description: <span id="modal-item-description"></span></p>
+                <p>Quantity: <span id="modal-item-quantity"></span></p>
+                <p>Location: <span id="modal-item-location"></span></p>
+                <p>SKU: <span id="modal-item-sku"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div class="modal" id="add-item-modal">
+        <div class="add-item-modal-content">
+            <div class="add-item-modal-header">
+                <h2>Add Item</h2>
+                <button class="close-modal-btn" aria-label="close modal" id="close-add-modal-btn">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E0E0E0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E" alt="close modal">
+                </button>
+            </div>
+            <div class="add-item-modal-body">
+                <input type="text" placeholder="Item Name" id="add-item-name">
+                <input type="text" placeholder="Item Description" id="add-item-description">
+                <input type="number" placeholder="Initial Quantity" id="add-item-quantity">
+                <input type="text" placeholder="Location" id="add-item-location">
+                <input type="text" placeholder="Item SKU" id="add-item-sku">
+                <button class="add-item-btn" id="add-item-btn">Add Item</button>
+            </div>
+        </div>
+    </div>
+    <!-- Scanner Modal -->
+    <div class="scanner-modal" id="scanner-modal">
+        <div class="scanner-modal-content">
+            <button class="close-scanner-btn" aria-label="close scanner" id="close-scanner-btn">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E0E0E0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E" alt="close scanner">
+            </button>
+            <!-- Scanner content will be rendered here -->
+            <div id="qr-reader"></div>
+            <div class="scan-btn-container">
+                <button class="scan-btn" id="scan-btn">Scan Barcode</button>
+            </div>
+
+        </div>
+    </div>
+    <!-- Edit item Modal -->
+       <div class="modal" id="edit-item-modal">
+           <div class="edit-item-modal-content">
+            <div class="edit-item-modal-header">
+                <h2 >Edit Item</h2>
+                   <button class="close-modal-btn" aria-label="close modal" id="close-edit-modal-btn">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E0E0E0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E" alt="close modal">
+                </button>
+            </div>
+           <div class="edit-item-modal-body" id="edit-modal-body">
+                <input type="text" placeholder="Item Name" id="edit-item-name">
+                <input type="text" placeholder="Item Description" id="edit-item-description">
+                <input type="number" placeholder="Initial Quantity" id="edit-item-quantity">
+                <input type="text" placeholder="Location" id="edit-item-location">
+                <input type="text" placeholder="Item SKU" id="edit-item-sku">
+                 <button id="save-edit-item-btn">Save changes</button>
+            </div>
+        </div>
+   </div>
+    <div id="messageContainer"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCFqQsvRT86u7olaTTxjOo5Q2H_Q8xzrVA",
+  authDomain: "morrow-household.firebaseapp.com",
+  projectId: "morrow-household",
+  storageBucket: "morrow-household.appspot.com",
+  messagingSenderId: "493691662380",
+  appId: "1:493691662380:web:4fd800628da5f01fa96189",
+  
+};
+
+  // Initialize Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore(); // Use firestore
+  //const functions = firebase.functions(); // If you intend to use firebase function as well
+
+    let inventoryData = [];
+    let currentInventory = [...inventoryData];
+    let scanning = false;
+    let editingItemId = null; // used to edit a specific item
+
+
+    const inventoryListDiv = document.getElementById('inventory-list');
+    const itemModal = document.getElementById('item-modal');
+    const addModal = document.getElementById('add-item-modal');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const closeAddModalBtn = document.getElementById('close-add-modal-btn');
+      const closeEditModalBtn = document.getElementById('close-edit-modal-btn');
+    const modalItemName = document.getElementById('modal-item-name');
+    const modalBody = document.getElementById('modal-body');
+    const searchInput = document.getElementById('search-input');
+    const addItemFab = document.getElementById('add-item-fab');
+       const editItemModal = document.getElementById('edit-item-modal');
+      const editModalBody = document.getElementById('edit-modal-body')
+
+
+    const addItemNameInput = document.getElementById('add-item-name');
+    const addItemDescriptionInput = document.getElementById('add-item-description');
+    const addItemQuantityInput = document.getElementById('add-item-quantity');
+    const addItemLocationInput = document.getElementById('add-item-location');
+    const addItemSkuInput = document.getElementById('add-item-sku');
+    const addItemButton = document.getElementById('add-item-btn');
+
+      const editItemNameInput = document.getElementById('edit-item-name');
+    const editItemDescriptionInput = document.getElementById('edit-item-description');
+    const editItemQuantityInput = document.getElementById('edit-item-quantity');
+    const editItemLocationInput = document.getElementById('edit-item-location');
+    const editItemSkuInput = document.getElementById('edit-item-sku');
+      const saveEditItemBtn = document.getElementById('save-edit-item-btn')
+
+    const scannerModal = document.getElementById('scanner-modal');
+    const closeScannerBtn = document.getElementById('close-scanner-btn');
+    const scanBtn = document.getElementById('scan-btn');
+    const scanBarcodeBtn = document.getElementById('scan-barcode-btn');
+    const messageContainer = document.getElementById('messageContainer');
+    let html5QrcodeScanner = null;
+
+    function generateInventoryItemHTML(item) {
+    return `
+        <div class="inventory-card" data-item-id="${item.id}">
+            <div class="item-image">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E0E0E0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='3' width='20' height='14' rx='2' ry='2'%3E%3C/rect%3E%3Cpath d='M2 17h20v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4Z'%3E%3C/path%3E%3C/svg%3E" alt="Product Icon">
+            </div>
+            <div class="item-info">
+                <div class="item-name">${item.name}</div>
+                <div class="quantity-indicator">Quantity: ${item.quantity} <span class="status ${item.status}"></span>
+                </div>
+                <span class="item-name">${item.location}</span>
+            </div>
+              <button class="edit-btn" aria-label="Edit Product" data-edit-id="${item.id}">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E0E0E0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5l-3 1 1-3L17 3z'%3E%3C/path%3E%3C/svg%3E" alt="Edit Icon">
+              </button>
+        </div>
+    `;
+}
+
+
+   function renderInventoryList() {
+        inventoryListDiv.innerHTML = currentInventory.map(item => generateInventoryItemHTML(item)).join('');
+        // Add event listeners to each card after rendering
+         document.querySelectorAll('.inventory-card').forEach(card => {
+            card.addEventListener('click', (event) => {
+                const itemId = card.dataset.itemId
+                const item = currentInventory.find(item => item.id === itemId);
+
+             if (item && event.target.closest('.edit-btn') === null){
+                modalItemName.textContent = item.name;
+                modalBody.innerHTML = `
+                        <p>Description: ${item.description}</p>
+                        <p>Quantity: ${item.quantity}</p>
+                        <p>Location: ${item.location}</p>
+                        <p>SKU: ${item.sku}</p>
+                        `;
+                itemModal.style.display = 'block';
+                } else if(item && event.target.closest('.edit-btn') ) {
+                     openEditModal(item)
+                }
+
+        });
+        });
+    }
+
+   async function loadInventoryData() {
+        try {
+            const querySnapshot = await db.collection("inventory").get();
+            inventoryData = [];
+            querySnapshot.forEach((doc) => {
+                const item = doc.data();
+                item.id = doc.id;
+                item.status = item.quantity > 0 ? 'available' : 'low';
+                inventoryData.push(item);
+            });
+            currentInventory = [...inventoryData];
+            renderInventoryList();
+            displayMessage('Inventory loaded from database', 'success');
+        } catch (error) {
+            console.error('Error fetching inventory data:', error);
+            displayMessage('Error fetching inventory from database', 'error');
+        }
+    }
+
+
+    loadInventoryData()
+
+    closeModalBtn.addEventListener('click', () => {
+        itemModal.style.display = 'none';
+    });
+
+    closeAddModalBtn.addEventListener('click', () => {
+        addModal.style.display = 'none';
+    });
+      closeEditModalBtn.addEventListener('click', () => {
+        editItemModal.style.display = 'none';
+           editingItemId= null;
+    });
+
+   closeScannerBtn.addEventListener('click', () => {
+        stopScanning();
+        scannerModal.style.display = 'none';
+    });
+
+    addItemFab.addEventListener('click', () => {
+    addModal.style.display = 'block';
+    });
+
+   scanBarcodeBtn.addEventListener('click', () => {
+        startScanning();
+    });
+
+
+
+    exportButton.addEventListener('click', () => {
+        exportCSV();
+    });
+
+    window.addEventListener('click', (event) => {
+    if (event.target === itemModal) {
+        itemModal.style.display = 'none';
+    }
+        if (event.target === addModal) {
+        addModal.style.display = 'none';
+    }
+     if (event.target === scannerModal) {
+            stopScanning();
+            scannerModal.style.display = 'none';
+        }
+       if (event.target === editItemModal) {
+        editItemModal.style.display = 'none';
+             editingItemId= null;
+        }
+    });
+
+    searchInput.addEventListener('input', () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        currentInventory = inventoryData.filter(item =>
+            item.name.toLowerCase().includes(searchTerm) || item.sku.toLowerCase().includes(searchTerm)
+        );
+
+        renderInventoryList();
+    });
+
+    addItemButton.addEventListener('click', async () => {
+  displayMessage("addItemButton clicked", 'info'); // Check if event listener fires
+
+  const name = addItemNameInput.value.trim();
+  const description = addItemDescriptionInput.value.trim();
+  const quantity = parseInt(addItemQuantityInput.value, 10);
+  const location = addItemLocationInput.value.trim();
+  const sku = addItemSkuInput.value.trim();
+
+  displayMessage(`Name: ${name}, Description: ${description}, Quantity: ${quantity}, Location: ${location}, SKU: ${sku}`, 'info'); // Check input values
+
+  if (name && description && !isNaN(quantity) && location && sku) {
+    displayMessage("Input validation passed", 'success'); // Check if validation passes
+
+    try {
+      displayMessage("Attempting to add item to Firestore", 'info'); // Check if Firestore operation is reached
+
+      await db.collection("inventory").add({
+        name: name,
+        description: description,
+        quantity: quantity,
+        location: location,
+        sku: sku,
+      });
+
+      displayMessage("Item added to Firestore successfully", 'success'); // Check if Firestore operation succeeds
+      addModal.style.display = 'none';
+      addItemNameInput.value = '';
+      addItemDescriptionInput.value = '';
+      addItemQuantityInput.value = '';
+      addItemLocationInput.value = '';
+      addItemSkuInput.value = '';
+      displayMessage('Item added successfully', 'success');
+
+      loadInventoryData();
+
+    } catch (error) {
+      console.error('Error adding item to Firestore:', error);
+      displayMessage(`Error adding item to Firestore: ${error.message}`, 'error'); // Display the actual error message
+    }
+  } else {
+    displayMessage("Input validation failed", 'error'); // Check if validation fails
+    displayMessage('Please fill all the fields with valid input', 'error');
+  }
+});
+
+ function openEditModal(item) {
+       editingItemId = item.id;
+        editItemNameInput.value = item.name;
+         editItemDescriptionInput.value = item.description;
+         editItemQuantityInput.value = item.quantity;
+        editItemLocationInput.value = item.location;
+         editItemSkuInput.value = item.sku;
+      editItemModal.style.display = 'block';
+    }
+
+   async function saveEditItem() {
+        if (editingItemId !== null) {
+            try {
+                await db.collection("inventory").doc(editingItemId).update({
+                    name: editItemNameInput.value.trim(),
+                    description: editItemDescriptionInput.value.trim(),
+                    quantity: parseInt(editItemQuantityInput.value, 10),
+                    location: editItemLocationInput.value.trim(),
+                    sku: editItemSkuInput.value.trim()
+                });
+                editItemModal.style.display = 'none';
+                editingItemId = null;
+                displayMessage('Item edited successfully', 'success');
+                loadInventoryData()
+            } catch (error) {
+                console.error('Error updating item:', error);
+                displayMessage('Error editing item on database', 'error');
+            }
+        }
+    }
+
+   function displayMessage(message, type) {
+        const newMessageBox = document.createElement('div');
+        newMessageBox.textContent = message;
+        newMessageBox.classList.add('message-box', type);
+        messageContainer.appendChild(newMessageBox);
+
+        setTimeout(() => {
+            messageContainer.removeChild(newMessageBox);
+        }, 3000);
+    }
+
+    function startScanning() {
+    scannerModal.style.display = 'block';
+        displayMessage('Starting barcode scanner...', 'success');
+        const qrDiv = document.getElementById("qr-reader");
+
+        function onScanSuccess(decodedText, decodedResult) {
+            displayMessage(`Barcode data: ${decodedText}`, 'success');
+             stopScanning();
+            scannerModal.style.display = 'none';
+            searchInput.value = decodedText;
+             const searchTerm = decodedText.toLowerCase();
+                currentInventory = inventoryData.filter(item =>
+                     item.name.toLowerCase().includes(searchTerm) || item.sku.toLowerCase().includes(searchTerm)
+                 );
+                 renderInventoryList();
+        }
+
+        function onScanFailure(error) {
+           console.warn(`QR scan failed: ${error}`);
+        }
+
+        html5QrcodeScanner = new Html5Qrcode("qr-reader", {  // Change to div ID
+            fps: 10,
+            qrbox: {width: 250, height: 250}
+        });
+
+          html5QrcodeScanner.start({ facingMode: "environment" }, {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+        }, onScanSuccess, onScanFailure)
+        .catch(error => {
+            console.error("Error starting scanner:", error);
+            displayMessage('Error starting scanner.', 'error');
+              stopScanning();
+            scannerModal.style.display = 'none';
+        });
+
+
+    }
+
+     function stopScanning() {
+       displayMessage('Stopping barcode scanner...', 'success');
+      if (html5QrcodeScanner) {
+           html5QrcodeScanner.stop().then(() => {
+              console.log("QR code scanning stopped");
+               html5QrcodeScanner.clear();
+              displayMessage('Barcode Scanner stopped', 'success');
+          }).catch(error => {
+               console.error("Error stopping scanner:", error);
+              displayMessage('Error stopping scanner.', 'error');
+           });
+        html5QrcodeScanner = null;
+        }
+    }
+
+
+function exportCSV() {
+    const csvData = convertToCSV(inventoryData);
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'inventory.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+       displayMessage('CSV exported successfully', 'success');
+}
+
+function convertToCSV(data) {
+    if (data.length === 0) {
+      return '';
+    }
+
+    const header = Object.keys(data[0]).join(',');
+    const rows = data.map(item => {
+        return Object.values(item).join(',');
+    });
+    return `${header}\n${rows.join('\n')}`;
+}
+</script>
+
+</body>
+</html>
