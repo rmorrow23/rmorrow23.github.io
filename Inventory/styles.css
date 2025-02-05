@@ -413,6 +413,7 @@
 
         #messageContainer {
            padding: 1rem;
+           position:absolute;
         }
         /* edit item modal style */
          .edit-item-modal-content {
