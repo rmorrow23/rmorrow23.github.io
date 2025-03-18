@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Icon Pack Creator</title>
+    <script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        input, button { margin: 10px; padding: 8px; font-size: 16px; }
+        #preview img { width: 50px; margin: 5px; }
+        #status { margin-top: 20px; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+    <h1>Create Your Android Icon Pack</h1>
+    <input type="file" id="iconUpload" multiple accept="image/png">
+    <input type="text" id="packageName" placeholder="Enter App Package Name">
+    <button onclick="uploadIcons()">Upload & Generate APK</button>
+    <div id="preview"></div>
+    <div id="status">Waiting for upload...</div>
+
+    <script>
+        // Firebase Config (Replace with your Firebase project details)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
+        const db = firebase.firestore();
+
+        let icons = [];
+
+        document.getElementById("iconUpload").addEventListener("change", function(event) {
+            const files = event.target.files;
+            const preview = document.getElementById("preview");
+            preview.innerHTML = "";
+            icons = [];
+
+            for (let file of files) {
+                let img = document.createElement("img");
+                img.src = URL.createObjectURL(file);
+                preview.appendChild(img);
+                icons.push(file);
+            }
+        });
+
+        async function uploadIcons() {
+            const packageName = document.getElementById("packageName").value.trim();
+            if (!packageName || icons.length === 0) {
+                alert("Please upload icons and enter a package name.");
+                return;
+            }
+
+            document.getElementById("status").innerText = "Uploading icons...";
+
+            const uploadPromises = [];
+            for (let file of icons) {
+                const storageRef = storage.ref(`icons/${packageName}/${file.name}`);
+                uploadPromises.push(storageRef.put(file));
+            }
+
+            await Promise.all(uploadPromises);
+            const docRef = await db.collection("iconPacks").add({
+                packageName,
+                status: "pending",
+                createdAt: new Date()
+            });
+
+            document.getElementById("status").innerText = "Icons uploaded! APK is being generated...";
+            checkAPKStatus(docRef.id);
+        }
+
+        async function checkAPKStatus(docId) {
+            const docRef = db.collection("iconPacks").doc(docId);
+            const interval = setInterval(async () => {
+                const doc = await docRef.get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.status === "ready") {
+                        document.getElementById("status").innerHTML = `<a href="${data.apkUrl}" download>Download APK</a>`;
+                        clearInterval(interval);
+                    } else if (data.status === "error") {
+                        document.getElementById("status").innerText = "Error generating APK. Try again later.";
+                        clearInterval(interval);
+                    }
+                }
+            }, 5000);
+        }
+    </script>
+
+</body>
+</html>
