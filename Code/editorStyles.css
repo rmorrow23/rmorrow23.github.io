@@ -16,7 +16,8 @@ body {
     display: flex;
     gap: 10px;
     padding: 0;
-    background: rgba(0, 0, 0, 0); /* Fully transparent to match the background */
+    background-color: rgba(150, 150, 150, 0.1);
+    backdrop-filter: blur(5px);
     border-radius: 8px;
     margin: 0;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -48,8 +49,7 @@ iframe {
 .CodeMirror {
     height: 100%;
     font-size: 14px;
-    background-color: rgba(150, 150, 150, 0.1)!important;
-    backdrop-filter: blur(5px);  /* Ensures transparency of the editors */
+    background-color: rgba(0, 0, 0, 0)!important;
     color: #f4f4f4;
     border-radius: 5px;
 }
