@@ -69,49 +69,54 @@
     }
 
     function renderCSSCards(cssString) {
-      container.innerHTML = "";
-      const blocks = splitCSSIntoCards(cssString);
+  container.innerHTML = "";
+  const blocks = splitCSSIntoCards(cssString);
 
-      blocks.forEach(block => {
-        const match = block.match(/^([^{]+)\s*\{([^}]+)\}/);
-        if (!match) return;
+  blocks.forEach(block => {
+    const match = block.match(/^([^{]+)\s*\{([^}]+)\}/);
+    if (!match) return;
 
-        const selector = match[1].trim();
-        const properties = match[2].trim().split(/;\s*/).filter(Boolean);
+    const selector = match[1].trim();
+    const propertiesRaw = match[2].trim();
 
-        const card = document.createElement("div");
-        card.classList.add("card");
-        card.dataset.selector = selector;
+    // Safely split properties while preserving values like url(...), rgba(...), etc.
+    const properties = propertiesRaw.match(/[^:;{}]+:[^;{}]+(?:\([^)]*\))?[^;{}]*/g) || [];
 
-        const title = document.createElement("h2");
-        title.textContent = selector;
-        card.appendChild(title);
+    const card = document.createElement("div");
+    card.classList.add("card");
+    card.dataset.selector = selector;
 
-        properties.forEach(prop => {
-          const [key, value] = prop.split(":").map(s => s.trim());
-          if (!key || !value) return;
+    const title = document.createElement("h2");
+    title.textContent = selector;
+    card.appendChild(title);
 
-          const propContainer = document.createElement("div");
-          propContainer.style.marginBottom = "8px";
+    properties.forEach(propLine => {
+      const [prop, ...valParts] = propLine.split(":");
+      const key = prop.trim();
+      const value = valParts.join(":").trim(); // Rejoin in case value had colons
 
-          const label = document.createElement("label");
-          label.textContent = key;
-          label.style.display = "block";
+      const propContainer = document.createElement("div");
+      propContainer.style.marginBottom = "8px";
 
-          const input = document.createElement("input");
-          input.type = "text";
-          input.name = key;
-          input.value = value;
-          input.dataset.selector = selector;
+      const label = document.createElement("label");
+      label.textContent = key;
+      label.style.display = "block";
 
-          propContainer.appendChild(label);
-          propContainer.appendChild(input);
-          card.appendChild(propContainer);
-        });
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = key;
+      input.value = value;
+      input.dataset.selector = selector;
 
-        container.appendChild(card);
-      });
-    }
+      propContainer.appendChild(label);
+      propContainer.appendChild(input);
+      card.appendChild(propContainer);
+    });
+
+    container.appendChild(card);
+  });
+}
+
 
     function collectCSSFromCards() {
       const selectors = {};
