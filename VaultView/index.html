@@ -14,7 +14,27 @@
   </div>
 
   <div id="cardsContainer"></div>
-  <button id="publishAllButton">✔️</button>
+
+  <hr />
+  <h2>Add New Style</h2>
+  <form id="newStyleForm">
+    <label>
+      Selector:
+      <input type="text" id="newSelector" required placeholder=".new-class or #id" />
+    </label><br /><br />
+    <label>
+      Property:
+      <input type="text" id="newProperty" required placeholder="e.g., color" />
+    </label><br /><br />
+    <label>
+      Value:
+      <input type="text" id="newValue" required placeholder="e.g., red" />
+    </label><br /><br />
+    <button type="submit">Add Style</button>
+  </form>
+
+  <br />
+  <button id="publishAllButton">✔️ Publish All</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -114,6 +134,41 @@
       const updatedCSS = collectCSSFromCards();
       await setDoc(cssDocRef, { css: updatedCSS });
       debugBox.innerText = "CSS updated in Firestore.";
+    });
+
+    document.getElementById("newStyleForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const selector = document.getElementById("newSelector").value.trim();
+      const property = document.getElementById("newProperty").value.trim();
+      const value = document.getElementById("newValue").value.trim();
+
+      const newCard = document.createElement("div");
+      newCard.classList.add("card");
+
+      const title = document.createElement("h2");
+      title.textContent = selector;
+      newCard.appendChild(title);
+
+      const propContainer = document.createElement("div");
+      propContainer.style.marginBottom = "8px";
+
+      const label = document.createElement("label");
+      label.textContent = property;
+      label.style.display = "block";
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = property;
+      input.value = value;
+      input.dataset.selector = selector;
+
+      propContainer.appendChild(label);
+      propContainer.appendChild(input);
+      newCard.appendChild(propContainer);
+
+      container.appendChild(newCard);
+      document.getElementById("newStyleForm").reset();
+      debugBox.innerText = `Added new style for ${selector}`;
     });
 
     onSnapshot(cssDocRef, (docSnap) => {
