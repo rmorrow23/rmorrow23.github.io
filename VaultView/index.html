@@ -8,33 +8,18 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
 </head>
 <body>
-  <div id="top">
-    <h1>VaultView CSS Editor</h1>
-    <div id="debugBox"></div>
+  <h1>VaultView CSS Editor</h1>
+
+  <div>
+    <input id="newSelector" placeholder="Selector (e.g. .card or body)" />
+    <input id="newProperty" placeholder="Property (e.g. color)" />
+    <input id="newValue" placeholder="Value (e.g. gold)" />
+    <button id="addPropertyButton">➕ Add Property</button>
   </div>
 
   <div id="cardsContainer"></div>
-
-  <hr />
-  <h2>Add New Style</h2>
-  <form id="newStyleForm">
-    <label>
-      Selector:
-      <input type="text" id="newSelector" required placeholder=".new-class or #id" />
-    </label><br /><br />
-    <label>
-      Property:
-      <input type="text" id="newProperty" required placeholder="e.g., color" />
-    </label><br /><br />
-    <label>
-      Value:
-      <input type="text" id="newValue" required placeholder="e.g., red" />
-    </label><br /><br />
-    <button type="submit">Add Style</button>
-  </form>
-
-  <br />
-  <button id="publishAllButton">✔️</button>
+  <button id="publishAllButton">✔️ Publish All</button>
+  <pre id="debugBox"></pre>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -57,6 +42,8 @@
     const debugBox = document.getElementById("debugBox");
     const container = document.getElementById("cardsContainer");
 
+    let rawCSS = "";
+
     function applyCSS(cssString) {
       const styleTag = document.getElementById("dynamic-style") || document.createElement("style");
       styleTag.id = "dynamic-style";
@@ -64,134 +51,124 @@
       document.head.appendChild(styleTag);
     }
 
-    function splitCSSIntoCards(cssString) {
-      return cssString.split(/\}\s*/).filter(Boolean).map(block => block + "}");
+    function parseCSSBlocks(cssString) {
+      const blocks = [];
+      const mediaRegex = /@media[^{]+\{[^{}]*\{[^{}]*\}[^{}]*\}/g;
+      const matches = cssString.match(mediaRegex) || [];
+
+      matches.forEach(match => {
+        blocks.push(match.trim());
+        cssString = cssString.replace(match, '');
+      });
+
+      const basicBlocks = cssString.split(/\}\s*/).filter(Boolean).map(b => b.trim() + '}');
+      return basicBlocks.concat(blocks);
     }
 
     function renderCSSCards(cssString) {
-  container.innerHTML = "";
-  const blocks = splitCSSIntoCards(cssString);
+      container.innerHTML = "";
+      const blocks = parseCSSBlocks(cssString);
 
-  blocks.forEach(block => {
-    const match = block.match(/^([^{]+)\s*\{([^}]+)\}/);
-    if (!match) return;
+      blocks.forEach(block => {
+        const card = document.createElement("div");
+        card.classList.add("card");
 
-    const selector = match[1].trim();
-    const propertiesRaw = match[2].trim();
+        const title = document.createElement("h2");
+        const selectorMatch = block.match(/^([^{@]+)\s*\{/);
+        const mediaMatch = block.startsWith("@media");
 
-    // Safely split properties while preserving values like url(...), rgba(...), etc.
-    const properties = propertiesRaw.match(/[^:;{}]+:[^;{}]+(?:\([^)]*\))?[^;{}]*/g) || [];
+        if (mediaMatch) {
+          title.textContent = "@media block";
+        } else if (selectorMatch) {
+          title.textContent = selectorMatch[1].trim();
+        } else {
+          title.textContent = "Unknown";
+        }
 
-    const card = document.createElement("div");
-    card.classList.add("card");
-    card.dataset.selector = selector;
+        card.appendChild(title);
 
-    const title = document.createElement("h2");
-    title.textContent = selector;
-    card.appendChild(title);
+        const propBlock = block.replace(/^[^{]+{/, '').replace(/\}$/, '').trim();
+        const properties = propBlock.split(/;(?![^\(]*\))/).filter(Boolean);
 
-    properties.forEach(propLine => {
-      const [prop, ...valParts] = propLine.split(":");
-      const key = prop.trim();
-      const value = valParts.join(":").trim(); // Rejoin in case value had colons
+        properties.forEach(prop => {
+          const [key, value] = prop.split(":").map(x => x.trim());
+          const row = document.createElement("div");
 
-      const propContainer = document.createElement("div");
-      propContainer.style.marginBottom = "8px";
+          const keyInput = document.createElement("input");
+          keyInput.value = key;
 
-      const label = document.createElement("label");
-      label.textContent = key;
-      label.style.display = "block";
+          const valueInput = document.createElement("input");
+          valueInput.value = value;
 
-      const input = document.createElement("input");
-      input.type = "text";
-      input.name = key;
-      input.value = value;
-      input.dataset.selector = selector;
+          row.appendChild(keyInput);
+          row.appendChild(valueInput);
+          card.appendChild(row);
+        });
 
-      propContainer.appendChild(label);
-      propContainer.appendChild(input);
-      card.appendChild(propContainer);
-    });
-
-    container.appendChild(card);
-  });
-}
-
+        container.appendChild(card);
+      });
+    }
 
     function collectCSSFromCards() {
-      const selectors = {};
-      const inputs = container.querySelectorAll("input");
+      const cards = container.querySelectorAll(".card");
+      let finalCSS = "";
 
-      inputs.forEach(input => {
-        const selector = input.dataset.selector;
-        const prop = input.name;
-        const value = input.value;
+      cards.forEach(card => {
+        const title = card.querySelector("h2").textContent;
+        const inputs = card.querySelectorAll("input");
 
-        if (!selectors[selector]) selectors[selector] = [];
-        selectors[selector].push(`${prop}: ${value}`);
+        if (title.startsWith("@media")) {
+          finalCSS += `${title} {\n`;
+          // Naive reparse — assumes only one level of inner styles
+          const inner = inputs[0].value;
+          finalCSS += `  ${inner}\n`;
+          finalCSS += `}\n\n`;
+        } else {
+          finalCSS += `${title} {\n`;
+          for (let i = 0; i < inputs.length; i += 2) {
+            const key = inputs[i].value;
+            const val = inputs[i + 1].value;
+            if (key && val) finalCSS += `  ${key}: ${val};\n`;
+          }
+          finalCSS += `}\n\n`;
+        }
       });
 
-      return Object.entries(selectors)
-        .map(([selector, rules]) => `${selector} {\n  ${rules.join(";\n  ")};\n}`)
-        .join("\n\n");
+      return finalCSS.trim();
     }
 
     document.getElementById("publishAllButton").addEventListener("click", async () => {
       const updatedCSS = collectCSSFromCards();
       await setDoc(cssDocRef, { css: updatedCSS });
-      debugBox.innerText = "CSS updated in Firestore.";
+      debugBox.textContent = "CSS updated.";
     });
 
-    document.getElementById("newStyleForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const selector = document.getElementById("newSelector").value.trim();
-      const property = document.getElementById("newProperty").value.trim();
-      const value = document.getElementById("newValue").value.trim();
+    document.getElementById("addPropertyButton").addEventListener("click", () => {
+      const sel = document.getElementById("newSelector").value.trim();
+      const prop = document.getElementById("newProperty").value.trim();
+      const val = document.getElementById("newValue").value.trim();
 
-      // Check if selector card exists
-      const existingCard = [...container.children].find(div => div.dataset.selector === selector);
+      if (!sel || !prop || !val) return;
 
-      const propContainer = document.createElement("div");
-      propContainer.style.marginBottom = "8px";
-
-      const label = document.createElement("label");
-      label.textContent = property;
-      label.style.display = "block";
-
-      const input = document.createElement("input");
-      input.type = "text";
-      input.name = property;
-      input.value = value;
-      input.dataset.selector = selector;
-
-      propContainer.appendChild(label);
-      propContainer.appendChild(input);
-
-      if (existingCard) {
-        existingCard.appendChild(propContainer);
-        debugBox.innerText = `Added new property to ${selector}`;
+      const regex = new RegExp(`${sel}\\s*\\{([\\s\\S]*?)\\}`, "m");
+      if (regex.test(rawCSS)) {
+        rawCSS = rawCSS.replace(regex, (match, props) => {
+          if (props.includes(prop)) return match;
+          return `${sel} {\n${props.trim()}\n  ${prop}: ${val};\n}`;
+        });
       } else {
-        const newCard = document.createElement("div");
-        newCard.classList.add("card");
-        newCard.dataset.selector = selector;
-
-        const title = document.createElement("h2");
-        title.textContent = selector;
-        newCard.appendChild(title);
-        newCard.appendChild(propContainer);
-
-        container.appendChild(newCard);
-        debugBox.innerText = `Created new selector ${selector}`;
+        rawCSS += `\n${sel} {\n  ${prop}: ${val};\n}`;
       }
 
-      document.getElementById("newStyleForm").reset();
+      setDoc(cssDocRef, { css: rawCSS });
+      debugBox.textContent = "Property added.";
     });
 
     onSnapshot(cssDocRef, (docSnap) => {
-      const cssString = docSnap.data()?.css || "";
-      applyCSS(cssString);
-      renderCSSCards(cssString);
-      debugBox.innerText = "CSS loaded from Firestore.";
+      rawCSS = docSnap.data()?.css || "";
+      applyCSS(rawCSS);
+      renderCSSCards(rawCSS);
+      debugBox.textContent = "CSS synced.";
     });
   </script>
 </body>
