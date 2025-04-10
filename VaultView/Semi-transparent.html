@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Semi-transparent Blur</title>
+  <style>
+    body {
+      background: url('your-background-image.jpg') no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh;
+      margin: 0;
+    }
+    .blur-box {
+      width: 300px;
+      height: 200px;
+      background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent black */
+      backdrop-filter: blur(10px); /* Apply 10px blur to background */
+      -webkit-backdrop-filter: blur(10px); /* For Safari */
+      border-radius: 15px;
+      margin: 50px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: gold;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="blur-box">
+    Semi-transparent blur effect
+  </div>
+</body>
+</html>

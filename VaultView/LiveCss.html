@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VaultView Live CSS Editor</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+</head>
+<body>
+        <div id="top">
+  <h1>VaultView CSS Editor</h1>
+   <div id="debugBox"></div> </div>
+  <div id="cardsContainer"></div>
+  <button id="publishAllButton">✔️</button>
+  
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+
+  apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
+
+  authDomain: "morrow-industries.firebaseapp.com",
+
+  databaseURL: "https://morrow-industries-default-rtdb.firebaseio.com",
+
+  projectId: "morrow-industries",
+
+  storageBucket: "morrow-industries.appspot.com",
+
+  messagingSenderId: "75190213345",
+
+  appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
+
+};
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const cssDocRef = doc(db, "styles", "liveCSS");
+
+    const debugBox = document.getElementById("debugBox");
+    const container = document.getElementById("cardsContainer");
+
+    function applyCSS(cssString) {
+      const styleTag = document.getElementById("dynamic-style") || document.createElement("style");
+      styleTag.id = "dynamic-style";
+      styleTag.innerHTML = cssString;
+      document.head.appendChild(styleTag);
+    }
+
+    function splitCSSIntoCards(cssString) {
+      return cssString.split(/\}\s*/).filter(Boolean).map(block => block + "}");
+    }
+
+    function renderCSSCards(cssString) {
+      container.innerHTML = "";
+      const blocks = splitCSSIntoCards(cssString);
+      blocks.forEach((block, index) => {
+        const card = document.createElement("div");
+        card.classList.add("card");
+
+        const textarea = document.createElement("textarea");
+        textarea.value = block;
+
+        card.appendChild(textarea);
+        container.appendChild(card);
+      });
+    }
+
+    function collectCSSFromCards() {
+      const textareas = container.querySelectorAll("textarea");
+      return Array.from(textareas).map(t => t.value.trim()).join("\n\n");
+    }
+
+    document.getElementById("publishAllButton").addEventListener("click", async () => {
+      const updatedCSS = collectCSSFromCards();
+      await setDoc(cssDocRef, { css: updatedCSS });
+      debugBox.innerText = "CSS updated in Firestore.";
+    });
+
+    // Realtime updates
+    onSnapshot(cssDocRef, (docSnap) => {
+      const cssString = docSnap.data()?.css || "";
+      applyCSS(cssString);
+      renderCSSCards(cssString);
+      debugBox.innerText = "CSS loaded from Firestore.";
+    });
+  </script>
+</body>
+</html>
