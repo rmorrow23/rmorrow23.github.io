@@ -1,0 +1,21 @@
+{
+    "name": "LiveCSS",
+    "short_name": "VVLiveCss",
+    "description": "Track your finances with VaultView",
+    "icons": [
+        {
+            "src": "Vault_View.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "Vault_View.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "/LiveCss.html",
+    "background_color": "#000000",
+    "theme_color": "#000",
+    "display": "standalone"
+}
