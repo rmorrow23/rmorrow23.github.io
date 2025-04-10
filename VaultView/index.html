@@ -8,9 +8,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
 </head>
 <body>
+  <div id="top">
   <h1>VaultView CSS Editor</h1>
-
-  <div>
+  <pre id="debugBox"></pre></div>
+  <div id="newSelectorForm">
     <input id="newSelector" placeholder="Selector (e.g. .card or body)" />
     <input id="newProperty" placeholder="Property (e.g. color)" />
     <input id="newValue" placeholder="Value (e.g. gold)" />
@@ -19,7 +20,7 @@
 
   <div id="cardsContainer"></div>
   <button id="publishAllButton">✔️</button>
-  <pre id="debugBox"></pre>
+  
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
