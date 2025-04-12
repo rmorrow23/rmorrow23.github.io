@@ -46,8 +46,16 @@
     const stylesHub = document.getElementById("stylesHub");
     const debugBox = document.getElementById("debugBox");
 
-    function applyCSS(cssString) {
-      document.getElementById("dynamic-style").textContent = cssString;
+    const allCSSMap = {};
+
+    function applyCSS(combinedCSS) {
+      let styleTag = document.getElementById("dynamic-style");
+      if (!styleTag) {
+        styleTag = document.createElement("style");
+        styleTag.id = "dynamic-style";
+        document.head.appendChild(styleTag);
+      }
+      styleTag.textContent = combinedCSS;
     }
 
     function splitCSSIntoRules(cssString) {
@@ -204,12 +212,20 @@
       const snapshot = await getDocs(stylesCollection);
       snapshot.forEach(docSnap => {
         const cssString = docSnap.data()?.css || "";
-        renderDocumentSection(docSnap.id, cssString);
-        applyCSS(cssString); // Optional: applies all styles globally
-        onSnapshot(doc(db, "styles", docSnap.id), (updateSnap) => {
+        const docId = docSnap.id;
+
+        allCSSMap[docId] = cssString;
+        applyCSS(Object.values(allCSSMap).join("\n\n"));
+
+        renderDocumentSection(docId, cssString);
+
+        onSnapshot(doc(db, "styles", docId), (updateSnap) => {
           const updatedCSS = updateSnap.data()?.css || "";
-          const target = stylesHub.querySelector(`[data-doc-id="${docSnap.id}"] .cardsContainer`);
-          if (target) renderCSSRulesToCards(target, updatedCSS, docSnap.id);
+          allCSSMap[docId] = updatedCSS;
+          applyCSS(Object.values(allCSSMap).join("\n\n"));
+
+          const target = stylesHub.querySelector(`[data-doc-id="${docId}"] .cardsContainer`);
+          if (target) renderCSSRulesToCards(target, updatedCSS, docId);
         });
       });
     };
