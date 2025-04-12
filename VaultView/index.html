@@ -45,7 +45,6 @@
 
     const stylesHub = document.getElementById("stylesHub");
     const debugBox = document.getElementById("debugBox");
-
     const allCSSMap = {};
 
     function applyCSS(combinedCSS) {
@@ -59,7 +58,22 @@
     }
 
     function splitCSSIntoRules(cssString) {
-      return cssString.split(/\}\s*/).filter(Boolean).map(rule => rule + "}");
+      const rules = [];
+      let depth = 0;
+      let buffer = "";
+      for (let i = 0; i < cssString.length; i++) {
+        const char = cssString[i];
+        buffer += char;
+        if (char === "{") depth++;
+        else if (char === "}") {
+          depth--;
+          if (depth === 0) {
+            rules.push(buffer.trim());
+            buffer = "";
+          }
+        }
+      }
+      return rules;
     }
 
     function renderCSSRulesToCards(container, cssString, docId) {
@@ -67,54 +81,73 @@
       const blocks = splitCSSIntoRules(cssString);
 
       blocks.forEach(block => {
-        const match = block.match(/^([^{]+)\s*\{([^}]+)\}/);
-        if (!match) return;
+        if (block.startsWith("@keyframes") || block.startsWith("@-")) {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.dataset.selector = "@keyframes";
+          card.dataset.docId = docId;
 
-        const selector = match[1].trim();
-        const properties = match[2].match(/[^:;{}]+:\s*[^;{}]+(?:\([^)]*\)|"[^"]*"|'[^']*'|[^;])*;?/g) || [];
+          const title = document.createElement("h2");
+          title.textContent = block.match(/^@[\w-]+\s+[^\s{]+/)?.[0] || "@keyframes";
+          card.appendChild(title);
 
-        const card = document.createElement("div");
-        card.className = "card";
-        card.dataset.selector = selector;
-        card.dataset.docId = docId;
+          const textarea = document.createElement("textarea");
+          textarea.value = block;
+          textarea.style.width = "100%";
+          textarea.style.minHeight = "200px";
+          textarea.dataset.fullblock = "true";
 
-        const title = document.createElement("h2");
-        title.textContent = selector;
-        card.appendChild(title);
+          card.appendChild(textarea);
+          container.appendChild(card);
+        } else {
+          const match = block.match(/^([^{]+)\s*\{([^}]*)\}$/s);
+          if (!match) return;
 
+          const selector = match[1].trim();
+          const rawProps = match[2];
+          const properties = rawProps.match(/[^:;{}]+:\s*[^;{}]+(?:\([^)]*\)|"[^"]*"|'[^']*'|[^;])*;?/g) || [];
 
-properties.forEach(prop => {
-  const splitIndex = prop.indexOf(":");
-  const key = prop.slice(0, splitIndex).trim();
-  const value = prop.slice(splitIndex + 1).trim().replace(/;$/, "");
-  if (!key || !value) return;
+          const card = document.createElement("div");
+          card.className = "card";
+          card.dataset.selector = selector;
+          card.dataset.docId = docId;
 
-  const propWrap = document.createElement("div");
-  propWrap.style.marginBottom = "8px";
+          const title = document.createElement("h2");
+          title.textContent = selector;
+          card.appendChild(title);
 
-  const label = document.createElement("label");
-  label.textContent = key;
-  label.style.display = "block";
+          properties.forEach(prop => {
+            const splitIndex = prop.indexOf(":");
+            const key = prop.slice(0, splitIndex).trim();
+            const value = prop.slice(splitIndex + 1).trim().replace(/;$/, "");
 
-  const input = document.createElement("input");
-  input.type = "text";
-  input.name = key;
-  input.value = value;
-  input.dataset.selector = selector;
+            const propWrap = document.createElement("div");
+            propWrap.style.marginBottom = "8px";
 
-  propWrap.appendChild(label);
-  propWrap.appendChild(input);
-  card.appendChild(propWrap);
-});
+            const label = document.createElement("label");
+            label.textContent = key;
+            label.style.display = "block";
 
+            const input = document.createElement("input");
+            input.type = "text";
+            input.name = key;
+            input.value = value;
+            input.dataset.selector = selector;
 
-        container.appendChild(card);
+            propWrap.appendChild(label);
+            propWrap.appendChild(input);
+            card.appendChild(propWrap);
+          });
+
+          container.appendChild(card);
+        }
       });
     }
 
     function collectCSSFromContainer(container) {
       const selectors = {};
       const inputs = container.querySelectorAll("input");
+      const keyframesBlocks = container.querySelectorAll("textarea[data-fullblock='true']");
 
       inputs.forEach(input => {
         const selector = input.dataset.selector;
@@ -125,9 +158,15 @@ properties.forEach(prop => {
         selectors[selector].push(`${prop}: ${value}`);
       });
 
-      return Object.entries(selectors)
+      const regularCSS = Object.entries(selectors)
         .map(([selector, rules]) => `${selector} {\n  ${rules.join(";\n  ")};\n}`)
         .join("\n\n");
+
+      const keyframesCSS = Array.from(keyframesBlocks)
+        .map(textarea => textarea.value.trim())
+        .join("\n\n");
+
+      return `${regularCSS}\n\n${keyframesCSS}`;
     }
 
     document.getElementById("publishAllButton").addEventListener("click", async () => {
