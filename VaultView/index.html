@@ -3,42 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VaultView Live CSS Editor</title>
+  <title>VaultView CSS Hub</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
 </head>
-<body>
-  <div id="top">
-    <h1>VaultView CSS Editor</h1>
-    <div id="debugBox"></div>
-  </div>
-
-  <div id="cardsContainer"></div>
-
-  <hr />
-  <h2>Add New Style</h2>
-  <form id="newStyleForm">
-    <label>
-      Selector:
-      <input type="text" id="newSelector" required placeholder=".new-class or #id" />
-    </label><br /><br />
-    <label>
-      Property:
-      <input type="text" id="newProperty" required placeholder="e.g., color" />
-    </label><br /><br />
-    <label>
-      Value:
-      <input type="text" id="newValue" required placeholder="e.g., red or url(...)" />
-    </label><br /><br />
-    <button type="submit">Add Style</button>
-  </form>
-
-  <br />
-  <button id="publishAllButton">✔️ </button>
+<body style="background: #111; color: gold; font-family: sans-serif; padding: 20px;">
+  <h1>VaultView: CSS Manager Hub</h1>
+  <div id="debugBox" style="background:#222; border:1px solid gold; padding:10px; margin-bottom:20px; font-family:monospace;"></div>
+  <div id="allStylesContainer"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      onSnapshot,
+      setDoc,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
@@ -52,50 +35,44 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const cssDocRef = doc(db, "styles", "liveCSS");
-
+    const stylesCollectionRef = collection(db, "styles");
+    const allStylesContainer = document.getElementById("allStylesContainer");
     const debugBox = document.getElementById("debugBox");
-    const container = document.getElementById("cardsContainer");
 
-    function applyCSS(cssString) {
-      let styleTag = document.getElementById("dynamic-style");
-      if (!styleTag) {
-        styleTag = document.createElement("style");
-        styleTag.id = "dynamic-style";
-        document.head.appendChild(styleTag);
-      }
+    function applyCSS(cssString, id) {
+      const styleTag = document.getElementById(`style-${id}`) || document.createElement("style");
+      styleTag.id = `style-${id}`;
       styleTag.innerHTML = cssString;
+      document.head.appendChild(styleTag);
     }
 
     function splitCSSIntoCards(cssString) {
-      const regex = /([^{]+)\{([^}]+)\}/g;
-      const cards = [];
-      let match;
-      while ((match = regex.exec(cssString)) !== null) {
-        cards.push({
-          selector: match[1].trim(),
-          properties: match[2].trim()
-        });
-      }
-      return cards;
+      return cssString.split(/\}\s*/).filter(Boolean).map(block => block + "}");
     }
 
-    function renderCSSCards(cssString) {
+    function renderCSSCards(container, cssString, docId) {
       container.innerHTML = "";
       const blocks = splitCSSIntoCards(cssString);
 
-      blocks.forEach(({ selector, properties }) => {
+      blocks.forEach(block => {
+        const match = block.match(/^([^{]+)\s*\{([^}]+)\}/);
+        if (!match) return;
+
+        const selector = match[1].trim();
+        const properties = match[2].trim().split(/;\s*/).filter(Boolean);
+
         const card = document.createElement("div");
         card.classList.add("card");
+        card.style = "background:#222; padding:16px; margin:10px 0; border-radius:8px;";
         card.dataset.selector = selector;
 
         const title = document.createElement("h2");
         title.textContent = selector;
+        title.style = "margin-bottom:10px;";
         card.appendChild(title);
 
-        const propsArray = properties.split(/;(?![^()]*\))/).filter(Boolean);
-        propsArray.forEach(prop => {
-          const [key, value] = prop.split(/:(.+)/).map(s => s.trim());
+        properties.forEach(prop => {
+          const [key, value] = prop.split(":").map(s => s.trim());
           if (!key || !value) return;
 
           const propContainer = document.createElement("div");
@@ -110,6 +87,7 @@
           input.name = key;
           input.value = value;
           input.dataset.selector = selector;
+          input.style = "width:100%; padding:6px; background:#333; color:gold; border:1px solid gold;";
 
           propContainer.appendChild(label);
           propContainer.appendChild(input);
@@ -120,7 +98,7 @@
       });
     }
 
-    function collectCSSFromCards() {
+    function collectCSSFromCards(container) {
       const selectors = {};
       const inputs = container.querySelectorAll("input");
 
@@ -138,63 +116,67 @@
         .join("\n\n");
     }
 
-    document.getElementById("publishAllButton").addEventListener("click", async () => {
-      const updatedCSS = collectCSSFromCards();
-      await setDoc(cssDocRef, { css: updatedCSS });
-      debugBox.innerText = "CSS updated in Firestore.";
-    });
+    function createStyleEditor(docId, initialCSS) {
+      const section = document.createElement("section");
+      section.style = "border:2px solid gold; padding:16px; margin-bottom:30px; border-radius:12px;";
 
-    document.getElementById("newStyleForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const selector = document.getElementById("newSelector").value.trim();
-      const property = document.getElementById("newProperty").value.trim();
-      const value = document.getElementById("newValue").value.trim();
+      const header = document.createElement("div");
+      header.style = "display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:10px;";
 
-      if (!selector || !property || !value) return;
+      const title = document.createElement("h2");
+      title.textContent = `Stylesheet: ${docId}`;
+      title.style.margin = 0;
 
-      const existingCard = [...container.children].find(div => div.dataset.selector === selector);
+      const toggleButton = document.createElement("button");
+      toggleButton.textContent = "▼";
+      toggleButton.style = "font-size: 1.2rem; background:none; border:none; color:gold; cursor:pointer;";
 
-      const propContainer = document.createElement("div");
-      propContainer.style.marginBottom = "8px";
+      header.appendChild(title);
+      header.appendChild(toggleButton);
+      section.appendChild(header);
 
-      const label = document.createElement("label");
-      label.textContent = property;
-      label.style.display = "block";
+      const cardsContainer = document.createElement("div");
+      cardsContainer.id = `cards-${docId}`;
+      section.appendChild(cardsContainer);
 
-      const input = document.createElement("input");
-      input.type = "text";
-      input.name = property;
-      input.value = value;
-      input.dataset.selector = selector;
+      const publishButton = document.createElement("button");
+      publishButton.textContent = "✔️ Publish Changes";
+      publishButton.style = "margin-top: 10px; padding: 10px; font-size: 1rem;";
+      publishButton.addEventListener("click", async () => {
+        const css = collectCSSFromCards(cardsContainer);
+        await setDoc(doc(db, "styles", docId), { css });
+        debugBox.innerText = `CSS for ${docId} updated in Firestore.`;
+      });
+      section.appendChild(publishButton);
 
-      propContainer.appendChild(label);
-      propContainer.appendChild(input);
+      toggleButton.addEventListener("click", () => {
+        const expanded = cardsContainer.style.display !== "none";
+        cardsContainer.style.display = expanded ? "none" : "block";
+        publishButton.style.display = expanded ? "none" : "inline-block";
+        toggleButton.textContent = expanded ? "▶" : "▼";
+      });
 
-      if (existingCard) {
-        existingCard.appendChild(propContainer);
-        debugBox.innerText = `Added property to ${selector}`;
-      } else {
-        const newCard = document.createElement("div");
-        newCard.classList.add("card");
-        newCard.dataset.selector = selector;
+      allStylesContainer.appendChild(section);
 
-        const title = document.createElement("h2");
-        title.textContent = selector;
-        newCard.appendChild(title);
-        newCard.appendChild(propContainer);
+      applyCSS(initialCSS, docId);
+      renderCSSCards(cardsContainer, initialCSS, docId);
+    }
 
-        container.appendChild(newCard);
-        debugBox.innerText = `Created new selector ${selector}`;
-      }
+    // Load all CSS documents and listen to each
+    const querySnapshot = await getDocs(stylesCollectionRef);
+    querySnapshot.forEach(docSnap => {
+      const docId = docSnap.id;
+      const data = docSnap.data();
+      const css = data?.css || "";
+      createStyleEditor(docId, css);
 
-      document.getElementById("newStyleForm").reset();
-    });
-
-    onSnapshot(cssDocRef, (docSnap) => {
-      const cssString = docSnap.data()?.css || "";
-      applyCSS(cssString);
-      renderCSSCards(cssString);
-      debugBox.innerText = "CSS loaded from Firestore.";
+      // Real-time updates
+      onSnapshot(doc(db, "styles", docId), (updatedDoc) => {
+        const cssString = updatedDoc.data()?.css || "";
+        applyCSS(cssString, docId);
+        renderCSSCards(document.getElementById(`cards-${docId}`), cssString, docId);
+        debugBox.innerText = `Realtime update received for ${docId}.`;
+      });
     });
   </script>
 </body>
