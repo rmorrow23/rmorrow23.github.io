@@ -71,7 +71,7 @@
         if (!match) return;
 
         const selector = match[1].trim();
-        const properties = match[2].trim().split(/;\s*/).filter(Boolean);
+        const properties = match[2].match(/[^:;{}]+:\s*[^;{}]+(?:\([^)]*\)|"[^"]*"|'[^']*'|[^;])*;?/g) || [];
 
         const card = document.createElement("div");
         card.className = "card";
@@ -82,27 +82,31 @@
         title.textContent = selector;
         card.appendChild(title);
 
-        properties.forEach(prop => {
-          const [key, value] = prop.split(":").map(s => s.trim());
-          if (!key || !value) return;
 
-          const propWrap = document.createElement("div");
-          propWrap.style.marginBottom = "8px";
+properties.forEach(prop => {
+  const splitIndex = prop.indexOf(":");
+  const key = prop.slice(0, splitIndex).trim();
+  const value = prop.slice(splitIndex + 1).trim().replace(/;$/, "");
+  if (!key || !value) return;
 
-          const label = document.createElement("label");
-          label.textContent = key;
-          label.style.display = "block";
+  const propWrap = document.createElement("div");
+  propWrap.style.marginBottom = "8px";
 
-          const input = document.createElement("input");
-          input.type = "text";
-          input.name = key;
-          input.value = value;
-          input.dataset.selector = selector;
+  const label = document.createElement("label");
+  label.textContent = key;
+  label.style.display = "block";
 
-          propWrap.appendChild(label);
-          propWrap.appendChild(input);
-          card.appendChild(propWrap);
-        });
+  const input = document.createElement("input");
+  input.type = "text";
+  input.name = key;
+  input.value = value;
+  input.dataset.selector = selector;
+
+  propWrap.appendChild(label);
+  propWrap.appendChild(input);
+  card.appendChild(propWrap);
+});
+
 
         container.appendChild(card);
       });
