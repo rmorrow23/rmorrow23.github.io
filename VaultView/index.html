@@ -3,25 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VaultView CSS Hub</title>
+  <title>VaultView CSS Editor Hub</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+  <style id="dynamic-style"></style>
 </head>
-<body style="background: #111; color: gold; font-family: sans-serif; padding: 20px;">
-  <h1>VaultView: CSS Manager Hub</h1>
-  <div id="debugBox" style="background:#222; border:1px solid gold; padding:10px; margin-bottom:20px; font-family:monospace;"></div>
-  <div id="allStylesContainer"></div>
+<body>
+  <div id="top">
+    <h1>VaultView CSS Editor</h1>
+    <div id="debugBox"></div>
+  </div>
+
+  <div id="stylesHub"></div>
+
+  <form id="newStyleForm">
+    <label>Selector:<br /><input type="text" id="newSelector" required /></label><br /><br />
+    <label>Property:<br /><input type="text" id="newProperty" required /></label><br /><br />
+    <label>Value:<br /><input type="text" id="newValue" required /></label><br /><br />
+    <button type="submit">Add Style</button>
+  </form>
+
+  <button id="publishAllButton">✔️</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      doc,
-      onSnapshot,
-      setDoc,
-      getDocs
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, getDocs, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
@@ -35,24 +41,22 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const stylesCollectionRef = collection(db, "styles");
-    const allStylesContainer = document.getElementById("allStylesContainer");
+    const stylesCollection = collection(db, "styles");
+
+    const stylesHub = document.getElementById("stylesHub");
     const debugBox = document.getElementById("debugBox");
 
-    function applyCSS(cssString, id) {
-      const styleTag = document.getElementById(`style-${id}`) || document.createElement("style");
-      styleTag.id = `style-${id}`;
-      styleTag.innerHTML = cssString;
-      document.head.appendChild(styleTag);
+    function applyCSS(cssString) {
+      document.getElementById("dynamic-style").textContent = cssString;
     }
 
-    function splitCSSIntoCards(cssString) {
-      return cssString.split(/\}\s*/).filter(Boolean).map(block => block + "}");
+    function splitCSSIntoRules(cssString) {
+      return cssString.split(/\}\s*/).filter(Boolean).map(rule => rule + "}");
     }
 
-    function renderCSSCards(container, cssString, docId) {
+    function renderCSSRulesToCards(container, cssString, docId) {
       container.innerHTML = "";
-      const blocks = splitCSSIntoCards(cssString);
+      const blocks = splitCSSIntoRules(cssString);
 
       blocks.forEach(block => {
         const match = block.match(/^([^{]+)\s*\{([^}]+)\}/);
@@ -62,21 +66,20 @@
         const properties = match[2].trim().split(/;\s*/).filter(Boolean);
 
         const card = document.createElement("div");
-        card.classList.add("card");
-        card.style = "background:#222; padding:16px; margin:10px 0; border-radius:8px;";
+        card.className = "card";
         card.dataset.selector = selector;
+        card.dataset.docId = docId;
 
         const title = document.createElement("h2");
         title.textContent = selector;
-        title.style = "margin-bottom:10px;";
         card.appendChild(title);
 
         properties.forEach(prop => {
           const [key, value] = prop.split(":").map(s => s.trim());
           if (!key || !value) return;
 
-          const propContainer = document.createElement("div");
-          propContainer.style.marginBottom = "8px";
+          const propWrap = document.createElement("div");
+          propWrap.style.marginBottom = "8px";
 
           const label = document.createElement("label");
           label.textContent = key;
@@ -87,18 +90,17 @@
           input.name = key;
           input.value = value;
           input.dataset.selector = selector;
-          input.style = "width:100%; padding:6px; background:#333; color:gold; border:1px solid gold;";
 
-          propContainer.appendChild(label);
-          propContainer.appendChild(input);
-          card.appendChild(propContainer);
+          propWrap.appendChild(label);
+          propWrap.appendChild(input);
+          card.appendChild(propWrap);
         });
 
         container.appendChild(card);
       });
     }
 
-    function collectCSSFromCards(container) {
+    function collectCSSFromContainer(container) {
       const selectors = {};
       const inputs = container.querySelectorAll("input");
 
@@ -116,68 +118,230 @@
         .join("\n\n");
     }
 
-    function createStyleEditor(docId, initialCSS) {
-      const section = document.createElement("section");
-      section.style = "border:2px solid gold; padding:16px; margin-bottom:30px; border-radius:12px;";
+    document.getElementById("publishAllButton").addEventListener("click", async () => {
+      const containers = stylesHub.querySelectorAll(".collapsible-container");
+      for (const wrapper of containers) {
+        const docId = wrapper.dataset.docId;
+        const innerContainer = wrapper.querySelector(".cardsContainer");
+        const updatedCSS = collectCSSFromContainer(innerContainer);
+        await setDoc(doc(db, "styles", docId), { css: updatedCSS });
+      }
+      debugBox.innerText = "All CSS updates published.";
+    });
+
+    document.getElementById("newStyleForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const selector = document.getElementById("newSelector").value.trim();
+      const property = document.getElementById("newProperty").value.trim();
+      const value = document.getElementById("newValue").value.trim();
+
+      const containers = stylesHub.querySelectorAll(".cardsContainer");
+
+      for (const container of containers) {
+        const card = [...container.children].find(div => div.dataset.selector === selector);
+
+        const propBlock = document.createElement("div");
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+
+        label.textContent = property;
+        label.style.display = "block";
+        input.type = "text";
+        input.name = property;
+        input.value = value;
+        input.dataset.selector = selector;
+
+        propBlock.appendChild(label);
+        propBlock.appendChild(input);
+
+        if (card) {
+          card.appendChild(propBlock);
+        } else {
+          const newCard = document.createElement("div");
+          newCard.className = "card";
+          newCard.dataset.selector = selector;
+
+          const title = document.createElement("h2");
+          title.textContent = selector;
+          newCard.appendChild(title);
+          newCard.appendChild(propBlock);
+          container.appendChild(newCard);
+        }
+      }
+
+      e.target.reset();
+    });
+
+    const renderDocumentSection = (docId, cssString) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "collapsible-container";
+      wrapper.dataset.docId = docId;
 
       const header = document.createElement("div");
-      header.style = "display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:10px;";
+      header.className = "collapsible-header";
+      header.textContent = docId;
 
-      const title = document.createElement("h2");
-      title.textContent = `Stylesheet: ${docId}`;
-      title.style.margin = 0;
+      const arrow = document.createElement("span");
+      arrow.textContent = "▼";
+      arrow.style.float = "right";
+      header.appendChild(arrow);
 
-      const toggleButton = document.createElement("button");
-      toggleButton.textContent = "▼";
-      toggleButton.style = "font-size: 1.2rem; background:none; border:none; color:gold; cursor:pointer;";
+      const content = document.createElement("div");
+      content.className = "collapsible-content cardsContainer";
 
-      header.appendChild(title);
-      header.appendChild(toggleButton);
-      section.appendChild(header);
-
-      const cardsContainer = document.createElement("div");
-      cardsContainer.id = `cards-${docId}`;
-      section.appendChild(cardsContainer);
-
-      const publishButton = document.createElement("button");
-      publishButton.textContent = "✔️ Publish Changes";
-      publishButton.style = "margin-top: 10px; padding: 10px; font-size: 1rem;";
-      publishButton.addEventListener("click", async () => {
-        const css = collectCSSFromCards(cardsContainer);
-        await setDoc(doc(db, "styles", docId), { css });
-        debugBox.innerText = `CSS for ${docId} updated in Firestore.`;
-      });
-      section.appendChild(publishButton);
-
-      toggleButton.addEventListener("click", () => {
-        const expanded = cardsContainer.style.display !== "none";
-        cardsContainer.style.display = expanded ? "none" : "block";
-        publishButton.style.display = expanded ? "none" : "inline-block";
-        toggleButton.textContent = expanded ? "▶" : "▼";
+      header.addEventListener("click", () => {
+        wrapper.classList.toggle("collapsed");
+        arrow.textContent = wrapper.classList.contains("collapsed") ? "▶" : "▼";
       });
 
-      allStylesContainer.appendChild(section);
+      renderCSSRulesToCards(content, cssString, docId);
+      wrapper.appendChild(header);
+      wrapper.appendChild(content);
+      stylesHub.appendChild(wrapper);
+    };
 
-      applyCSS(initialCSS, docId);
-      renderCSSCards(cardsContainer, initialCSS, docId);
-    }
-
-    // Load all CSS documents and listen to each
-    const querySnapshot = await getDocs(stylesCollectionRef);
-    querySnapshot.forEach(docSnap => {
-      const docId = docSnap.id;
-      const data = docSnap.data();
-      const css = data?.css || "";
-      createStyleEditor(docId, css);
-
-      // Real-time updates
-      onSnapshot(doc(db, "styles", docId), (updatedDoc) => {
-        const cssString = updatedDoc.data()?.css || "";
-        applyCSS(cssString, docId);
-        renderCSSCards(document.getElementById(`cards-${docId}`), cssString, docId);
-        debugBox.innerText = `Realtime update received for ${docId}.`;
+    const loadAllCSS = async () => {
+      const snapshot = await getDocs(stylesCollection);
+      snapshot.forEach(docSnap => {
+        const cssString = docSnap.data()?.css || "";
+        renderDocumentSection(docSnap.id, cssString);
+        applyCSS(cssString); // Optional: applies all styles globally
+        onSnapshot(doc(db, "styles", docSnap.id), (updateSnap) => {
+          const updatedCSS = updateSnap.data()?.css || "";
+          const target = stylesHub.querySelector(`[data-doc-id="${docSnap.id}"] .cardsContainer`);
+          if (target) renderCSSRulesToCards(target, updatedCSS, docSnap.id);
+        });
       });
-    });
+    };
+
+    loadAllCSS();
   </script>
+
+  <style>
+    body {
+      background: url('Lux.jpg');
+      color: gold;
+      font-family: sans-serif;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-size: 100%;
+      padding: 0;
+    }
+    h1 {
+      text-align: center;
+      background: rgba(0,0,0,0);
+      font-size: 35px;
+      margin-bottom: -0.5rem;
+    }
+    .card {
+      background: rgba(70,70,70,0.5);
+      padding: 16px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0px 4px 7px rgba(0,0,0,0.7);
+      backdrop-filter: blur(10px);
+    }
+    input {
+      background: rgba(0,0,0,0);
+      width: 100%;
+      border: none;
+      font-size: 25px;
+      color: white;
+    }
+    label {
+      font-size: 25px;
+      color: gold;
+      width: 75%;
+    }
+    #newStyleForm {
+      background: rgba(70,70,70,0.5);
+      padding: 2rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 7px rgba(0,0,0,0.7);
+      backdrop-filter: blur(10px);
+      width: 82%;
+      margin: 2rem auto;
+    }
+    #debugBox {
+      background-color: rgba(0,0,0,0);
+      border: none;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 1rem;
+      width: 100%;
+      text-align: center;
+    }
+    #top {
+      background-color: rgba(150, 150, 150, 0.3);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      flex-direction: column;
+      width: 99%;
+      border-radius: 0px 0px 1rem 1rem;
+      padding-bottom: 15px;
+      z-index: 1000;
+    }
+    #publishAllButton {
+      position: fixed;
+      bottom: 15px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background-color: rgba(170,170,170,0.1);
+      color: white;
+      border: none;
+      font-size: 2.5rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: background-color 0.3s ease;
+      backdrop-filter: blur(4px);
+    }
+    #publishAllButton:hover {
+      background-color: rgba(70,70,70,0.5);
+    }
+    .collapsible-container {
+      margin: 2rem auto;
+      width: 90%;
+      border-radius: 10px;
+      background: rgba(40, 40, 40, 0.5);
+      box-shadow: 0 4px 7px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+    .collapsible-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: gold;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+    }
+    .collapsible-content {
+      padding: 1rem;
+      display: block;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .collapsed .collapsible-content {
+      display: none;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scaleY(0.95); }
+      to { opacity: 1; transform: scaleY(1); }
+    }
+  </style>
 </body>
 </html>
