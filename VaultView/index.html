@@ -57,69 +57,42 @@
       styleTag.textContent = combinedCSS;
     }
 
-    function splitCSSIntoRules(cssString) {
-      const rules = [];
-      let depth = 0;
-      let buffer = "";
-      for (let i = 0; i < cssString.length; i++) {
-        const char = cssString[i];
-        buffer += char;
-        if (char === "{") depth++;
-        else if (char === "}") {
-          depth--;
-          if (depth === 0) {
-            rules.push(buffer.trim());
-            buffer = "";
-          }
-        }
-      }
-      return rules;
-    }
-
     function renderCSSRulesToCards(container, cssString, docId) {
       container.innerHTML = "";
-      const blocks = splitCSSIntoRules(cssString);
+
+      const blocks = cssString.match(/@keyframes[^{}]+\{[^}]+\}(?:\s*[^}]+\})*|[^@][^{]+\{[^}]+\}/g) || [];
 
       blocks.forEach(block => {
-        if (block.startsWith("@keyframes") || block.startsWith("@-")) {
-          const card = document.createElement("div");
-          card.className = "card";
-          card.dataset.selector = "@keyframes";
-          card.dataset.docId = docId;
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.docId = docId;
 
+        if (block.trim().startsWith("@keyframes")) {
           const title = document.createElement("h2");
-          title.textContent = block.match(/^@[\w-]+\s+[^\s{]+/)?.[0] || "@keyframes";
+          const nameMatch = block.match(/@keyframes\s+([a-zA-Z0-9-_]+)/);
+          title.textContent = `@keyframes ${nameMatch ? nameMatch[1] : "Unnamed"}`;
           card.appendChild(title);
 
           const textarea = document.createElement("textarea");
-          textarea.value = block;
-          textarea.style.width = "100%";
-          textarea.style.minHeight = "200px";
-          textarea.dataset.fullblock = "true";
-
+          textarea.value = block.trim();
+          textarea.className = "keyframes-editor";
           card.appendChild(textarea);
-          container.appendChild(card);
         } else {
-          const match = block.match(/^([^{]+)\s*\{([^}]*)\}$/s);
+          const match = block.match(/^([^{]+)\s*\{([^}]*)\}/);
           if (!match) return;
 
           const selector = match[1].trim();
-          const rawProps = match[2];
-          const properties = rawProps.match(/[^:;{}]+:\s*[^;{}]+(?:\([^)]*\)|"[^"]*"|'[^']*'|[^;])*;?/g) || [];
+          const properties = match[2].trim().split(/;\s*/).filter(Boolean);
 
-          const card = document.createElement("div");
-          card.className = "card";
           card.dataset.selector = selector;
-          card.dataset.docId = docId;
 
           const title = document.createElement("h2");
           title.textContent = selector;
           card.appendChild(title);
 
           properties.forEach(prop => {
-            const splitIndex = prop.indexOf(":");
-            const key = prop.slice(0, splitIndex).trim();
-            const value = prop.slice(splitIndex + 1).trim().replace(/;$/, "");
+            const [key, value] = prop.split(":".trim());
+            if (!key || !value) return;
 
             const propWrap = document.createElement("div");
             propWrap.style.marginBottom = "8px";
@@ -138,35 +111,30 @@
             propWrap.appendChild(input);
             card.appendChild(propWrap);
           });
-
-          container.appendChild(card);
         }
+
+        container.appendChild(card);
       });
     }
 
     function collectCSSFromContainer(container) {
       const selectors = {};
+      const combined = [];
       const inputs = container.querySelectorAll("input");
-      const keyframesBlocks = container.querySelectorAll("textarea[data-fullblock='true']");
 
       inputs.forEach(input => {
         const selector = input.dataset.selector;
         const prop = input.name;
         const value = input.value;
-
         if (!selectors[selector]) selectors[selector] = [];
         selectors[selector].push(`${prop}: ${value}`);
       });
 
-      const regularCSS = Object.entries(selectors)
-        .map(([selector, rules]) => `${selector} {\n  ${rules.join(";\n  ")};\n}`)
-        .join("\n\n");
+      const keyframes = container.querySelectorAll(".keyframes-editor");
+      keyframes.forEach(t => combined.push(t.value.trim()));
 
-      const keyframesCSS = Array.from(keyframesBlocks)
-        .map(textarea => textarea.value.trim())
-        .join("\n\n");
-
-      return `${regularCSS}\n\n${keyframesCSS}`;
+      combined.push(...Object.entries(selectors).map(([sel, props]) => `${sel} {\n  ${props.join(";\n  ")};\n}`));
+      return combined.join("\n\n");
     }
 
     document.getElementById("publishAllButton").addEventListener("click", async () => {
@@ -178,49 +146,6 @@
         await setDoc(doc(db, "styles", docId), { css: updatedCSS });
       }
       debugBox.innerText = "All CSS updates published.";
-    });
-
-    document.getElementById("newStyleForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const selector = document.getElementById("newSelector").value.trim();
-      const property = document.getElementById("newProperty").value.trim();
-      const value = document.getElementById("newValue").value.trim();
-
-      const containers = stylesHub.querySelectorAll(".cardsContainer");
-
-      for (const container of containers) {
-        const card = [...container.children].find(div => div.dataset.selector === selector);
-
-        const propBlock = document.createElement("div");
-        const label = document.createElement("label");
-        const input = document.createElement("input");
-
-        label.textContent = property;
-        label.style.display = "block";
-        input.type = "text";
-        input.name = property;
-        input.value = value;
-        input.dataset.selector = selector;
-
-        propBlock.appendChild(label);
-        propBlock.appendChild(input);
-
-        if (card) {
-          card.appendChild(propBlock);
-        } else {
-          const newCard = document.createElement("div");
-          newCard.className = "card";
-          newCard.dataset.selector = selector;
-
-          const title = document.createElement("h2");
-          title.textContent = selector;
-          newCard.appendChild(title);
-          newCard.appendChild(propBlock);
-          container.appendChild(newCard);
-        }
-      }
-
-      e.target.reset();
     });
 
     const renderDocumentSection = (docId, cssString) => {
@@ -256,17 +181,13 @@
       snapshot.forEach(docSnap => {
         const cssString = docSnap.data()?.css || "";
         const docId = docSnap.id;
-
         allCSSMap[docId] = cssString;
         applyCSS(Object.values(allCSSMap).join("\n\n"));
-
         renderDocumentSection(docId, cssString);
-
         onSnapshot(doc(db, "styles", docId), (updateSnap) => {
           const updatedCSS = updateSnap.data()?.css || "";
           allCSSMap[docId] = updatedCSS;
           applyCSS(Object.values(allCSSMap).join("\n\n"));
-
           const target = stylesHub.querySelector(`[data-doc-id="${docId}"] .cardsContainer`);
           if (target) renderCSSRulesToCards(target, updatedCSS, docId);
         });
