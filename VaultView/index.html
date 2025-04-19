@@ -1,202 +1,567 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VaultView CSS Editor Hub</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
-  <style id="dynamic-style"></style>
-</head>
-<body>
-  <div id="top">
-    <h1>VaultView CSS Editor</h1>
-    <div id="debugBox"></div>
-  </div>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000" />
+    <title>VaultView - Financial Tracker</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Existing styles (graph, navbar, etc.) */
 
-  <div id="stylesHub"></div>
-
-  <form id="newStyleForm">
-    <label>Selector:<br /><input type="text" id="newSelector" required /></label><br /><br />
-    <label>Property:<br /><input type="text" id="newProperty" required /></label><br /><br />
-    <label>Value:<br /><input type="text" id="newValue" required /></label><br /><br />
-    <button type="submit">Add Style</button>
-  </form>
-
-  <button id="publishAllButton">✔️</button>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, doc, getDocs, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
-      authDomain: "morrow-industries.firebaseapp.com",
-      databaseURL: "https://morrow-industries-default-rtdb.firebaseio.com",
-      projectId: "morrow-industries",
-      storageBucket: "morrow-industries.appspot.com",
-      messagingSenderId: "75190213345",
-      appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const stylesCollection = collection(db, "styles");
-
-    const stylesHub = document.getElementById("stylesHub");
-    const debugBox = document.getElementById("debugBox");
-    const allCSSMap = {};
-
-    function applyCSS(combinedCSS) {
-      let styleTag = document.getElementById("dynamic-style");
-      if (!styleTag) {
-        styleTag = document.createElement("style");
-        styleTag.id = "dynamic-style";
-        document.head.appendChild(styleTag);
-      }
-      styleTag.textContent = combinedCSS;
-    }
-
-    function renderCSSRulesToCards(container, cssString, docId) {
-      container.innerHTML = "";
-
-      const blocks = cssString.match(/@keyframes\s+[^{]+\{(?:[^{}]*\{[^{}]*\})+\s*\}|[^@][^{]+\{[^}]*\}/g) || [];
-
-      blocks.forEach(block => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.dataset.docId = docId;
-
-        if (block.trim().startsWith("@keyframes")) {
-          const title = document.createElement("h2");
-          const nameMatch = block.match(/@keyframes\s+([a-zA-Z0-9-_]+)/);
-          title.textContent = `@keyframes ${nameMatch ? nameMatch[1] : "Unnamed"}`;
-          card.appendChild(title);
-
-          const textarea = document.createElement("textarea");
-          textarea.value = block.trim();
-          textarea.className = "keyframes-editor";
-          card.appendChild(textarea);
-        } else {
-          const match = block.match(/^([^{]+)\s*\{([^}]*)\}/);
-          if (!match) return;
-
-          const selector = match[1].trim();
-          const properties = match[2].match(/[^:;{}]+:\s*[^;{}]+(?:\([^)]*\)|"[^"]*"|'[^']*'|[^;])*;?/g) || [];
-
-          card.dataset.selector = selector;
-
-          const title = document.createElement("h2");
-          title.textContent = selector;
-          card.appendChild(title);
-
-          properties.forEach(prop => {
-            const splitIndex = prop.indexOf(":");
-            const key = prop.slice(0, splitIndex).trim();
-            const value = prop.slice(splitIndex + 1).trim().replace(/;$/, "");
-            if (!key || !value) return;
-
-            const propWrap = document.createElement("div");
-            propWrap.style.marginBottom = "8px";
-
-            const label = document.createElement("label");
-            label.textContent = key;
-            label.style.display = "block";
-
-            const input = document.createElement("input");
-            input.type = "text";
-            input.name = key;
-            input.value = value;
-            input.dataset.selector = selector;
-
-            propWrap.appendChild(label);
-            propWrap.appendChild(input);
-            card.appendChild(propWrap);
-          });
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        container.appendChild(card);
-      });
-    }
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
-    function collectCSSFromContainer(container) {
-      const selectors = {};
-      const combined = [];
-      const inputs = container.querySelectorAll("input");
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            /* Use viewport width */
+            height: 100vh;
+            /* Use viewport height */
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.3s ease;
+            padding: 0 0.05rem;
+            /* Small side padding */
+            box-sizing: border-box;
+        }
 
-      inputs.forEach(input => {
-        const selector = input.dataset.selector;
-        const prop = input.name;
-        const value = input.value;
-        if (!selectors[selector]) selectors[selector] = [];
-        selectors[selector].push(`${prop}: ${value}`);
-      });
+        /* Modal Content */
+        .modal-content {
+            background: linear-gradient(180deg, #111, #000);
+            border-radius: 10px;
+            padding: 1rem;
+            max-width: 600px;
+            width: 90%;
+            /* Fills 90% of the viewport width */
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.7);
+            position: relative;
+            box-sizing: border-box;
+        }
 
-      const keyframes = container.querySelectorAll(".keyframes-editor");
-      keyframes.forEach(t => combined.push(t.value));
+        /* Close Button */
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            font-size: 2rem;
+            color: #fff;
+            cursor: pointer;
+        }
 
-      combined.push(...Object.entries(selectors).map(([sel, props]) => `${sel} {\n  ${props.join(";\n  ")};\n}`));
-      return combined.join("\n\n");
-    }
+        /* Blur effect applied to the main content when modal is active */
+        .blurred {
+            filter: blur(5px);
+        }
 
-    document.getElementById("publishAllButton").addEventListener("click", async () => {
-      const containers = stylesHub.querySelectorAll(".collapsible-container");
-      for (const wrapper of containers) {
-        const docId = wrapper.dataset.docId;
-        const innerContainer = wrapper.querySelector(".cardsContainer");
-        const updatedCSS = collectCSSFromContainer(innerContainer);
-        await setDoc(doc(db, "styles", docId), { css: updatedCSS });
-      }
-      debugBox.innerText = "All CSS updates published.";
-    });
+        /* Form Styles for the Modal */
+        .modal-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
 
-    const renderDocumentSection = (docId, cssString) => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "collapsible-container";
-      wrapper.dataset.docId = docId;
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
 
-      const header = document.createElement("div");
-      header.className = "collapsible-header";
-      header.textContent = docId;
+        .form-group label {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: gold;
+        }
 
-      const arrow = document.createElement("span");
-      arrow.textContent = "▼";
-      arrow.style.float = "right";
-      header.appendChild(arrow);
+        .form-group input,
+        .form-group select {
+            padding: 0.75rem;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #111;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
 
-      const content = document.createElement("div");
-      content.className = "collapsible-content cardsContainer";
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: gold;
+            box-shadow: 0 0 5px gold;
+        }
 
-      header.addEventListener("click", () => {
-        wrapper.classList.toggle("collapsed");
-        arrow.textContent = wrapper.classList.contains("collapsed") ? "▶" : "▼";
-      });
+        .submit-button {
+            padding: 0.75rem;
+            border: none;
+            border-radius: 5px;
+            background-color: gold;
+            color: #000;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
 
-      renderCSSRulesToCards(content, cssString, docId);
-      wrapper.appendChild(header);
-      wrapper.appendChild(content);
-      stylesHub.appendChild(wrapper);
-    };
+        .submit-button:hover {
+            background-color: #e6c200;
+            transform: scale(1.02);
+        }
 
-    const loadAllCSS = async () => {
-      const snapshot = await getDocs(stylesCollection);
-      snapshot.forEach(docSnap => {
-        const cssString = docSnap.data()?.css || "";
-        const docId = docSnap.id;
-        allCSSMap[docId] = cssString;
-        applyCSS(Object.values(allCSSMap).join("\n\n"));
-        renderDocumentSection(docId, cssString);
-        onSnapshot(doc(db, "styles", docId), (updateSnap) => {
-          const updatedCSS = updateSnap.data()?.css || "";
-          allCSSMap[docId] = updatedCSS;
-          applyCSS(Object.values(allCSSMap).join("\n\n"));
-          const target = stylesHub.querySelector(`[data-doc-id="${docId}"] .cardsContainer`);
-          if (target) renderCSSRulesToCards(target, updatedCSS, docId);
+        .submit-button:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Modal Overlay -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <h2>Add Transaction</h2>
+            <form id="addTransactionForm">
+                <div class="form-group">
+                    <label for="transaction-date">Date</label>
+                    <input type="date" id="transaction-date" name="transaction-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="transaction-description">Description</label>
+                    <input type="text" id="transaction-description" name="transaction-description"
+                        placeholder="Enter description" required>
+                </div>
+                <div class="form-group">
+                    <label for="transaction-amount">Amount</label>
+                    <input type="number" id="transaction-amount" name="transaction-amount" step="0.01"
+                        placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="transaction-category">Category</label>
+                    <select id="transaction-category" name="transaction-category" required>
+                        <option value="">Select category</option>
+                        <!-- Options will be populated dynamically from budget.csv -->
+                    </select>
+                </div>
+                <button type="submit" class="submit-button">Add Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="logo">
+                <img id="logo" src="VAULTVIEW.png" />
+
+            </div>
+            <ul class="nav-links">
+                <li><a href="#">Dashboard</a></li>
+                <li><a href="css.html">CSS Editor</a></li>
+                <li><a href="redact.html">Redact</a></li>
+                <li><a href="schedule.html">Schedule</a></li>
+            </ul>
+            <div class="burger">
+                <div class="line1"></div>
+                <div class="line2"></div>
+                <div class="line3"></div>
+            </div>
+        </nav>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="#" class="sidebar-item" id="openAddTransaction"><i class="fas fa-plus fa-lg"></i> Add
+                Transaction</a>
+            <a href="#" class="sidebar-item"><i class="fas fa-chart-bar fa-lg"></i> View Reports</a>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Hero Section -->
+            <section class="hero">
+                <div class="card-total-balance">
+                    <h3>Total Balance</h3>
+                    <p>$12,500.00</p>
+                </div>
+                <div class="card-income">
+                    <h3>Monthly Income</h3>
+                    <p>$3,000.00</p>
+                </div>
+                <div class="card-expenses">
+                    <h3>Monthly Expenses</h3>
+                    <p>$1,200.00</p>
+                </div>
+            </section>
+
+            <!-- Install App Section -->
+            <section class="install-section" id="installSection">
+                <button id="installButton" style="display: block;">Install App</button>
+            </section>
+            <section class="overViewSection">
+                <!-- Graph Section -->
+                <section class="graph-section">
+                    <h2>Financial Trends</h2>
+                    <div class="graph-container">
+                        <canvas id="financialChart"></canvas>
+                    </div>
+                </section>
+                <!-- Budget Section -->
+                <section class="budget-section">
+                    <h2>Budget</h2>
+                    <div class="total-budget-card" id="totalBudgetCard">
+                        <div class="card-header">
+                            <h3>Amount Remaining</h3>
+                            <button class="toggle-details" id="toggleBudgetDetails">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        <p class="budget-amount">$1685</p>
+                        <div id="totalProgressBarContainer">
+                            <div id="totalProgressBar"></div>
+                        </div>
+                    </div>
+                    <!-- This container will be filled with dynamic category cards -->
+                    <div class="budget-details" id="budgetDetails"></div>
+                </section>
+
+            </section>
+            <!-- Transactions Section -->
+            <section class="transactions-section">
+                <h2>Recent Transactions</h2>
+                <div class="transaction-card-container" id="transactionsContainer">
+                    <!-- Transactions will be dynamically added here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2025 Morrow Industries. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <button class="nav-btn" id="prevPage">&lt;</button>
+        <button class="nav-btn" id="nextPage">&gt;</button>
+    </div>
+
+    <script>
+        // Burger menu toggle
+        const navSlide = () => {
+            const burger = document.querySelector(".burger");
+            const nav = document.querySelector(".nav-links");
+            const navLinks = document.querySelectorAll(".nav-links li");
+
+            burger.addEventListener("click", () => {
+                nav.classList.toggle("nav-active");
+                navLinks.forEach((link, index) => {
+                    link.style.animation = link.style.animation ? "" : `navLinkFade 0.2s ease forwards ${index / 7 + 0.5}s`;
+                });
+                burger.classList.toggle("toggle");
+            });
+        };
+        navSlide();
+
+        // Financial Chart Drawing (existing code)
+        document.addEventListener("DOMContentLoaded", function () {
+            const canvas = document.getElementById("financialChart");
+            const ctx = canvas.getContext("2d");
+
+            const dpr = window.devicePixelRatio || 1;
+            const container = canvas.parentElement;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + "px";
+            canvas.style.height = height + "px";
+            ctx.scale(dpr, dpr);
+
+            const dataPoints = [30, 20, 40, 0, 20, 5, 2, 7, 11, 28, 99, 35, 78, 63];
+            const stepX = width / (dataPoints.length - 1);
+            const maxDataValue = Math.max(...dataPoints);
+            const minDataValue = Math.min(...dataPoints);
+            const padding = 20;
+
+            const scaleY = (value) => {
+                return height - ((value - minDataValue) / (maxDataValue - minDataValue)) * (height - 2 * padding) - padding;
+            };
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "rgba(255, 215, 0, 0.9)";
+            ctx.lineWidth = 1;
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = "gold";
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+
+            ctx.beginPath();
+            ctx.moveTo(0, scaleY(dataPoints[0]));
+            for (let i = 1; i < dataPoints.length - 1; i++) {
+                const xMid = (i * stepX + (i + 1) * stepX) / 2;
+                const yMid = (scaleY(dataPoints[i]) + scaleY(dataPoints[i + 1]) / 2);
+                ctx.quadraticCurveTo(i * stepX, scaleY(dataPoints[i]), xMid, yMid);
+            }
+            ctx.lineTo((dataPoints.length - 1) * stepX, scaleY(dataPoints[dataPoints.length - 1]));
+            ctx.stroke();
+
+            ctx.fillStyle = "transparent";
+            for (let i = 0; i < dataPoints.length; i++) {
+                ctx.beginPath();
+                ctx.arc(i * stepX, scaleY(dataPoints[i]), 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Hardcoded transaction data for demonstration
+            const transactions = [
+                { date: "March 1st", description: "Grocery Shopping", amount: "-$75.00", category: "Food" },
+                { date: "March 2nd", description: "Salary Deposit", amount: "+$3,000.00", category: "Income" },
+                { date: "March 2nd", description: "Movie Tickets", amount: "-$25.00", category: "Entertainment" },
+                { date: "March 2nd", description: "Online Course", amount: "-$99.00", category: "Education" },
+                { date: "March 2nd", description: "Dinner with Friends", amount: "-$60.00", category: "Food" },
+                { date: "March 2nd", description: "Rent Payment", amount: "-$1,500.00", category: "Housing" }
+            ];
+
+            const transactionsContainer = document.getElementById("transactionsContainer");
+
+            function createTransactionCard(transaction) {
+                const card = document.createElement("div");
+                card.classList.add("transaction-card");
+
+                const dateHeading = document.createElement("h4");
+                dateHeading.textContent = transaction.date;
+                card.appendChild(dateHeading);
+
+                const descriptionParagraph = document.createElement("p");
+                descriptionParagraph.textContent = transaction.description;
+                card.appendChild(descriptionParagraph);
+
+                const categoryParagraph = document.createElement("p");
+                categoryParagraph.textContent = transaction.category;
+                card.appendChild(categoryParagraph);
+
+                const amountParagraph = document.createElement("p");
+                amountParagraph.textContent = transaction.amount;
+                card.appendChild(amountParagraph);
+
+                return card;
+            }
+
+            transactions.forEach(transaction => {
+                const card = createTransactionCard(transaction);
+                transactionsContainer.appendChild(card);
+            });
         });
-      });
-    };
 
-    loadAllCSS();
-  </script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+
+        // PWA Install Button Logic
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+        const installSection = document.getElementById('installSection');
+
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            installSection.style.display = 'none';
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'inline-block';
+        });
+
+        installButton.addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                    installButton.style.display = 'none';
+                });
+            }
+        });
+
+        // Modal Overlay Logic
+        function openModal() {
+            const modal = document.getElementById("modalOverlay");
+            modal.style.display = "flex";
+            document.querySelector(".container").classList.add("blurred");
+        }
+
+        function closeModal() {
+            const modal = document.getElementById("modalOverlay");
+            modal.style.display = "none";
+            document.querySelector(".container").classList.remove("blurred");
+        }
+
+        document.getElementById("closeModal").addEventListener("click", closeModal);
+        document.getElementById("openAddTransaction").addEventListener("click", openModal);
+
+        // --- New Logic for Add Transaction Modal: CSV Budget Loading & Updating ---
+        let budgetData = []; // Global variable to store CSV data
+
+        async function loadBudgetCSV() {
+            try {
+                const response = await fetch('budget.csv');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const csvText = await response.text();
+                return csvText;
+            } catch (error) {
+                console.error('Error fetching CSV:', error);
+                return null;
+            }
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim() !== '');
+            return lines.map(line => line.split(','));
+        }
+
+        function createCategoryCard(category, amount, paid) {
+            const card = document.createElement("div");
+            card.classList.add("category-card");
+
+            const header = document.createElement("h4");
+            header.textContent = category;
+            card.appendChild(header);
+
+            const para = document.createElement("p");
+            para.textContent = "$" + amount;
+            card.appendChild(para);
+
+            // Create a container for the progress bar
+            const progressBarContainer = document.createElement("div");
+            progressBarContainer.classList.add("ProgressBarContainer");
+
+            // Create the progress bar element itself
+            const progressBar = document.createElement("div");
+            progressBar.classList.add("ProgressBar");
+
+            // Append the progress bar into its container
+            progressBarContainer.appendChild(progressBar);
+
+            // Calculate progress as a percentage
+            let progress = (parseFloat(paid) / parseFloat(amount)) * 100;
+            progressBar.style.width = progress + "%";
+
+            // Append the container to the card
+            card.appendChild(progressBarContainer);
+
+            return card;
+        }
+
+        function updateBudgetCards() {
+            const budgetContainer = document.getElementById("budgetDetails");
+            budgetContainer.innerHTML = "";
+            // Skip header row (assumed at index 0)
+            budgetData.slice(1).forEach(row => {
+                const category = row[0];
+                const amount = row[1];
+                const paid = row[3];
+                const card = createCategoryCard(category, amount, paid);
+                budgetContainer.appendChild(card);
+            });
+        }
+
+        // On DOMContentLoaded, load CSV, populate the modal dropdown, and update budget cards
+        document.addEventListener('DOMContentLoaded', async () => {
+            const csvText = await loadBudgetCSV();
+            if (csvText) {
+                budgetData = parseCSV(csvText);
+                // Populate transaction category select (skip header)
+                const categorySelect = document.getElementById('transaction-category');
+                budgetData.slice(1).forEach(row => {
+                    const option = document.createElement('option');
+                    option.value = row[0];
+                    option.textContent = row[0];
+                    categorySelect.appendChild(option);
+                });
+                // Update budget cards display
+                updateBudgetCards();
+            } else {
+                console.error("Could not load budget CSV data.");
+            }
+        });
+
+        // When a transaction is added, update the "Paid" value for that category and refresh UI
+        document.getElementById("addTransactionForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const date = document.getElementById("transaction-date").value;
+            const description = document.getElementById("transaction-description").value;
+            const amount = parseFloat(document.getElementById("transaction-amount").value);
+            const category = document.getElementById("transaction-category").value;
+
+            // Update the CSV data for the selected category (skip header row)
+            for (let i = 1; i < budgetData.length; i++) {
+                if (budgetData[i][0] === category) {
+                    let currentPaid = parseFloat(budgetData[i][3]) || 0;
+                    currentPaid += amount;
+                    budgetData[i][3] = currentPaid.toString();
+                    let currentAmount = parseFloat(budgetData[i][1]) || 0;
+                    currentAmount -= amount;
+                    budgetData[i][1] = currentAmount.toString();
+                    break;
+                }
+            }
+
+            // Optionally, add the transaction to your transactions UI here
+
+            // Rebuild the budget cards UI to reflect updated "Paid" values
+            updateBudgetCards();
+
+            // Clear the form and close the modal (assuming closeModal() is defined)
+            this.reset();
+            closeModal();
+        });
+    </script>
 </body>
+
 </html>
