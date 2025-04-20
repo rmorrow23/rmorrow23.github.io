@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Learning Javascript</title>
+</head>
+<style>
+    body {
+        background-color: black;
+        color: gold;
+        font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    }
+
+    h1 {
+        color: white;
+        font-size: 2rem;
+        margin-left: 2rem;
+    }
+
+    p {
+        margin-left: 2rem;
+        margin-top: 2rem;
+    }
+
+    button {
+        margin-left: 2rem;
+        margin-top: 2rem;
+        border-radius: 5px;
+        height: 50px;
+        width: 125px;
+        background-color: black;
+        color: gold;
+        border: none;
+        font-size: 20px;
+    }
+
+    button:hover {
+        border: 1px gold;
+        background-color: rgba(255, 215, 0, 0.1);
+        box-shadow: 0 0 10px 2px gold;
+    }
+</style>
+
+<body>
+    <h1>Exercise 1</h1>
+    <p id="pMsg">Create an html page that utilizes the basic html elements. </p>
+    <button id="updatePmsgBtn">
+        Update
+    </button>
+</body>
+<script>
+    let updatedPmsg = "Congratulations! You successfully mastered the basics of HTML! ";
+    const pMsg = document.getElementById("pMsg")
+
+    function updatePmsg() {
+        pMsg.textContent = updatedPmsg;
+    }
+    const updatePmsgBtn = document.getElementById("updatePmsgBtn")
+    updatePmsgBtn.addEventListener("click", updatePmsg)
+</script>
+
+</html>

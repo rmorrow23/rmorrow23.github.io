@@ -35,16 +35,13 @@ h3 {
 
 /* Navigation Bar */
 .navbar {
-    background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent black */
-
-      backdrop-filter: blur(10px); /* Apply 10px blur to background */
-
-      -webkit-backdrop-filter: blur(10px);
+    background-color: rgba(150, 150, 150, 0.3);
+    backdrop-filter: blur(1px);
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: relative;
+    position: fixed;
     z-index: 100;
     /* Ensure navbar stays on top */
     width: 100%;
@@ -63,16 +60,16 @@ h3 {
     /*  Crucial: Make .logo a flex container  */
     flex-direction: row;
     /*  Ensure the logo is displayed in a row  */
-    align-items: center;
+    align-items: right;
     /*  Vertically center the image and text */
-    padding: 0.5rem 0;
+    width: 100%;
     /* Reduced padding */
     z-index: 100;
     box-sizing: border-box;
 }
 
 #logo {
-    height: 3rem;
+    height: 4rem;
     /* Set the image height */
     margin-right: 1rem;
     /* Add some space between the image and the text */
@@ -114,7 +111,7 @@ h3 {
 
 /* Sidebar */
 .sidebar {
-    margin-top: 3rem;
+    margin-top: 7rem;
     background-color: #000;
     width: 100px;
     position: fixed;
@@ -131,7 +128,7 @@ h3 {
 
 .sidebar-item {
 
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
     color: #fff;
     text-decoration: none;
     display: flex;
@@ -141,6 +138,7 @@ h3 {
     transition: color 0.3s;
     padding: 0.5rem;
     box-sizing: border-box;
+    justify-content: space-between;
 }
 
 .sidebar-item:hover {
@@ -148,7 +146,7 @@ h3 {
 }
 
 .sidebar-item i {
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 /* Main Content */
@@ -167,6 +165,7 @@ h3 {
 .hero {
     display: flex;
     justify-content: space-around;
+    margin-top: 9rem;
     margin-bottom: 2rem;
     width: 100%;
     /* Ensure hero takes full width */
@@ -174,15 +173,16 @@ h3 {
     /* Include padding and border in the element's total width and height */
     flex-wrap: wrap;
     /* Allow cards to wrap to the next line */
+
 }
 
-.card-total-balance{
+.card-total-balance {
     background: linear-gradient(180deg, #111, #000);
-    border-top: 1px solid gold;    
-    border-left: 1px solid gold;    
-    border-right: 1px solid gold;
+    border-top: 2px solid rgba(255, 215, 0, 0.75);
+    border-left: 2px solid rgba(255, 215, 0, 0.75);
+    border-right: 2px solid rgba(255, 215, 0, 0.75);
     border-radius: 10px;
-    box-shadow: 0 -2px 9px rgba(255, 215, 0, 0.8);
+    box-shadow: 0 -2px 11px rgba(255, 215, 0, 0.4);
     padding: 1.5rem;
     text-align: center;
     /* Two cards per row, minus spacing */
@@ -191,10 +191,11 @@ h3 {
     margin-bottom: 1rem;
     /* Add margin to separate cards vertically */
 }
-.card-expenses{
+
+.card-expenses {
     background: linear-gradient(180deg, #111, #000);
-    border-top: 1px solid red;
-    border-right: 1px solid red;
+    border-top: 3px solid red;
+    border-right: 3px solid red;
     border-radius: 10px;
     box-shadow: 2px -2px 7px rgba(255, 0, 0, 0.7);
     padding: 1.5rem;
@@ -206,10 +207,11 @@ h3 {
     margin-bottom: 0rem;
     /* Add margin to separate cards vertically */
 }
+
 .card-income {
     background: linear-gradient(180deg, #111, #000);
-    border-top: 1px solid green;
-    border-left: 1px solid green;
+    border-top: 3px solid green;
+    border-left: 3px solid green;
     border-radius: 10px;
     box-shadow: -2px -2px 9px rgba(0, 255, 0, 0.4);
     padding: 1.5rem;
@@ -245,9 +247,10 @@ h3 {
 
 .card-expenses p {
     font-size: 1.5rem;
-    font-weight: bold;    
+    font-weight: bold;
     text-shadow: 2px -1px 1px rgba(255, 20, 20, 0.8);
 }
+
 .card-income h3 {
     font-size: 1.2rem;
     margin-bottom: 0.5rem;
@@ -263,6 +266,23 @@ h3 {
 .graph-section {
     margin-bottom: 2rem;
     width: 100%;
+    height: 300px;
+    /* Ensure graph section takes full width */
+    box-sizing: border-box;
+    /* Include padding and border in the element's total width and height */
+}
+
+.graph-section h2 {
+    border-bottom: 5px solid gold;
+    border-radius: 10px;
+    padding-left: 0.7rem;
+    padding-bottom: 0.3rem;
+    padding-top: 0.3rem;
+    text-align: center;
+    position: relative;
+    margin-bottom: 0.25rem;
+    background: linear-gradient(180deg, #333, #000);
+    width: 100%;
     /* Ensure graph section takes full width */
     box-sizing: border-box;
     /* Include padding and border in the element's total width and height */
@@ -270,12 +290,10 @@ h3 {
 
 .graph-container {
     width: 100%;
-    max-width: 600px;
-    margin: 20px auto;
-    height: 300px;
+    height: 100%;
     position: relative;
     background: linear-gradient(180deg, #111, #000);
-    border-top: 1px solid gold;
+    border-top: 5px solid gold;
     border-radius: 10px;
     box-shadow: 0 -2px 15px rgba(255, 215, 0, 0.3);
     overflow: hidden;
@@ -288,18 +306,21 @@ canvas {
     width: 100%;
     height: 100%;
 }
+
 .transactions-section {
-    border-bottom: 1px solid gold;
+    border-bottom: 5px solid gold;
     border-radius: 10px;
     box-sizing: border-box;
     /* Include padding and border in the element's total width and height */
 }
+
 .transactions-section h2 {
-    border-bottom: 1px solid gold;
+    border-bottom: 5px solid gold;
     border-radius: 10px;
     padding-left: 0.7rem;
     padding-bottom: 0.3rem;
-    padding-top: 0.3rem; 
+    text-align: center;
+    padding-top: 0.3rem;
     position: relative;
     background: linear-gradient(180deg, #333, #000);
     width: 100%;
@@ -311,15 +332,15 @@ canvas {
 /* New styles for transaction cards */
 .transaction-card-container {
     display: flex;
-   /* flex-wrap: wrap; */
-   flex-direction: column;
-    background: linear-gradient(0deg, #333, #000);
-    width: 100%;
-    margin-top: -1.8rem;
-    box-sizing: border-box;
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
+    /* flex-wrap: wrap; */
+    flex-direction: column;
+    border-top: 5px solid gold;
+    background-color: #111;
     padding: 1rem;
+    width: 100%;
+    margin-top: -1rem;
+    box-sizing: border-box;
+    border-radius: 10px;
 }
 
 .transaction-card {
@@ -327,62 +348,251 @@ canvas {
     border-left: 1px solid gold;
     border-radius: 10px;
     box-shadow: 1px 0 1px rgba(255, 215, 0, 0.5);
-    padding: 1rem; /* More generous padding */
+    padding: 1rem;
+    /* More generous padding */
     width: 100%;
     box-sizing: border-box;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
 
     /* Grid Layout */
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
-    gap: 0.5rem;  /*Consistent spacing between */
-    align-items: start; /*  Ensure top alignment */
+    gap: 0.5rem;
+    /*Consistent spacing between */
+    align-items: start;
+    /*  Ensure top alignment */
 }
 
-.transaction-card h4 {  /* Date */
+.transaction-card h4 {
+    /* Date */
     margin: 0;
     font-size: 1rem;
     grid-column: 1 / 2;
     grid-row: 1 / 2;
     align-self: start;
-    color: #aaa;  /* Lighter color for date */
+    color: #aaa;
+    /* Lighter color for date */
 }
 
-.transaction-card p:nth-child(2) {  /* Description */
+.transaction-card p:nth-child(2) {
+    /* Description */
     margin: 0;
-    font-size: 0.9rem; /* slightly larger than the rest */
+    font-size: 0.9rem;
+    /* slightly larger than the rest */
     grid-column: 1 / 2;
     grid-row: 2 / 3;
-    align-self: start; /*Align to the Top*/
+    align-self: start;
+    /*Align to the Top*/
 }
 
-.transaction-card p:nth-child(3) {  /* Category */
+.transaction-card p:nth-child(3) {
+    /* Category */
     margin: 0;
     font-size: 1rem;
     grid-column: 2 / 3;
     grid-row: 1 / 2;
-    align-self: start;  /* Align to top */
+    align-self: start;
+    /* Align to top */
     text-align: right;
-    color: #aaa;  /* Lighter color for category */
+    color: #aaa;
+    /* Lighter color for category */
 }
 
-.transaction-card p:last-child {   /* Amount */
+.transaction-card p:last-child {
+    /* Amount */
     margin: 0;
     font-size: 1.1rem;
     font-weight: bold;
     grid-column: 2 / 3;
     grid-row: 2 / 3;
-    align-self: start;  /* Align to the Top */
+    align-self: start;
+    /* Align to the Top */
     text-align: right;
 }
+
+.overViewSection {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 9rem;
+    margin-bottom: 2rem;
+    width: 100%;
+    /* Ensure hero takes full width */
+    box-sizing: border-box;
+    /* Include padding and border in the element's total width and height */
+    flex-wrap: wrap;
+    /* Allow cards to wrap to the next line */
+}
+
+/* Budget Section Container */
+.budget-section {
+    margin: 7rem 0;
+    width: 100%;
+    box-sizing: border-box;
+
+}
+
+/* Section Title */
+.budget-section h2 {
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    border-bottom: 5px solid gold;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #333, #000);
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+/* Total Budget Card */
+.total-budget-card {
+    text-align: center;
+    border-top: 5px solid gold;
+    border-bottom: 5px solid gold;
+    background-color: #111;
+    padding: 1rem;
+    width: 100%;
+    margin-top: -0.75rem;
+    box-sizing: border-box;
+    border-radius: 10px;
+    position: relative;
+    transition: transform 0.3s ease;
+
+    box-shadow: 0 -2px 15px rgba(255, 215, 0, 0.3);
+}
+
+.total-budget-card:hover {
+    transform: scale(1);
+}
+
+/* Card Header (Total Budget Title + Toggle Button) */
+.total-budget-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 15%;
+}
+
+.total-budget-card h3 {
+    font-size: 1.5rem;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.total-budget-card .toggle-details {
+    background: transparent;
+    border: none;
+    color: gold;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+/* Budget Amount Styling */
+.total-budget-card .budget-amount {
+    font-size: 3rem;
+    font-weight: bold;
+    color: rgba(255, 215, 0, 0.75);
+    margin-top: 1rem;
+}
+
+/* Budget Details (Category Cards) - Hidden by default */
+.budget-details {
+    display: none;
+    width: 100%;
+    margin-top: -1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    transition: opacity 0.3s ease;
+    background-color: #000;
+    border-radius: 10px;
+    border-bottom: 5px solid gold;
+    box-sizing: border-box;
+    padding: 11% 5% 5% 5%;
+}
+
+.ProgressBarContainer {
+    position: relative;
+    width: 80%;
+    height: 8px;
+    background: rgba(255, 215, 0, 0.2);
+    border-radius: 5px;
+    display: flex;
+    margin-top: 1rem;
+    z-index: 10;
+}
+
+.ProgressBar {
+    width: 50%;
+    height: 100%;
+    background: maroon;
+    border-radius: 5px;
+    transition: width 0.3s;
+}
+
+#totalProgressBarContainer {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 215, 0, 0.2);
+    border-radius: 5px;
+    display: flex;
+    margin-top: -1.5rem;
+    z-index: 10;
+}
+
+#totalProgressBar {
+    width: 50%;
+    height: 100%;
+    background: maroon;
+    border-radius: 5px;
+    transition: width 0.3s;
+}
+
+
+
+/* Category Cards */
+.category-card {
+    background: linear-gradient(180deg, #111, #000);
+    border-top: 4px solid gold;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    transition: transform 0.3s ease;
+    justify-items: center;
+    box-shadow: 0 -2px 6px rgba(255, 215, 0, 0.3);
+}
+
+.category-card:hover {
+    transform: scale(1.4);
+    box-shadow: 0 -2px 16px rgba(255, 215, 0, 0.8);
+}
+
+.category-card h4 {
+    margin: 0;
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.category-card p {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: gold;
+    margin: 0;
+}
+
+
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .transaction-card {
         width: 100%;
-        display: grid; /*Keep the grid for mobile*/
-        grid-template-columns: 1fr 1fr;  /*Keep 2 columns*/
+        display: grid;
+        /*Keep the grid for mobile*/
+        grid-template-columns: 1fr 1fr;
+        /*Keep 2 columns*/
     }
 
     .transaction-card h4,
@@ -393,11 +603,34 @@ canvas {
     }
 
     .transaction-card p:nth-child(3) {
-        text-align: right; /* restore the Category alignment*/
+        text-align: right;
+        /* restore the Category alignment*/
     }
 
     .transaction-card p:last-child {
-        text-align: right;  /*Restore the Amount text alignement*/
+        text-align: right;
+        /*Restore the Amount text alignement*/
+    }
+
+    .hero {
+        margin-top: 7rem;
+    }
+
+    /* Navigation Bar */
+    .navbar {
+        background-color: rgba(150, 150, 150, 0.1);
+        backdrop-filter: blur(5px);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: fixed;
+        z-index: 100;
+        /* Ensure navbar stays on top */
+        width: 100%;
+        /* Ensure navbar takes full width */
+        box-sizing: border-box;
+        /* Include padding and border in the element's total width and height */
     }
 }
 
@@ -422,15 +655,27 @@ canvas {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .modal-overlay {
+        width: 100vw;
+        height: 100vh;
+        padding: 0 1rem;
+    }
+
+    /* Adjust modal content for smaller screens */
+    .modal-content {
+        max-width: 95%;
+        padding: 1rem;
+    }
+
     .content {
         padding: 1rem;
         /* Reduce padding on mobile */
     }
 
-    .hero {
-        /* flex-direction: column; Stack cards on smaller screens */
-        /*align-items: stretch; Cards take full width */
-    }
+    /*.hero {
+         flex-direction: column; Stack cards on smaller screens */
+    /*align-items: stretch; Cards take full width 
+    }*/
 
     .card {
         /*width: 100%;  Cards take full width on mobile */
@@ -449,6 +694,7 @@ canvas {
         /* Reduced padding */
         z-index: 100;
         top: auto;
+        height: 5rem;
         box-sizing: border-box;
         font-size: 0.8rem;
         /* Smaller sidebar icons/text */
@@ -494,11 +740,17 @@ canvas {
     .nav-links li {
         display: block;
         margin: 1rem 0;
+        opacity: 0;
     }
 
 
     .burger {
         display: block;
+
+    }
+
+    .burger div {
+        background-color: white;
     }
 
     .nav-active {
@@ -529,7 +781,7 @@ canvas {
     }
 
     .toggle .line1 {
-        transform: rotate(-45deg) translate(-5px, 6px);
+        transform: translateY(8px) rotate(45deg);
     }
 
     .toggle .line2 {
@@ -537,18 +789,131 @@ canvas {
     }
 
     .toggle .line3 {
-        transform: rotate(45deg) translate(-5px, -6px);
+        transform: translateY(-8px) rotate(-45deg);
     }
+
 }
 
 .burger {
+    cursor: pointer;
     display: block;
+    position: relative;
+    z-index: 1000;
+    /* Ensure it's on top */
 }
 
 .burger div {
     width: 25px;
     height: 3px;
-    background-color: white;
     margin: 5px;
+    transition: transform 0.4s ease, opacity 0.4s ease;
+    transform-origin: center;
+    /* Ensure rotations occur from the center */
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    /* semi-transparent black */
+    display: none;
+    /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    overflow: hidden;
+    /* Above other content */
+    transition: opacity 0.3s ease;
+    width: 100%;
+}
+
+/* Modal Content */
+.modal-content {
+    background: linear-gradient(180deg, #111, #000);
+    border: 1px solid gold;
+    border-radius: 10px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 2px 10px rgba(255, 215, 0, 0.7);
+    position: relative;
+}
+
+/* Close Button */
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    font-size: 2rem;
+    color: #fff;
+    cursor: pointer;
+}
+
+/* Blur effect on the main container when modal is open */
+.blurred {
+    filter: blur(5px);
+}
+
+/* Form Styles (reuse or adapt from your existing styles) */
+.add-transaction-section form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: gold;
+}
+
+.form-group input,
+.form-group select {
+    padding: 0.75rem;
+    border: 1px solid #444;
+    border-radius: 5px;
+    background-color: #111;
+    color: #fff;
+    font-size: 1rem;
     transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: gold;
+    box-shadow: 0 0 5px gold;
+}
+
+.submit-button {
+    padding: 0.75rem;
+    border: none;
+    border-radius: 5px;
+    background-color: gold;
+    color: #000;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.submit-button:hover {
+    background-color: #e6c200;
+    transform: scale(1.02);
+}
+
+.submit-button:active {
+    transform: scale(0.98);
 }

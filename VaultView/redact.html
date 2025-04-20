@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <!-- We disable native scaling so we can control zoom via re-rendering -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>PDF Redaction Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Poppins:wght@300;500;700&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.6rem;
+            color: gold;
+            margin-bottom: 1rem;
+        }
+
+        /* Container with fixed height and scroll */
+        #canvasContainer {
+            position: relative;
+            width: 90vw;
+            max-width: 100%;
+            height: 80%;
+            min-height: 500px;
+            border-top: 2px solid gold;
+            border-radius: 18px;
+            box-shadow: 0 5px 10px rgba(255, 215, 0, 0.25);
+            overflow: scroll;
+            margin-top: 7rem;
+            background: rgba(255, 215, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* The canvases are rendered at the PDF's native dimensions and centered */
+        canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            touch-action: none;
+            display: none;
+        }
+
+        #uploadLabel {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.7);
+            color: transparent;
+            font-size: 3.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            z-index: 5;
+        }
+
+        #uploadLabel:hover {
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        input[type=" file"] {
+            display: none;
+        }
+
+        /* Floating Buttons */
+        .floating-btn {
+            position: absolute;
+            background:
+                gold;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            display: none;
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
+            z-index: 10;
+            pointer-events:
+                auto;
+        }
+
+        .floating-btn:hover {
+            background: #e6c200;
+            transform: scale(1.1);
+        }
+
+        #undoBtn {
+            top: 10px;
+            left: 10px;
+            padding-top: 0;
+            font-size: 2rem;
+        }
+
+        #saveRedacted {
+            top: 10px;
+            right: 10px;
+            font-size: 1.75rem;
+        }
+
+        /* New Toggle
+        Button for Drawing/Scrolling Mode */
+        #toggleMode {
+            bottom: 10px;
+            left: 10px;
+        }
+
+        /* Loading Bar below Save Button
+        */
+        #saveProgressBarContainer {
+            position: relative;
+            width: 10rem;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            display: none;
+            margin-top: 1rem;
+            z-index: 10;
+        }
+
+        #saveProgressBar {
+            width: 100%;
+            height:
+                100%;
+            background: red;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            bottom: 1%;
+            border-radius: 1rem;
+            transform: translateX(-50%);
+            width: 85%;
+            padding: 5px 10px;
+            border-top: 2px solid gold;
+            background: rgba(0, 0, 0, 1);
+            box-shadow: 0 4px 10px rgba(255,
+                    215, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            font-size: 3.5rem;
+            color: gold;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 50px;
+        }
+
+        .nav-btn:hover {
+            color:
+                #e6c200;
+            transform: scale(1.1);
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background-color: #000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            z-index: 100;
+            /* Ensure navbar stays on top */
+            width: 100%;
+            /* Ensure navbar takes full width */
+            box-sizing: border-box;
+            /* Include padding and border in the element's total width and height */
+        }
+
+        /*  The LOGO - UPDATED FOR CORRECT HTML */
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+            letter-spacing: 1px;
+            display: flex;
+            /*  Crucial: Make .logo a flex container  */
+            flex-direction: row;
+            /*  Ensure the logo is displayed in a row  */
+            align-items: center;
+            /*  Vertically center the image and text */
+            padding: 0.5rem 0;
+            /* Reduced padding */
+            z-index: 100;
+            box-sizing: border-box;
+        }
+
+
+        #logo {
+            height: 3rem;
+            /* Set the image height */
+            margin-right: 1rem;
+            /* Add some space between the image and the text */
+            filter: gold;
+        }
+
+        .logo h1 {
+            /* Style the h1 *inside* .logo */
+            margin-left: 2.1rem;
+            /* remove default h1 margins */
+            font-size: 1.5rem;
+            /* make size similar to the rest */
+            font-weight: bold;
+            /* bold text */
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+
+            /* Mobile Navigation */
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 100%;
+                height: 100vh;
+                background-color: #000;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                transform: translateX(100%);
+                /* Hide initially */
+                transition: transform 0.5s ease-in-out;
+                box-sizing: border-box;
+                z-index: 10;
+            }
+
+            .nav-links li {
+                display: block;
+                margin: 1rem 0;
+                opacity: 0;
+            }
+
+
+            .burger {
+                display: block;
+            }
+
+            .nav-active {
+                transform: translateX(0%);
+                /* Show on activation */
+            }
+
+            @keyframes navLinkFade {
+                from {
+                    opacity: 0;
+                    transform: translateX(50px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateX(0px);
+                }
+            }
+
+            .toggle .line1 {
+                transform: translateY(8px) rotate(45deg);
+            }
+
+            .toggle .line2 {
+                opacity: 0;
+            }
+
+            .toggle .line3 {
+                transform: translateY(-8px) rotate(-45deg);
+            }
+
+        }
+
+        .burger {
+            cursor: pointer;
+            display: block;
+            position: relative;
+            z-index: 1000;
+            /* Ensure it's on top */
+        }
+
+        .burger div {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            margin: 5px;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            transform-origin: center;
+            /* Ensure rotations occur from the center */
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links li {
+            margin-left: 2rem;
+        }
+
+        .nav-links li a {
+            color: #fff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .nav-links li a:hover {
+            color: gold;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <img id="logo" src="balance.png" />
+            <h1>VaultView</h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="#">Transactions</a></li>
+            <li><a href="redact.html">Redact</a></li>
+            <li><a href="#">Settings</a></li>
+        </ul>
+        <div class="burger">
+            <div class="line1"></div>
+            <div class="line2"></div>
+            <div class="line3"></div>
+        </div>
+    </nav>
+    <div class="container">
+        <div id="canvasContainer">
+            <label for="uploadPdf" id="uploadLabel"><!--📂--> </label>
+            <input type="file" id="uploadPdf" accept="application/pdf" />
+            <canvas id="pdfCanvas"></canvas>
+            <canvas id="redactionCanvas"></canvas>
+            <button id="undoBtn" class="floating-btn">↶</button>
+            <button id="saveRedacted" class="floating-btn">💾
+                <div id="saveProgressBarContainer">
+                    <div id="saveProgressBar"></div>
+                </div>
+            </button>
+            <button id="toggleMode" class="floating-btn">🖊</button>
+
+        </div>
+    </div>
+    <!-- Bottom Navigation for Page Switching -->
+    <div class="bottom-nav">
+        <button class="nav-btn" id="prevPage">&lt;</button>
+        <button class="nav-btn" id="nextPage">&gt;</button>
+    </div>
+    <script>
+        const navSlide = () => {
+            const burger = document.querySelector(".burger");
+            const nav = document.querySelector(".nav-links");
+            const navLinks = document.querySelectorAll(".nav-links li");
+
+            burger.addEventListener("click", () => {
+                nav.classList.toggle("nav-active");
+                navLinks.forEach((link, index) => {
+                    link.style.animation = link.style.animation ? "" : `navLinkFade 0.2s ease forwards ${index / 7 + 0.5}s`;
+                });
+                burger.classList.toggle("toggle");
+            });
+        }
+        navSlide();
+        let pdfDoc = null,
+            pageNum = 1,
+            pdfCanvas = document.getElementById('pdfCanvas'),
+            redactionCanvas = document.getElementById('redactionCanvas'),
+            pdfCtx = pdfCanvas.getContext('2d'),
+            redactionCtx = redactionCanvas.getContext('2d'),
+            redactions = {},
+            fileBuffer = null,
+            isDrawing = false,
+            startX, startY,
+            currentScale = 1, // Global zoom factor; 1 = native size
+            isDrawingMode = true; // true: drawing mode; false: scroll/zoom mode
+
+        const canvasContainer = document.getElementById('canvasContainer');
+        const progressBarContainer = document.getElementById('saveProgressBarContainer');
+        const progressBar = document.getElementById('saveProgressBar');
+        let initialPinchDistance = null;
+        let pinchTimeout = null;
+
+        // Toggle between drawing and scrolling mode
+        document.getElementById('toggleMode').addEventListener('click', function (e) {
+            e.stopPropagation();
+            isDrawingMode = !isDrawingMode;
+            this.textContent = isDrawingMode ? "🖊" : "🖐";
+            redactionCanvas.style.touchAction = isDrawingMode ? "none" : "auto";
+            redactionCanvas.style.pointerEvents = isDrawingMode ? "auto" : "none";
+        });
+
+        document.getElementById('uploadPdf').addEventListener('change', function (event) {
+            let file = event.target.files[0];
+            if (file.type !== "application/pdf") {
+                alert("Please upload a valid PDF file.");
+                return;
+            }
+            document.getElementById('uploadLabel').style.display = "none";
+            pdfCanvas.style.display = "block";
+            redactionCanvas.style.display = "block";
+            document.getElementById('saveRedacted').style.display = "block";
+            document.getElementById('undoBtn').style.display = "block";
+            document.getElementById('toggleMode').style.display = "block";
+            let fileReader = new FileReader();
+            fileReader.onload = function () {
+                let typedArray = new Uint8Array(this.result);
+                fileBuffer = typedArray;
+                pdfjsLib.getDocument(typedArray).promise.then(pdf => {
+                    pdfDoc = pdf;
+                    currentScale = 1; // Reset zoom
+                    renderPage();
+                });
+            };
+            fileReader.readAsArrayBuffer(file);
+        });
+
+        function renderPage() {
+            pdfDoc.getPage(pageNum).then(page => {
+                let viewport = page.getViewport({ scale: currentScale });
+                pdfCanvas.width = viewport.width;
+                pdfCanvas.height = viewport.height;
+                redactionCanvas.width = viewport.width;
+                redactionCanvas.height = viewport.height;
+                pdfCanvas.style.width = viewport.width + "px";
+                pdfCanvas.style.height = viewport.height + "px";
+                redactionCanvas.style.width = viewport.width + "px";
+                redactionCanvas.style.height = viewport.height + "px";
+                let renderContext = { canvasContext: pdfCtx, viewport: viewport };
+                pdfCtx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+                redactionCtx.clearRect(0, 0, redactionCanvas.width, redactionCanvas.height);
+                page.render(renderContext).promise.then(() => drawRedactions());
+            });
+        }
+
+        function drawRedactions() {
+            redactionCtx.clearRect(0, 0, redactionCanvas.width, redactionCanvas.height);
+            redactionCtx.fillStyle = "black";
+            if (redactions[pageNum]) {
+                redactions[pageNum].forEach(redact => {
+                    redactionCtx.fillRect(redact.x * currentScale, redact.y * currentScale, redact.width * currentScale, redact.height * currentScale);
+                });
+            }
+        }
+
+        function undoLastRedaction() {
+            if (redactions[pageNum] && redactions[pageNum].length > 0) {
+                redactions[pageNum].pop();
+                drawRedactions();
+            }
+        }
+
+        function startDraw(e) {
+            if (!isDrawingMode) return;
+            let rect = redactionCanvas.getBoundingClientRect();
+            startX = ((e.touches ? e.touches[0].clientX : e.clientX) - rect.left) / currentScale;
+            startY = ((e.touches ? e.touches[0].clientY : e.clientY) - rect.top) / currentScale;
+            isDrawing = true;
+            e.preventDefault();
+        }
+
+        function draw(e) {
+            if (!isDrawing || !isDrawingMode) return;
+            let rect = redactionCanvas.getBoundingClientRect();
+            let endX = ((e.touches ? e.touches[0].clientX : e.clientX) - rect.left) / currentScale;
+            let endY = ((e.touches ? e.touches[0].clientY : e.clientY) - rect.top) / currentScale;
+            redactionCtx.clearRect(0, 0, redactionCanvas.width, redactionCanvas.height);
+            drawRedactions();
+            redactionCtx.fillStyle = "black";
+            redactionCtx.fillRect(startX * currentScale, startY * currentScale, (endX - startX) * currentScale, (endY - startY) * currentScale);
+            if (isDrawingMode) e.preventDefault();
+        }
+
+        function endDraw(e) {
+            if (!isDrawing || !isDrawingMode) return;
+            let rect = redactionCanvas.getBoundingClientRect();
+            let endX = ((e.changedTouches ? e.changedTouches[0].clientX : e.clientX) - rect.left) / currentScale;
+            let endY = ((e.changedTouches ? e.changedTouches[0].clientY : e.clientY) - rect.top) / currentScale;
+            if (!redactions[pageNum]) redactions[pageNum] = [];
+            redactions[pageNum].push({
+                x: startX,
+                y: startY,
+                width: endX - startX,
+                height: endY - startY
+            });
+            isDrawing = false;
+            drawRedactions();
+        }
+
+        redactionCanvas.addEventListener('mousedown', startDraw);
+        redactionCanvas.addEventListener('mousemove', draw);
+        redactionCanvas.addEventListener('mouseup', endDraw);
+        redactionCanvas.addEventListener('touchstart', startDraw);
+        redactionCanvas.addEventListener('touchmove', draw);
+        redactionCanvas.addEventListener('touchend', endDraw);
+
+        document.getElementById('undoBtn').addEventListener('click', function (e) {
+            e.stopPropagation();
+            undoLastRedaction();
+        });
+
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (pageNum > 1) pageNum--;
+            renderPage();
+        });
+        document.getElementById('nextPage').addEventListener('click', () => {
+            if (pageNum < pdfDoc.numPages) pageNum++;
+            renderPage();
+        });
+
+        document.getElementById('saveRedacted').addEventListener('click', async function (e) {
+            e.stopPropagation();
+            if (!fileBuffer) {
+                alert("Please upload a PDF first!");
+                return;
+            }
+            // Show progress bar
+            progressBarContainer.style.display = "block";
+            progressBar.style.width = "0%";
+
+            // Use a high-resolution multiplier (4 for 4K resolution)
+            const resolutionMultiplier = 4;
+            const newPdfDoc = await PDFLib.PDFDocument.create();
+
+            // For each page in the PDF
+            for (let p = 1; p <= pdfDoc.numPages; p++) {
+                let page = await pdfDoc.getPage(p);
+                let viewport = page.getViewport({ scale: currentScale });
+
+                // Create an offscreen merge canvas at high resolution
+                let mergeCanvas = document.createElement('canvas');
+                mergeCanvas.width = viewport.width * resolutionMultiplier;
+                mergeCanvas.height = viewport.height * resolutionMultiplier;
+                let mergeCtx = mergeCanvas.getContext('2d');
+
+                // Create a temporary canvas to render the PDF page
+                let tempCanvas = document.createElement('canvas');
+                tempCanvas.width = viewport.width;
+                tempCanvas.height = viewport.height;
+                let tempCtx = tempCanvas.getContext('2d');
+                await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
+
+                // Draw the PDF page onto the merge canvas at high resolution
+                mergeCtx.drawImage(
+                    tempCanvas,
+                    0, 0, tempCanvas.width, tempCanvas.height,
+                    0, 0, mergeCanvas.width, mergeCanvas.height
+                );
+
+                // Draw redactions for this page, if any exist, scaling them appropriately
+                if (redactions[p]) {
+                    mergeCtx.fillStyle = "black";
+                    redactions[p].forEach(redact => {
+                        mergeCtx.fillRect(
+                            redact.x * currentScale * resolutionMultiplier,
+                            redact.y * currentScale * resolutionMultiplier,
+                            redact.width * currentScale * resolutionMultiplier,
+                            redact.height * currentScale * resolutionMultiplier
+                        );
+                    });
+                }
+
+                // Simulate progress update (increment progress for each page)
+                let progress = (p / pdfDoc.numPages) * 100;
+                progressBar.style.width = progress + "%";
+
+                let imgDataUrl = mergeCanvas.toDataURL("image/png");
+                const pngImage = await newPdfDoc.embedPng(imgDataUrl);
+                const { width, height } = pngImage.scale(1);
+                const newPage = newPdfDoc.addPage([width, height]);
+                newPage.drawImage(pngImage, { x: 0, y: 0, width, height });
+            }
+
+            // Set progress to 100% and then hide the progress bar after a short delay
+            progressBar.style.width = "100%";
+            setTimeout(() => {
+                progressBarContainer.style.display = "none";
+            }, 500);
+
+            const modifiedPdfBytes = await newPdfDoc.save();
+            let blob = new Blob([modifiedPdfBytes], { type: "application/pdf" });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = "redacted_pdf.pdf";
+            link.click();
+        });
+
+        // Enable pinch-zoom on the actual PDF by re-rendering at a new scale
+        canvasContainer.addEventListener('touchstart', function (e) {
+            if (!isDrawingMode && e.touches.length === 2) {
+                initialPinchDistance = getPinchDistance(e.touches[0], e.touches[1]);
+                e.preventDefault();
+            }
+        });
+        canvasContainer.addEventListener('touchmove', function (e) {
+            if (!isDrawingMode && e.touches.length === 2 && initialPinchDistance) {
+                let newDistance = getPinchDistance(e.touches[0], e.touches[1]);
+                let newScale = currentScale * (newDistance / initialPinchDistance);
+                newScale = Math.max(0.5, Math.min(newScale, 3));
+                currentScale = newScale;
+                if (pinchTimeout) clearTimeout(pinchTimeout);
+                pinchTimeout = setTimeout(() => {
+                    renderPage();
+                    pinchTimeout = null;
+                }, 200);
+                e.preventDefault();
+            }
+        });
+        canvasContainer.addEventListener('touchend', function (e) {
+            if (!isDrawingMode && e.touches.length < 2) {
+                initialPinchDistance = null;
+            }
+        });
+        function getPinchDistance(t1, t2) {
+            let dx = t1.clientX - t2.clientX;
+            let dy = t1.clientY - t2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+    </script>
+</body>
+
+</html>
