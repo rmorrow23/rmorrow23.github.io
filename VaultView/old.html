@@ -1,0 +1,246 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Redaction Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Poppins:wght@300;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.6rem;
+            color: gold;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            background-color: gold;
+            color: black;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 5px;
+            transition: 0.3s;
+            width: 90%;
+            max-width: 250px;
+        }
+
+        .btn:hover {
+            background-color: #e6c200;
+            transform: scale(1.05);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            background-color: gold;
+            color: black;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-block;
+            margin-bottom: 1rem;
+            width: 90%;
+            max-width: 250px;
+        }
+
+        .file-label:hover {
+            background-color: #e6c200;
+            transform: scale(1.05);
+        }
+
+        #canvasContainer {
+            position: relative;
+            width: 90vw;
+            max-width: 100%;
+            height: 120vw;
+            background: none;
+            border: 2px solid gold;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            overflow: hidden;
+            margin-top: 2rem;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: none;
+            touch-action: none;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            /* Ensure navbar stays on top */
+            width: 100%;
+            /* Ensure navbar takes full width */
+            box-sizing: border-box;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 -2px 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: gold;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 50px;
+        }
+
+        .nav-btn:hover {
+            color: #e6c200;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>PDF Redaction Tool</h1>
+        <label class="file-label">
+            Upload PDF
+            <input type="file" id="uploadPdf" accept="application/pdf">
+        </label>
+        <button class="btn" id="saveRedacted">Save as Redacted PDF</button>
+
+        <div id="canvasContainer">
+            <canvas id="pdfCanvas"></canvas>
+            <canvas id="redactionCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation for Page Switching -->
+    <div class="bottom-nav">
+        <button class="nav-btn" id="prevPage">&lt;</button>
+        <button class="nav-btn" id="nextPage">&gt;</button>
+    </div>
+
+    <script>
+        let pdfDoc = null,
+            pageNum = 1,
+            pdfCanvas = document.getElementById('pdfCanvas'),
+            redactionCanvas = document.getElementById('redactionCanvas'),
+            pdfCtx = pdfCanvas.getContext('2d'),
+            redactionCtx = redactionCanvas.getContext('2d'),
+            redactions = {},
+            fileBuffer = null,
+            isDrawing = false,
+            startX, startY, scaleRatio = 1;
+
+        document.getElementById('uploadPdf').addEventListener('change', function (event) {
+            let file = event.target.files[0];
+            if (file.type !== "application/pdf") {
+                alert("Please upload a valid PDF file.");
+                return;
+            }
+
+            let fileReader = new FileReader();
+            fileReader.onload = function () {
+                let typedArray = new Uint8Array(this.result);
+                fileBuffer = typedArray;
+                pdfjsLib.getDocument(typedArray).promise.then(pdf => {
+                    pdfDoc = pdf;
+                    renderPage();
+                });
+            };
+            fileReader.readAsArrayBuffer(file);
+        });
+
+        function renderPage() {
+            pdfDoc.getPage(pageNum).then(page => {
+                let viewport = page.getViewport({ scale: 1.5 });
+
+                pdfCanvas.width = redactionCanvas.width = viewport.width;
+                pdfCanvas.height = redactionCanvas.height = viewport.height;
+                scaleRatio = viewport.width / pdfCanvas.clientWidth;
+
+                let renderContext = { canvasContext: pdfCtx, viewport: viewport };
+                page.render(renderContext).promise.then(() => drawRedactions());
+            });
+        }
+
+        function drawRedactions() {
+            redactionCtx.clearRect(0, 0, redactionCanvas.width, redactionCanvas.height);
+            redactionCtx.fillStyle = "black";
+            if (redactions[pageNum]) {
+                redactions[pageNum].forEach(redact => {
+                    redactionCtx.fillRect(redact.x * scaleRatio, redact.y * scaleRatio, redact.width * scaleRatio, redact.height * scaleRatio);
+                });
+            }
+        }
+
+        function startDraw(e) {
+            let rect = redactionCanvas.getBoundingClientRect();
+            startX = ((e.touches ? e.touches[0].clientX : e.clientX) - rect.left) * scaleRatio;
+            startY = ((e.touches ? e.touches[0].clientY : e.clientY) - rect.top) * scaleRatio;
+            isDrawing = true;
+            e.preventDefault();
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            let rect = redactionCanvas.getBoundingClientRect();
+            let endX = ((e.touches ? e.touches[0].clientX : e.clientX) - rect.left) * scaleRatio;
+            let endY = ((e.touches ? e.touches[0].clientY : e.clientY) - rect.top) * scaleRatio;
+            redactionCtx.fillStyle = "black";
+            redactionCtx.fillRect(startX, startY, endX - startX, endY - startY);
+            e.preventDefault();
+        }
+
+        function endDraw() {
+            isDrawing = false;
+        }
+
+        redactionCanvas.addEventListener('mousedown', startDraw);
+        redactionCanvas.addEventListener('mousemove', draw);
+        redactionCanvas.addEventListener('mouseup', endDraw);
+        redactionCanvas.addEventListener('touchstart', startDraw);
+        redactionCanvas.addEventListener('touchmove', draw);
+        redactionCanvas.addEventListener('touchend', endDraw);
+
+        document.getElementById('prevPage').addEventListener('click', () => { if (pageNum > 1) pageNum--; renderPage(); });
+        document.getElementById('nextPage').addEventListener('click', () => { if (pageNum < pdfDoc.numPages) pageNum++; renderPage(); });
+
+    </script>
+</body>
+
+</html>
