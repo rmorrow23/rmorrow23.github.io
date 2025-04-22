@@ -164,7 +164,7 @@ h3 {
     /* Ensure content takes full width */
     box-sizing: border-box;
     /* Include padding and border in the element's total width and height */
-    backdrop-filter: blur(120px);
+    backdrop-filter: blur(50px);
     opacity:(0.5);
 }
 
