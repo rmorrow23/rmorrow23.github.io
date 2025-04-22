@@ -165,6 +165,7 @@ h3 {
     box-sizing: border-box;
     /* Include padding and border in the element's total width and height */
     backdrop-filter: blur(10px);
+    opacity:(0.5)
 }
 
 /* Hero Section */
