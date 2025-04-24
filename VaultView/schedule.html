@@ -221,16 +221,45 @@
     let pendingProcess = null;
 
     function updateAllSchedules(firstMondayProcess) {
-      const rotation = processMap[firstMondayProcess];
-      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-      for (let i = 0; i < days.length; i++) {
-        const rotated = [...rotation.slice(i), ...rotation.slice(0, i)];
-        database.ref("TMMI/Schedule/" + days[i]).set(JSON.stringify(rotated));
-      }
-      pendingProcess = null;
-      document.getElementById('confirmBtn').style.display = 'none';
-      showSuccessPopup();
+
+  const base = ["C1E", "C2D2", "WD", "DTL", "FT4A"];
+
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  let rotation = [...base];
+
+  // Start with Monday's first process
+
+  while (rotation[0] !== firstMondayProcess) {
+
+    rotation.push(rotation.shift());
+
+  }
+
+  for (let i = 0; i < days.length; i++) {
+
+    const currentDaySchedule = [...rotation];
+
+    database.ref("TMMI/Schedule/" + days[i]).set(JSON.stringify(currentDaySchedule));
+
+    // Rotate so next day's first is current day's last
+
+    const last = currentDaySchedule[currentDaySchedule.length - 1];
+
+    while (rotation[0] !== last) {
+
+      rotation.push(rotation.shift());
+
     }
+
+  }
+
+  pendingProcess = null;
+
+  document.getElementById('confirmBtn').style.display = 'none';
+
+  showSuccessPopup();
+}
 
     function showSuccessPopup() {
       const popup = document.getElementById('successPopup');
