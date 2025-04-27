@@ -49,7 +49,7 @@ h3 {
     position: fixed;
     z-index: 100;
     /* Ensure navbar stays on top */
-    width: 90%;
+    width: 100%;
     /* Ensure navbar takes full width */
     box-sizing: border-box;
     /* Include padding and border in the element's total width and height */
@@ -67,7 +67,7 @@ h3 {
     /*  Ensure the logo is displayed in a row  */
     align-items: right;
     /*  Vertically center the image and text */
-    width: 100%;
+    width: 90%;
     /* Reduced padding */
     z-index: 100;
     box-sizing: border-box;
@@ -116,7 +116,7 @@ h3 {
 
 /* Sidebar */
 .sidebar {
-    margin-top: 6rem;
+    margin-top: 6.5rem;
     background-color: #000;
     width: 100px;
     position: fixed;
