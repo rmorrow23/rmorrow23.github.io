@@ -67,7 +67,7 @@ h3 {
     /*  Ensure the logo is displayed in a row  */
     align-items: right;
     /*  Vertically center the image and text */
-    width: 90%;
+    width: 100%;
     /* Reduced padding */
     z-index: 100;
     box-sizing: border-box;
@@ -98,6 +98,7 @@ h3 {
     list-style: none;
     margin: 0;
     padding: 0;
+    width: 25%;
 }
 
 .nav-links li {
