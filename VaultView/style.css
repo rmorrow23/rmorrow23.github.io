@@ -49,7 +49,7 @@ h3 {
     position: fixed;
     z-index: 100;
     /* Ensure navbar stays on top */
-    width: 100%;
+    width: 90%;
     /* Ensure navbar takes full width */
     box-sizing: border-box;
     /* Include padding and border in the element's total width and height */
