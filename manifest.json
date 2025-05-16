@@ -4,14 +4,14 @@
     "description": "View my personal portfolio!",
     "icons": [
         {
-            "src": "randy.jpg",
+            "src": "MorrowInd.png",
             "sizes": "192x192",
-            "type": "image/jpg"
+            "type": "image/png"
         },
         {
-            "src": "randy.jpg",
+            "src": "MorrowInd.png",
             "sizes": "512x512",
-            "type": "image/jpg"
+            "type": "image/png"
         }
     ],
     "start_url": "/index.html",
