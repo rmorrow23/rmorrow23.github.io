@@ -230,9 +230,21 @@
     e.preventDefault();
     deferredPrompt = e;
 
-    // Show a custom install button or UI here
+    // Create and show custom install button
     const installBtn = document.createElement('button');
     installBtn.textContent = 'Install App';
+    installBtn.style.position = 'fixed';
+    installBtn.style.bottom = '20px';
+    installBtn.style.right = '20px';
+    installBtn.style.padding = '10px 20px';
+    installBtn.style.fontSize = '1rem';
+    installBtn.style.zIndex = '1000';
+    installBtn.style.background = '#00ffcc';
+    installBtn.style.color = '#000';
+    installBtn.style.border = 'none';
+    installBtn.style.borderRadius = '10px';
+    installBtn.style.cursor = 'pointer';
+
     installBtn.onclick = () => {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(choice => {
@@ -242,10 +254,11 @@
           console.log('User dismissed install');
         }
         deferredPrompt = null;
+        installBtn.remove();
       });
     };
-    document.getElementById('container').appendChild(installBtn);
+
+    document.body.appendChild(installBtn);
   });
 </script>
-
 </html>
