@@ -190,7 +190,7 @@
 
 <body>
     <div class="overlay"></div>
-    <div class="container">
+    <div class="container" id="container">
         <div class="profile-card">
             <div class="profile-wrapper">
                 <div class="profile-image-container">
@@ -244,7 +244,7 @@
         deferredPrompt = null;
       });
     };
-    document.container.appendChild(installBtn);
+    document.getElementById('container').appendChild(installBtn);
   });
 </script>
 
