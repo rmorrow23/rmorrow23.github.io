@@ -1,0 +1,21 @@
+{
+    "name": "Morrow Industries",
+    "short_name": "Morrow Industries",
+    "description": "View my personal portfolio!",
+    "icons": [
+        {
+            "src": "randy.jpg",
+            "sizes": "192x192",
+            "type": "image/jpg"
+        },
+        {
+            "src": "randy.jpg",
+            "sizes": "512x512",
+            "type": "image/jpg"
+        }
+    ],
+    "start_url": "/index.html",
+    "background_color": "#000000",
+    "theme_color": "#000",
+    "display": "standalone"
+}
