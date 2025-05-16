@@ -223,5 +223,29 @@
             });
         }
 </script>
+<script>
+  let deferredPrompt;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // Show a custom install button or UI here
+    const installBtn = document.createElement('button');
+    installBtn.textContent = 'Install App';
+    installBtn.onclick = () => {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(choice => {
+        if (choice.outcome === 'accepted') {
+          console.log('User accepted install');
+        } else {
+          console.log('User dismissed install');
+        }
+        deferredPrompt = null;
+      });
+    };
+    document.body.appendChild(installBtn);
+  });
+</script>
 
 </html>
