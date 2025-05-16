@@ -209,5 +209,19 @@
     </div>
     <footer>© 2025 Randal Morrow | All rights reserved</footer>
 </body>
+<script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/VaultView/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+</script>
 
 </html>
