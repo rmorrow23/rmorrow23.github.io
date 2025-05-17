@@ -29,8 +29,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            backdrop-filter: blur(10px);
-            background: rgba(200, 200, 200, 0.1);
+            backdrop-filter: blur(15px);
+            background: rgba(0, 0, 20, 0.5);
             z-index: 0;
         }
 
@@ -39,14 +39,14 @@
             flex-direction: column;
             position: relative;
             z-index: 1;
-            
             background: rgba(200, 200, 200, 0);
             padding: 10% 5% 10% 5%;
             border-radius: 20px;
             max-width: 95%;
             height: auto;
-            margin-top: 5%;
+            margin-top: 0;
             box-shadow: 0px 0px 10px rgba(255, 255, 255, 0);
+
         }
 
         h1 {
@@ -54,12 +54,18 @@
             margin-bottom: 20px;
             color: #00ffcc;
             width: 100%;
+            text-shadow: 0 0 20px #000, 0 0 8px #000;
+            animation: fadeIn .95s ease-out 1.5s forwards;
+            opacity: 0;
         }
 
         p {
             font-size: 1.2rem;
             color: #ccc;
             width: 100%;
+            animation: fadeIn 0.95s ease-out 2.5s forwards;
+            opacity: 0;
+
         }
 
         .loader {
@@ -79,6 +85,29 @@
 
             100% {
                 background-position: -200% 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0px);
+            }
+        }
+        @keyframes fadeInLogo {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0px);
             }
         }
 
@@ -109,30 +138,46 @@
             display: inline-block;
         }
 
+        .profile-card {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
         .profile-pic {
-            width: 15rem;
-            height: 15rem;
-            border-radius: 50%;
-            border: 3px solid #ff7e5f;
-            object-fit: cover;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 20rem;
+            height: 20rem;
+            border-radius: 5%;
+            border: 0px solid #00000000;
+            background-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0px 0px 3px rgba(255, 255, 255, 0.5);
+            object-fit: cover;            
+            animation: fadeInLogo 1.5s ease-out forwards;
+            opacity: 0;
+            /* Start hidden for animation */
         }
 
         .construction-icon {
-            width: 8rem;
-            height: 8rem;
-        }
-
-        .divider {
-            width: 2px;
-            height: 90px;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 4rem;
+            height: 4rem;
+            background: rgba(0, 0, 0, 0);
+            border-radius: 50%;
+            padding: 5px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0);
+            display: none;
         }
 
         /* Mobile Styles */
         @media (max-width: 600px) {
-            
+
             .divider {
                 display: none;
             }
@@ -161,10 +206,11 @@
             .profile-pic {
                 width: 15rem;
                 height: 15rem;
-                border-radius: 50%;
-                border: 3px solid #ff7e5f;
+                border-radius: 5%;
+                border: 0px solid #00000000;
                 object-fit: cover;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                background-color: rgba(255, 255, 255, 0.1);
+                box-shadow: 0px 0px 3px rgba(255, 255, 255, 0.5);
             }
 
             .construction-icon {
@@ -194,7 +240,7 @@
         <div class="profile-card">
             <div class="profile-wrapper">
                 <div class="profile-image-container">
-                    <img src="randy.jpg" alt="Randal Morrow" class="profile-pic">
+                    <img src="morindv2.png" alt="Morrow Industries" class="profile-pic">
                     <img src="construction-icon.png" alt="Under Construction" class="construction-icon mobile-overlay">
                 </div>
                 <div class="divider"></div>
@@ -202,63 +248,64 @@
             </div>
         </div>
 
-        <h1>Randal Morrow</h1>
+        <h1>Morrow Industries</h1>
         <p>This site is currently under construction.<br><br>
             Check back soon to explore my portfolio and projects!</p>
         <div class="loader_"></div>
     </div>
-    <footer>© 2025 Randal Morrow | All rights reserved</footer>
+    <footer>© 2025 Morrow Industries | All rights reserved</footer>
 </body>
 <script>
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registered with scope:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.error('ServiceWorker registration failed:', error);
-                    });
-            });
-        }
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('ServiceWorker registered with scope:', registration.scope);
+                })
+                .catch(error => {
+                    console.error('ServiceWorker registration failed:', error);
+                });
+        });
+    }
 </script>
 <script>
-  let deferredPrompt;
+    let deferredPrompt;
 
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
 
-    // Create and show custom install button
-    const installBtn = document.createElement('button');
-    installBtn.textContent = 'Install App';
-    installBtn.style.position = 'fixed';
-    installBtn.style.bottom = '20px';
-    installBtn.style.right = '20px';
-    installBtn.style.padding = '10px 20px';
-    installBtn.style.fontSize = '1rem';
-    installBtn.style.zIndex = '1000';
-    installBtn.style.background = '#00ffcc';
-    installBtn.style.color = '#000';
-    installBtn.style.border = 'none';
-    installBtn.style.borderRadius = '10px';
-    installBtn.style.cursor = 'pointer';
+        // Create and show custom install button
+        const installBtn = document.createElement('button');
+        installBtn.textContent = 'Install App';
+        installBtn.style.position = 'fixed';
+        installBtn.style.bottom = '20px';
+        installBtn.style.right = '20px';
+        installBtn.style.padding = '10px 20px';
+        installBtn.style.fontSize = '1rem';
+        installBtn.style.zIndex = '1000';
+        installBtn.style.background = '#00ffcc';
+        installBtn.style.color = '#000';
+        installBtn.style.border = 'none';
+        installBtn.style.borderRadius = '10px';
+        installBtn.style.cursor = 'pointer';
 
-    installBtn.onclick = () => {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(choice => {
-        if (choice.outcome === 'accepted') {
-          console.log('User accepted install');
-        } else {
-          console.log('User dismissed install');
-        }
-        deferredPrompt = null;
-        installBtn.remove();
-      });
-    };
+        installBtn.onclick = () => {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(choice => {
+                if (choice.outcome === 'accepted') {
+                    console.log('User accepted install');
+                } else {
+                    console.log('User dismissed install');
+                }
+                deferredPrompt = null;
+                installBtn.remove();
+            });
+        };
 
-    document.body.appendChild(installBtn);
-  });
+        document.body.appendChild(installBtn);
+    });
 </script>
+
 </html>
