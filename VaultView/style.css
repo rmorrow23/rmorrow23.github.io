@@ -49,7 +49,7 @@ h3 {
     position: fixed;
     z-index: 100;
     /* Ensure navbar stays on top */
-    width: 100%;
+    width: 100vw;
     /* Ensure navbar takes full width */
     box-sizing: border-box;
     /* Include padding and border in the element's total width and height */
@@ -95,10 +95,10 @@ h3 {
 /* Desktop Navigation */
 .nav-links {
     display: flex;
-    list-style: none;
+    list-style:none;
     margin: 0;
     padding: 0;
-    width: 25%;
+    width: 85%;
 }
 
 .nav-links li {
@@ -109,6 +109,7 @@ h3 {
     color: #fff;
     text-decoration: none;
     transition: color 0.3s;
+    font-size: 0.95rem;
 }
 
 .nav-links li a:hover {
@@ -117,8 +118,8 @@ h3 {
 
 /* Sidebar */
 .sidebar {
-    margin-top: 6.5rem;
-    background-color: #000;
+    margin-top: 6rem;
+    background-color: rgba(0, 0, 0, 0.5);
     width: 100px;
     position: fixed;
     top: 0;
