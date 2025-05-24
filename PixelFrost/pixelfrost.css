@@ -1,0 +1,358 @@
+/* General Look & Feel */
+body {
+  margin: 0;
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  background: linear-gradient(135deg, #092e33, #031a1d);
+  color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Header */
+header {
+  text-align: center;
+  margin-top: 2rem;
+}
+header h1 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #00ffff;
+  margin-bottom: 0.25rem;
+}
+header p {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #ccc;
+}
+
+/* Canvas */
+.editor {
+  border: 1px solid rgba(0,255,255,0.05);
+  font-style: italic;
+  opacity: 0.95;
+  width: 90vw;
+  max-width: 900px;
+  aspect-ratio: 16 / 9;
+  background-color: #000;
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(0,255,255,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #aaa;
+  margin: 2rem 0 1rem;
+  position: relative;
+  text-align: center;
+}
+    #editor::before {
+      content: "";
+      display: block;
+      padding-top: calc(100% * (var(--height, 3840) / var(--width, 3840)));
+    }
+
+/* Toggle Button */
+.toggle-btn {
+  position: absolute;
+  bottom: -28px;
+  left: 90%;
+  transform: translateX(-50%);
+  z-index: 10;
+
+  background: #00ffff;
+  color: #000;
+  font-size: 1.5rem;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,255,255,0.25);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Controls Panel */
+.controls-panel {
+  pointer-events: none;
+
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  box-shadow: 0 8px 20px rgba(0, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+  width: 90vw;
+  max-width: 500px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateY(10px);
+  opacity: 0;
+  z-index: 100;
+}
+
+.controls-panel.settingsVisible {
+  pointer-events: auto;
+
+  display: flex;
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Inputs & Labels */
+.controls-panel label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+.controls-panel select,
+.controls-panel input[type="file"] {
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+}
+
+/* Full-width Buttons */
+.controls-panel button.full {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  color: #00ffff;
+  border: 2px solid #00ffff;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.controls-panel button.full:hover {
+  background: rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+}
+
+/* Icon Button Row */
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.action-buttons button {
+  background: transparent;
+  border: 2px solid #00ffff;
+  color: #00ffff;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+.action-buttons button:hover {
+  background: rgba(0,255,255,0.1);
+  box-shadow: 0 0 8px rgba(0,255,255,0.3);
+}
+
+/* Reset Link */
+.controls-panel .reset-link {
+  text-align: center;
+  font-size: 1rem;
+  color: #00ffff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 600;
+  padding-top: 0.5rem;
+}
+.controls-panel .reset-link:hover {
+  opacity: 0.8;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .editor {
+  border: 1px solid rgba(0,255,255,0.05);
+  font-style: italic;
+  opacity: 0.95;
+
+    width: 95vw;
+  }
+  .controls-panel {
+  pointer-events: none;
+
+    width: 90vw;
+  }
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  .action-buttons button {
+    width: 48px;
+    height: 48px;
+  }
+  button,
+  select,
+  input[type=\"file\"] {
+    min-height: 48px;
+  }
+}
+/* Dialog Modal Override */
+.controls-panel {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: unset !important;
+  max-height: unset !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  box-shadow: 0 12px 40px rgba(0, 255, 255, 0.15);
+  border-radius: 0;
+  padding: 2rem;
+  z-index: 9999;
+}
+
+.controls-panel[open] {
+  display: flex;
+}
+
+/* Adjust toggle button placement */
+.editor-wrapper {
+  position: relative;
+}
+.toggle-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+}
+
+/* Custom Dialog Overlay */
+.custom-dialog-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+.custom-dialog-overlay.settingsVisible {
+  display: flex;
+}
+
+.custom-dialog {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  box-shadow: 0 12px 40px rgba(0, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 90vw;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.custom-dialog {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 2rem;
+  width: 90vw;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.25rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.custom-dialog label {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #e0e0e0;
+}
+
+.custom-dialog select {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+  padding: 0.75rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 1rem;
+}
+
+.custom-dialog .full {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #00ffff;
+  background: transparent;
+  border: 2px solid #00ffff;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-dialog .full:hover {
+  background: rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
+}
+
+.custom-dialog .action-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.custom-dialog .action-buttons button {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid #00ffff;
+  background: transparent;
+  color: #00ffff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-dialog .action-buttons button:hover {
+  background: rgba(0,255,255,0.1);
+  box-shadow: 0 0 8px rgba(0,255,255,0.3);
+}
+
+.custom-dialog .reset-link {
+  font-size: 1rem;
+  text-align: center;
+  background: none;
+  border: none;
+  color: #00ffff;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+}
