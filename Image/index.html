@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -82,9 +81,7 @@
   </div>
   <div id="editor">
     <img id="baseImage" src="" alt="" style="display:none;">
-  </div>
-
-  <div id="overlayForm">
+  </div>  <div id="overlayForm">
     <label>Image URL: <input type="text" id="formUrl"></label>
     <label>Width (px): <input type="number" id="formWidth"></label>
     <label>Height (px): <input type="number" id="formHeight"></label>
@@ -92,9 +89,7 @@
     <label>Blur (px): <input type="number" id="formBlur"></label>
     <label>Corner Radius (px): <input type="number" id="formRadius"></label>
     <button onclick="applyOverlayChanges()">Apply</button>
-  </div>
-
-  <script>
+  </div>  <script>
     const upload = document.getElementById('upload');
     const baseImage = document.getElementById('baseImage');
     const editor = document.getElementById('editor');
@@ -143,6 +138,7 @@
       overlay.style.position = 'absolute';
       overlay.style.borderRadius = '0px';
       overlay.style.backdropFilter = 'blur(0px)';
+      overlay.style.filter = 'blur(0px)';
       overlay.style.backgroundColor = 'transparent';
       overlay.draggable = false;
       overlay.dataset.scale = 1;
@@ -236,7 +232,7 @@
       document.getElementById('formWidth').value = parseInt(selectedOverlay.style.width);
       document.getElementById('formHeight').value = parseInt(selectedOverlay.style.height);
       document.getElementById('formBgColor').value = selectedOverlay.style.backgroundColor || '#ffffff';
-      document.getElementById('formBlur').value = parseInt(selectedOverlay.style.backdropFilter.replace(/[^\\d]/g, '') || 0);
+      document.getElementById('formBlur').value = parseInt(selectedOverlay.style.backdropFilter.replace(/[^\d]/g, '') || 0);
       document.getElementById('formRadius').value = parseInt(selectedOverlay.style.borderRadius || 0);
       overlayForm.style.display = 'block';
     }
@@ -247,7 +243,9 @@
       selectedOverlay.style.width = document.getElementById('formWidth').value + 'px';
       selectedOverlay.style.height = document.getElementById('formHeight').value + 'px';
       selectedOverlay.style.backgroundColor = document.getElementById('formBgColor').value;
-      selectedOverlay.style.backdropFilter = 'blur(' + document.getElementById('formBlur').value + 'px)';
+      const blurVal = document.getElementById('formBlur').value + 'px';
+      selectedOverlay.style.backdropFilter = 'blur(' + blurVal + ')';
+      selectedOverlay.style.filter = 'blur(' + blurVal + ')'; // fallback for html2canvas
       selectedOverlay.style.borderRadius = document.getElementById('formRadius').value + 'px';
       overlayForm.style.display = 'none';
     }
@@ -264,6 +262,5 @@
         link.click();
       });
     }
-  </script>
-</body>
+  </script></body>
 </html>
