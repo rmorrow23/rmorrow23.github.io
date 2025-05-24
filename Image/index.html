@@ -1,0 +1,278 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Element-Based Image Editor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    #editor {
+      position: relative;
+      width: 95vw;
+      max-width: 95vw;
+      margin-top: 20px;
+      border: 2px solid #ccc;
+    }
+    #editor::before {
+      content: "";
+      display: block;
+      padding-top: calc(100% * (var(--height, 3840) / var(--width, 3840)));
+    }
+    #editor img, .overlay {
+      position: absolute;
+      object-fit: contain;
+      touch-action: none;
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    .overlay {
+      cursor: move;
+      z-index: 2;
+      transform-origin: center;
+    }
+    #overlayForm {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      z-index: 999;
+    }
+    #overlayForm label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    #overlayForm input {
+      width: 100%;
+      padding: 5px;
+    }
+    #overlayForm button {
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Element-Based Image Editor</h1>
+  <label for="resolutionSelect">Canvas Resolution:</label>
+  <select id="resolutionSelect">
+    <option value="3840x3840">4K Square (3840x3840)</option>
+    <option value="886x1920">Mobile Vertical (886x1920)</option>
+    <option value="1920x1080">Full HD (1920x1080)</option>
+  </select>
+  <input type="file" id="upload" accept="image/*">
+  <div class="controls">
+    <button onclick="addOverlayImage()">Add Overlay</button>
+    <button onclick="saveImage()">Download Result</button>
+  </div>
+  <div id="editor">
+    <img id="baseImage" src="" alt="" style="display:none;">
+  </div>  <div id="overlayForm">
+    <label>Image URL: <input type="text" id="formUrl"></label>
+    <label>Width (px): <input type="number" id="formWidth"></label>
+    <label>Height (px): <input type="number" id="formHeight"></label>
+    <label>Background Color (hex or rgba): <input type="text" id="formBgColor"></label>
+    <label>Blur (px): <input type="number" id="formBlur"></label>
+    <label>Corner Radius (px): <input type="number" id="formRadius"></label>
+    <button onclick="applyOverlayChanges()">Apply</button>
+  </div>  <script>
+    const upload = document.getElementById('upload');
+    const baseImage = document.getElementById('baseImage');
+    const editor = document.getElementById('editor');
+    const resolutionSelect = document.getElementById('resolutionSelect');
+    const overlayForm = document.getElementById('overlayForm');
+    let selectedOverlay = null;
+
+    let canvasWidth = 3840;
+    let canvasHeight = 3840;
+
+    function updateCanvasSize() {
+      const [width, height] = resolutionSelect.value.split('x').map(Number);
+      canvasWidth = width;
+      canvasHeight = height;
+      editor.style.setProperty('--width', width);
+      editor.style.setProperty('--height', height);
+    }
+
+    resolutionSelect.addEventListener('change', updateCanvasSize);
+    updateCanvasSize();
+
+    upload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          baseImage.src = event.target.result;
+          baseImage.style.display = 'block';
+          baseImage.style.top = '0';
+          baseImage.style.left = '0';
+          baseImage.style.width = '100%';
+          baseImage.style.height = '100%';
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function addOverlayImage() {
+      const overlay = document.createElement('img');
+      overlay.src = 'https://via.placeholder.com/100';
+      overlay.classList.add('overlay');
+      overlay.style.width = '100px';
+      overlay.style.height = '100px';
+      overlay.style.left = '50px';
+      overlay.style.top = '50px';
+      overlay.style.position = 'absolute';
+      overlay.style.borderRadius = '0px';
+      overlay.style.backdropFilter = 'blur(0px)';
+      overlay.style.backgroundColor = 'transparent';
+      overlay.draggable = false;
+      overlay.dataset.scale = 1;
+      overlay.dataset.rotation = 0;
+
+      let startX, startY, origX, origY;
+
+      function moveOverlay(ev) {
+        const clientX = ev.type.includes('touch') ? ev.touches[0].clientX : ev.clientX;
+        const clientY = ev.type.includes('touch') ? ev.touches[0].clientY : ev.clientY;
+        overlay.style.left = origX + (clientX - startX) + 'px';
+        overlay.style.top = origY + (clientY - startY) + 'px';
+      }
+
+      function stopMoveOverlay() {
+        document.removeEventListener('mousemove', moveOverlay);
+        document.removeEventListener('mouseup', stopMoveOverlay);
+        document.removeEventListener('touchmove', moveOverlay);
+        document.removeEventListener('touchend', stopMoveOverlay);
+      }
+
+      function pinchGesture(ev) {
+        if (ev.touches.length === 2) {
+          ev.preventDefault();
+          const dx = ev.touches[0].clientX - ev.touches[1].clientX;
+          const dy = ev.touches[0].clientY - ev.touches[1].clientY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const angle = Math.atan2(dy, dx);
+
+          if (!overlay.dataset.startDist) {
+            overlay.dataset.startDist = distance;
+            overlay.dataset.startAngle = angle;
+            overlay.dataset.initScale = overlay.dataset.scale;
+            overlay.dataset.initRot = overlay.dataset.rotation;
+          }
+
+          const scale = distance / overlay.dataset.startDist * overlay.dataset.initScale;
+          const rot = (angle - overlay.dataset.startAngle) + parseFloat(overlay.dataset.initRot);
+          overlay.dataset.scale = scale;
+          overlay.dataset.rotation = rot;
+          overlay.style.transform = `scale(${scale}) rotate(${rot}rad)`;
+        }
+      }
+
+      overlay.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        selectedOverlay = overlay;
+        startX = e.clientX;
+        startY = e.clientY;
+        origX = overlay.offsetLeft;
+        origY = overlay.offsetTop;
+        document.addEventListener('mousemove', moveOverlay);
+        document.addEventListener('mouseup', stopMoveOverlay);
+      });
+
+      overlay.addEventListener('touchstart', function (e) {
+        if (e.touches.length === 1) {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+          origX = overlay.offsetLeft;
+          origY = overlay.offsetTop;
+        }
+        selectedOverlay = overlay;
+      });
+
+      overlay.addEventListener('touchmove', function (e) {
+        if (e.touches.length === 1) {
+          moveOverlay(e);
+        } else if (e.touches.length === 2) {
+          pinchGesture(e);
+        }
+      });
+
+      overlay.addEventListener('touchend', function () {
+        delete overlay.dataset.startDist;
+        delete overlay.dataset.startAngle;
+      });
+
+      overlay.addEventListener('click', function (e) {
+        e.stopPropagation();
+        selectedOverlay = overlay;
+        openCustomizationForm();
+      });
+
+      editor.appendChild(overlay);
+    }
+
+    function openCustomizationForm() {
+      if (!selectedOverlay) return;
+      document.getElementById('formUrl').value = selectedOverlay.src;
+      document.getElementById('formWidth').value = parseInt(selectedOverlay.style.width);
+      document.getElementById('formHeight').value = parseInt(selectedOverlay.style.height);
+      document.getElementById('formBgColor').value = selectedOverlay.style.backgroundColor || '#ffffff';
+      document.getElementById('formBlur').value = parseInt(selectedOverlay.style.filter.replace(/[^\d]/g, '') || 0);
+      document.getElementById('formRadius').value = parseInt(selectedOverlay.style.borderRadius || 0);
+      overlayForm.style.display = 'block';
+    }
+
+    function applyOverlayChanges() {
+      if (!selectedOverlay) return;
+      selectedOverlay.src = document.getElementById('formUrl').value;
+      selectedOverlay.style.width = document.getElementById('formWidth').value + 'px';
+      selectedOverlay.style.height = document.getElementById('formHeight').value + 'px';
+      selectedOverlay.style.backgroundColor = document.getElementById('formBgColor').value;
+      selectedOverlay.style.filter = 'blur(' + document.getElementById('formBlur').value + 'px)';
+      selectedOverlay.style.borderRadius = document.getElementById('formRadius').value + 'px';
+      overlayForm.style.display = 'none';
+    }
+
+    function saveImage() {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      const ctx = canvas.getContext('2d');
+
+      const images = editor.querySelectorAll('img');
+      let loadCount = 0;
+
+      images.forEach(img => {
+        const temp = new Image();
+        temp.crossOrigin = 'anonymous';
+        temp.src = img.src;
+        temp.onload = () => {
+          const x = img.offsetLeft;
+          const y = img.offsetTop;
+          const w = img.offsetWidth;
+          const h = img.offsetHeight;
+          ctx.drawImage(temp, x, y, w, h);
+          loadCount++;
+          if (loadCount === images.length) {
+            const link = document.createElement('a');
+            link.download = 'edited_image.png';
+            link.href = canvas.toDataURL();
+            link.click();
+          }
+        };
+      });
+    }
+  </script></body>
+</html>
