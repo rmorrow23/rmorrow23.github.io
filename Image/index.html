@@ -1,8 +1,10 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Element-Based Image Editor</title>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -19,6 +21,7 @@
       max-width: 95vw;
       margin-top: 20px;
       border: 2px solid #ccc;
+      background: white;
     }
     #editor::before {
       content: "";
@@ -75,11 +78,13 @@
   <input type="file" id="upload" accept="image/*">
   <div class="controls">
     <button onclick="addOverlayImage()">Add Overlay</button>
-    <button onclick="saveImage()">Download Result</button>
+    <button onclick="saveScreenshot()">Download Result</button>
   </div>
   <div id="editor">
     <img id="baseImage" src="" alt="" style="display:none;">
-  </div>  <div id="overlayForm">
+  </div>
+
+  <div id="overlayForm">
     <label>Image URL: <input type="text" id="formUrl"></label>
     <label>Width (px): <input type="number" id="formWidth"></label>
     <label>Height (px): <input type="number" id="formHeight"></label>
@@ -87,7 +92,9 @@
     <label>Blur (px): <input type="number" id="formBlur"></label>
     <label>Corner Radius (px): <input type="number" id="formRadius"></label>
     <button onclick="applyOverlayChanges()">Apply</button>
-  </div>  <script>
+  </div>
+
+  <script>
     const upload = document.getElementById('upload');
     const baseImage = document.getElementById('baseImage');
     const editor = document.getElementById('editor');
@@ -229,7 +236,7 @@
       document.getElementById('formWidth').value = parseInt(selectedOverlay.style.width);
       document.getElementById('formHeight').value = parseInt(selectedOverlay.style.height);
       document.getElementById('formBgColor').value = selectedOverlay.style.backgroundColor || '#ffffff';
-      document.getElementById('formBlur').value = parseInt(selectedOverlay.style.filter.replace(/[^\d]/g, '') || 0);
+      document.getElementById('formBlur').value = parseInt(selectedOverlay.style.backdropFilter.replace(/[^\\d]/g, '') || 0);
       document.getElementById('formRadius').value = parseInt(selectedOverlay.style.borderRadius || 0);
       overlayForm.style.display = 'block';
     }
@@ -240,39 +247,23 @@
       selectedOverlay.style.width = document.getElementById('formWidth').value + 'px';
       selectedOverlay.style.height = document.getElementById('formHeight').value + 'px';
       selectedOverlay.style.backgroundColor = document.getElementById('formBgColor').value;
-      selectedOverlay.style.filter = 'blur(' + document.getElementById('formBlur').value + 'px)';
+      selectedOverlay.style.backdropFilter = 'blur(' + document.getElementById('formBlur').value + 'px)';
       selectedOverlay.style.borderRadius = document.getElementById('formRadius').value + 'px';
       overlayForm.style.display = 'none';
     }
 
-    function saveImage() {
-      const canvas = document.createElement('canvas');
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-      const ctx = canvas.getContext('2d');
-
-      const images = editor.querySelectorAll('img');
-      let loadCount = 0;
-
-      images.forEach(img => {
-        const temp = new Image();
-        temp.crossOrigin = 'anonymous';
-        temp.src = img.src;
-        temp.onload = () => {
-          const x = img.offsetLeft;
-          const y = img.offsetTop;
-          const w = img.offsetWidth;
-          const h = img.offsetHeight;
-          ctx.drawImage(temp, x, y, w, h);
-          loadCount++;
-          if (loadCount === images.length) {
-            const link = document.createElement('a');
-            link.download = 'edited_image.png';
-            link.href = canvas.toDataURL();
-            link.click();
-          }
-        };
+    function saveScreenshot() {
+      html2canvas(document.getElementById('editor'), {
+        allowTaint: true,
+        useCORS: true,
+        backgroundColor: null
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'edited_image.png';
+        link.href = canvas.toDataURL();
+        link.click();
       });
     }
-  </script></body>
+  </script>
+</body>
 </html>
