@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PixelFrost</title>
+  <link rel="stylesheet" href="pixelfrost.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <h1 class="brand">PixelFrost</h1>
+    <p class="tagline">Create. Enhance. Capture.</p>
+  </header>
+
+  <main>
+    <section class="editor-wrapper">
+      <section class="editor">
+        <button class="toggle-btn" onclick="toggleControls()">☰</button>
+        <span>Your design will appear here</span>
+      </section>
+    </section>
+
+    <div class="custom-dialog-overlay" id="controlPanel">
+      <div class="custom-dialog">
+        <label for="resolutionSelect">Canvas Size</label>
+        <select id="resolutionSelect">
+          <option value="3840x3840">4K Square</option>
+          <option value="886x1920">Mobile Vertical</option>
+          <option value="1920x1080">Full HD</option>
+        </select>
+
+        <button class="full" onclick="document.getElementById('upload').click()">↑ Choose Image</button>
+        <input type="file" id="upload" accept="image/*" style="display:none;">
+
+        <button class="full" onclick="addOverlayImage()">＋ Add Overlay</button>
+
+        <div class="action-buttons">
+          <button onclick="zoomEditor(0.9)">➖</button>
+          <button onclick="zoomEditor(1.1)">➕</button>
+          <button onclick="saveScreenshot()">⬇️</button>
+        </div>
+
+        <button class="reset-link" onclick="resetZoom()">Reset</button>
+        <button class="full close-btn" onclick="toggleControls()">Close</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="pixelfrost.js"></script>
+</body>
+</html>
