@@ -10,7 +10,8 @@
     <link rel="manifest" href="manifest.json" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        html,body {
+        html,
+        body {
             font-family: 'Poppins', sans-serif;
             background: url('Tech.jpg') no-repeat center center fixed;
             background-size: cover;
@@ -19,14 +20,14 @@
             justify-content: center;
             text-align: center;
             overflow: hidden;
-height:100vh;
-width:100vw;
+            height: 100vh;
+            width: 100vw;
 
         }
 
         .overlay {
-            height:100vh;
-width:100vw;
+            height: 100vh;
+            width: 100vw;
             position: fixed;
             top: 0;
             left: 0;
@@ -45,8 +46,8 @@ width:100vw;
             background: rgba(200, 200, 200, 0);
             padding: 10% 5% 10% 5%;
             border-radius: 20px;
-            height:100vh;
-width:100vw;
+            height: 100vh;
+            width: 100vw;
             margin-top: 0;
             box-shadow: 0px 0px 10px rgba(255, 255, 255, 0);
 
@@ -102,6 +103,7 @@ width:100vw;
                 transform: translateY(0px);
             }
         }
+
         @keyframes fadeInLogo {
             from {
                 opacity: 0;
@@ -159,7 +161,7 @@ width:100vw;
             border: 0px solid #00000000;
             background-color: rgba(255, 255, 255, 0.1);
             box-shadow: 0px 0px 3px rgba(255, 255, 255, 0.5);
-            object-fit: cover;            
+            object-fit: cover;
             animation: fadeInLogo 1.5s ease-out forwards;
             opacity: 0;
             /* Start hidden for animation */
@@ -212,7 +214,7 @@ width:100vw;
                 border-radius: 5%;
                 border: 0px solid #00000000;
                 object-fit: cover;
-                margin-top: 5rem;
+                margin-top: -1rem;
                 background-color: rgba(255, 255, 255, 0.1);
                 box-shadow: 0px 0px 3px rgba(255, 255, 255, 0.5);
             }
@@ -228,15 +230,16 @@ width:100vw;
                 padding: 5px;
                 box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
             }
+
             h1 {
-            font-size: 1.75rem;
-            margin-bottom: 20px;
-            margin-left: -25%;
-            color: #00ffcc;
-            width: 150%;
-            animation: fadeIn .95s ease-out 1.5s forwards;
-            opacity: 0;
-        }
+                font-size: 1.75rem;
+                margin-bottom: 20px;
+                margin-left: -25%;
+                color: #00ffcc;
+                width: 150%;
+                animation: fadeIn .95s ease-out 1.5s forwards;
+                opacity: 0;
+            }
 
         }
 
@@ -246,6 +249,43 @@ width:100vw;
         }
     </style>
 </head>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
+        authDomain: "morrow-industries.firebaseapp.com",
+        projectId: "morrow-industries",
+        messagingSenderId: "75190213345",
+        appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const week = new Date();
+    const weekKey = `week_${week.getFullYear()}_W${Math.ceil((((week - new Date(week.getFullYear(), 0, 1)) / 86400000) + 1) / 7)}`;
+
+    const btn = document.getElementById('progressButton');
+
+    async function updateChecklistProgress() {
+        const docRef = doc(db, "checklists", weekKey);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const tasks = docSnap.data().tasks;
+            const completed = tasks.filter(t => t.done).length;
+            const percent = Math.round((completed / tasks.length) * 100);
+            if (btn) btn.innerText = `Checklist Progress: ${percent}% Complete`;
+        } else {
+            if (btn) btn.innerText = `Checklist Progress: 0% Complete`;
+        }
+    }
+
+    updateChecklistProgress();
+</script>
+
 
 <body>
     <div class="overlay"></div>
@@ -264,6 +304,24 @@ width:100vw;
         <h1>Morrow Industries</h1>
         <p>This site is currently under construction.<br><br>
             Check back soon to explore my portfolio and projects!</p>
+        <a href="/CheckList/index.html"
+            style="text-decoration: none; margin-top: 20px; animation: fadeIn 0.95s ease-out 3s forwards; opacity: 0;">
+            <button id="progressButton" style="
+            padding: 12px 24px;
+            font-size: 1rem;
+            background: rgba(0, 245, 294, 1);
+            color: black;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 294, 0.5);
+            transition: background 0.3s ease;">
+                View Weekly Checklist
+            </button>
+        </a>
+
+        </a>
+
         <div class="loader_"></div>
     </div>
     <footer>© 2025 Morrow Industries | All rights reserved</footer>
