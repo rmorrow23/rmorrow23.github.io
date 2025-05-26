@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weekly Checklist</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
+  <style>
+    html, body {
+      font-family: 'Poppins', sans-serif;
+      background: url('Tech.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      margin: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      backdrop-filter: blur(15px);
+      background: rgba(0, 0, 20, 0.5);
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+      overflow-y: auto;
+      height: 90vh;
+      margin-top: 2vh;
+    }
+    ::-webkit-scrollbar {
+    display: none;
+}
+
+    h1 {
+      color: #00ffcc;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .task {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .task:hover {
+      background: rgba(0, 255, 204, 0.2);
+    }
+
+    .progress-bar {
+      height: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00ffcc, #00ccaa);
+      width: 0%;
+      transition: width 0.3s ease-in-out;
+    }
+
+    .floating-badge {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 245, 294, 1);
+      color: black;
+      padding: 10px 14px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(0, 255, 294, 0.5);
+      z-index: 999;
+      display: none;
+    }
+
+    .dialog {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 20, 0.95);
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+      max-width: 500px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .dialog h2 {
+      margin-top: 0;
+      color: #00ffcc;
+    }
+
+    .dialog button {
+      margin-top: 1rem;
+      padding: 8px 16px;
+      background: #00ffcc;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="container">
+    <h1>Weekly Developer Tasks</h1>
+    <div class="progress-bar">
+      <div id="progressBarFill" class="progress-bar-fill"></div>
+    </div>
+    <div id="taskList">Loading...</div>
+  </div>
+  <div id="floatingProgress" class="floating-badge"></div>
+  <div id="taskDialog" class="dialog">
+    <h2 id="dialogTitle"></h2>
+    <p id="dialogDesc"></p>
+    <button onclick="document.getElementById('taskDialog').style.display='none'">Close</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
+      authDomain: "morrow-industries.firebaseapp.com",
+      projectId: "morrow-industries",
+      messagingSenderId: "75190213345",
+      appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const week = new Date();
+    const weekKey = `week_${week.getFullYear()}_W${Math.ceil((((week - new Date(week.getFullYear(), 0, 1)) / 86400000) + 1) / 7)}`;
+    const docRef = doc(db, "checklists", weekKey);
+    const taskListDiv = document.getElementById('taskList');
+    const progressFill = document.getElementById('progressBarFill');
+    const progressBadge = document.getElementById('floatingProgress');
+    const dialog = document.getElementById('taskDialog');
+    const dialogTitle = document.getElementById('dialogTitle');
+    const dialogDesc = document.getElementById('dialogDesc');
+
+    async function loadTasks() {
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const tasks = docSnap.data().tasks;
+        renderTasks(tasks);
+      } else {
+        await setDoc(docRef, { tasks: [] });
+        taskListDiv.innerHTML = "<p>No tasks yet.</p>";
+      }
+    }
+
+    function renderTasks(tasks) {
+      taskListDiv.innerHTML = "";
+      tasks.forEach((task, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'task';
+        wrapper.innerHTML = `<strong>${task.title}</strong>`;
+        wrapper.addEventListener('click', () => {
+          dialogTitle.textContent = task.title;
+          dialogDesc.textContent = task.description;
+          dialog.style.display = 'block';
+        });
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = task.done;
+        checkbox.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          tasks[index].done = checkbox.checked;
+          await setDoc(docRef, { tasks });
+          updateProgress(tasks);
+        });
+
+        wrapper.prepend(checkbox);
+        taskListDiv.appendChild(wrapper);
+      });
+
+      updateProgress(tasks);
+    }
+
+    function updateProgress(tasks) {
+      const completed = tasks.filter(t => t.done).length;
+      const percent = Math.round((completed / tasks.length) * 100);
+      progressFill.style.width = percent + '%';
+      progressBadge.textContent = `${percent}% Complete`;
+      progressBadge.style.display = 'block';
+    }
+
+    loadTasks();
+  </script>
+</body>
+</html>
