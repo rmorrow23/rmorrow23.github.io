@@ -1,15 +1,15 @@
 {
-  "week_2025_W21": {
+  "week_2025_W22": {
     "tasks": [
       {
         "title": "Transfer Code to New Expo Go Account",
         "description": "Transfer the existing app code to the shared Expo Go account that both you and the developer will use.",
-        "done": false
+        "done": true
       },
       {
-        "title": "Adjust Baby Data and Loan Data in App",
-        "description": "Ensure Baby QR scans properly update the financial statements. Also, allow users to manually enter loan data.",
-        "done": false
+        "title": "Add Baby Data in App",
+        "description": "Ensure Baby QR scans properly update the financial statements.",
+        "done": true
       },
       {
         "title": "Loan Functionality",
@@ -19,7 +19,7 @@
       {
         "title": "Fix Profession Loading from QR",
         "description": "Ensure that professions are loaded correctly from QR codes and reflected properly in the financial data.",
-        "done": false
+        "done": true
       },
       {
         "title": "Canva Presentation Collaboration",
