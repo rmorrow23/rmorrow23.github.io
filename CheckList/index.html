@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,108 +14,104 @@
       height: 100vh;
       width: 100vw;
       overflow: hidden;
-    }
-
-    .overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      backdrop-filter: blur(15px);
-      background: rgba(0, 0, 20, 0.5);
-      z-index: 0;
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      padding: 2rem;
-      max-width: 800px;
-      margin: auto;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 15px;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-      overflow-y: auto;
-      height: 90vh;
-      margin-top: 2vh;
-    }
-    ::-webkit-scrollbar {
-    display: none;
+    }.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  backdrop-filter: blur(15px);
+  background: rgba(0, 0, 20, 0.5);
+  z-index: 0;
 }
 
-    h1 {
-      color: #00ffcc;
-      text-align: center;
-      margin-bottom: 1rem;
-    }
+.container {
+  position: relative;
+  z-index: 1;
+  padding: 2rem;
+  max-width: 800px;
+  margin: auto;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+  overflow-y: auto;
+  height: 90vh;
+  margin-top: 5vh;
+}
 
-    .task {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 10px 15px;
-      margin: 10px 0;
-      border-radius: 8px;
-      cursor: pointer;
-    }
+h1 {
+  color: #00ffcc;
+  text-align: center;
+  margin-bottom: 1rem;
+}
 
-    .task:hover {
-      background: rgba(0, 255, 204, 0.2);
-    }
+.task {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
 
-    .progress-bar {
-      height: 20px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 1rem;
-    }
+.task:hover {
+  background: rgba(0, 255, 204, 0.2);
+}
 
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #00ffcc, #00ccaa);
-      width: 0%;
-      transition: width 0.3s ease-in-out;
-    }
+.progress-bar {
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
 
-    .floating-badge {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(0, 245, 294, 1);
-      color: black;
-      padding: 10px 14px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      border-radius: 12px;
-      box-shadow: 0 0 8px rgba(0, 255, 294, 0.5);
-      z-index: 999;
-      display: none;
-    }
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ffcc, #00ccaa);
+  width: 0%;
+  transition: width 0.3s ease-in-out;
+}
 
-    .dialog {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 20, 0.95);
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
-      max-width: 500px;
-      display: none;
-      z-index: 1000;
-    }
+.floating-badge {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #00ffcc;
+  color: black;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0, 255, 204, 0.5);
+  z-index: 999;
+  display: none;
+}
 
-    .dialog h2 {
-      margin-top: 0;
-      color: #00ffcc;
-    }
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 20, 0.95);
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+  max-width: 500px;
+  display: none;
+  z-index: 1000;
+}
 
-    .dialog button {
-      margin-top: 1rem;
-      padding: 8px 16px;
-      background: #00ffcc;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
+.dialog h2 {
+  margin-top: 0;
+  color: #00ffcc;
+}
+
+.dialog button {
+  margin-top: 1rem;
+  padding: 8px 16px;
+  background: #00ffcc;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
   </style>
 </head>
 <body>
@@ -127,15 +122,15 @@
       <div id="progressBarFill" class="progress-bar-fill"></div>
     </div>
     <div id="taskList">Loading...</div>
+    <h1>Archived Tasks</h1>
+    <div id="archivedTasks"></div>
   </div>
   <div id="floatingProgress" class="floating-badge"></div>
   <div id="taskDialog" class="dialog">
     <h2 id="dialogTitle"></h2>
     <p id="dialogDesc"></p>
     <button onclick="document.getElementById('taskDialog').style.display='none'">Close</button>
-  </div>
-
-  <script type="module">
+  </div>  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
@@ -152,8 +147,8 @@
 
     const week = new Date();
     const weekKey = `week_${week.getFullYear()}_W${Math.ceil((((week - new Date(week.getFullYear(), 0, 1)) / 86400000) + 1) / 7)}`;
-    const docRef = doc(db, "checklists", weekKey);
     const taskListDiv = document.getElementById('taskList');
+    const archivedDiv = document.getElementById('archivedTasks');
     const progressFill = document.getElementById('progressBarFill');
     const progressBadge = document.getElementById('floatingProgress');
     const dialog = document.getElementById('taskDialog');
@@ -161,18 +156,18 @@
     const dialogDesc = document.getElementById('dialogDesc');
 
     async function loadTasks() {
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const tasks = docSnap.data().tasks;
-        renderTasks(tasks);
-      } else {
-        await setDoc(docRef, { tasks: [] });
-        taskListDiv.innerHTML = "<p>No tasks yet.</p>";
-      }
+      const currentRef = doc(db, "checklists", weekKey);
+      const archiveRef = doc(db, "checklists", "archived");
+
+      const currentSnap = await getDoc(currentRef);
+      const archiveSnap = await getDoc(archiveRef);
+
+      if (currentSnap.exists()) renderTasks(currentSnap.data().tasks, taskListDiv, true);
+      if (archiveSnap.exists()) renderTasks(archiveSnap.data().tasks, archivedDiv, false);
     }
 
-    function renderTasks(tasks) {
-      taskListDiv.innerHTML = "";
+    function renderTasks(tasks, container, isEditable) {
+      container.innerHTML = "";
       tasks.forEach((task, index) => {
         const wrapper = document.createElement('div');
         wrapper.className = 'task';
@@ -183,21 +178,23 @@
           dialog.style.display = 'block';
         });
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = task.done;
-        checkbox.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          tasks[index].done = checkbox.checked;
-          await setDoc(docRef, { tasks });
-          updateProgress(tasks);
-        });
+        if (isEditable) {
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = task.done;
+          checkbox.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            tasks[index].done = checkbox.checked;
+            await setDoc(doc(db, "checklists", weekKey), { tasks });
+            updateProgress(tasks);
+          });
+          wrapper.prepend(checkbox);
+        }
 
-        wrapper.prepend(checkbox);
-        taskListDiv.appendChild(wrapper);
+        container.appendChild(wrapper);
       });
 
-      updateProgress(tasks);
+      if (isEditable) updateProgress(tasks);
     }
 
     function updateProgress(tasks) {
@@ -209,6 +206,5 @@
     }
 
     loadTasks();
-  </script>
-</body>
+  </script></body>
 </html>
