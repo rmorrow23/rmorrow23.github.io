@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fridge Options</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #121212;
+      color: #f0f0f0;
+    }
+
+    header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      background: #1e90ff;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    header h1 {
+      flex: 1;
+      text-align: center;
+      margin: 0;
+    }
+
+    #admin-login-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      position: absolute;
+      right: 1rem;
+      top: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      transition: background 0.2s ease;
+    }
+
+    #admin-login-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .card {
+      background: #1e1e1e;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      overflow: hidden;
+      transition: transform 0.2s ease;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+    }
+
+    .carousel {
+      position: relative;
+      overflow: hidden;
+      height: 200px;
+    }
+
+    .carousel img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: none;
+    }
+
+    .carousel img.active {
+      display: block;
+    }
+
+    .info {
+      padding: 1rem;
+    }
+
+    .info h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .price {
+      font-weight: bold;
+      color: #1e90ff;
+      margin-top: 0.5rem;
+    }
+
+    /* Fullscreen Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.95);
+      overflow-y: auto;
+      padding: 2rem;
+      box-sizing: border-box;
+    }
+
+    .modal-content {
+      background: #1e1e1e;
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 800px;
+      margin: auto;
+      color: #f0f0f0;
+      position: relative;
+    }
+
+    .modal h2 {
+      margin-top: 0;
+    }
+
+    .modal .carousel {
+      height: 300px;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .carousel-controls {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .carousel-controls button {
+      background: rgba(0, 0, 0, 0.4);
+      border: none;
+      color: black;
+      font-size: 1.5rem;
+      padding: 0.5rem 1.0rem;
+      border-radius: 50%;
+      cursor: pointer;
+      pointer-events: all;
+      backdrop-filter: blur(5px);
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+
+    .features {
+      margin-top: 1rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    .features li::before {
+      content: "✔️ ";
+      color: #1e90ff;
+    }
+
+    .close-btn {
+      background: #ff4d4d;
+      border: none;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      float: right;
+    }
+
+    /* Admin styles */
+    #admin-section {
+      display: none;
+      padding: 1rem;
+      background: #1e1e1e;
+      border-top: 2px solid #1e90ff;
+    }
+
+    #admin-form input, 
+    #admin-form textarea {
+      width: 100%;
+      margin: 0.3rem 0;
+      padding: 0.5rem;
+      border: 1px solid #555;
+      border-radius: 6px;
+      background: #2b2b2b;
+      color: #fff;
+    }
+
+    #admin-form button {
+      margin-top: 0.5rem;
+      padding: 0.7rem 1rem;
+      background: #1e90ff;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .admin-controls {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem;
+    }
+
+    .admin-controls button {
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 0.3rem 0.6rem;
+    }
+
+    .admin-controls .delete {
+      background: #ff4d4d;
+    }
+
+    .admin-controls .edit {
+      background: #28a745;
+    }
+    #modal-carousel img {
+  display: block;
+  max-width: 100%;
+  height: 0.5rem;
+  object-fit: fill;
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Choose Your New Fridge</h1>
+    <button id="admin-login-btn" title="Admin Login">⚙️</button>
+  </header>
+
+  <main id="fridge-container" class="grid"></main>
+
+  <!-- Modal -->
+  <div id="fridge-modal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" id="close-modal">Close</button>
+      <h2 id="modal-brand"></h2>
+      <div class="carousel" id="modal-carousel">
+        <div class="carousel-controls">
+          <button id="prev-img">❮</button>
+          <button id="next-img">❯</button>
+        </div>
+      </div>
+      <p class="price" id="modal-price"></p>
+      <p id="modal-size"></p>
+      <p id="modal-details"></p>
+      <h3>Features:</h3>
+      <ul class="features" id="modal-features"></ul>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <section id="admin-section">
+    <h2>Admin Panel</h2>
+    <form id="admin-form">
+      <input type="hidden" id="fridge-id">
+      <input type="text" id="brand" placeholder="Brand" required>
+      <input type="number" id="price" placeholder="Price" required>
+      <input type="text" id="size" placeholder="Size" required>
+      <textarea id="images" placeholder="Image URLs (comma separated)" required></textarea>
+      <textarea id="details" placeholder="Details"></textarea>
+      <textarea id="features" placeholder="Features (comma separated)"></textarea>
+      <button type="submit">Save Fridge</button>
+    </form>
+  </section>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { 
+      getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, getDoc 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // 🔑 Replace with your Firebase project details
+    const firebaseConfig = {
+            apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
+            authDomain: "morrow-industries.firebaseapp.com",
+            databaseURL: "https://morrow-industries-default-rtdb.firebaseio.com",
+            projectId: "morrow-industries",
+            storageBucket: "morrow-industries.appspot.com",
+            messagingSenderId: "75190213345",
+            appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
+        };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const container = document.getElementById("fridge-container");
+    const modal = document.getElementById("fridge-modal");
+    const closeModal = document.getElementById("close-modal");
+    const modalBrand = document.getElementById("modal-brand");
+    const modalPrice = document.getElementById("modal-price");
+    const modalSize = document.getElementById("modal-size");
+    const modalDetails = document.getElementById("modal-details");
+    const modalCarousel = document.getElementById("modal-carousel");
+    const modalFeatures = document.getElementById("modal-features");
+    let modalImages = [];
+    let currentImg = 0;
+
+    const prevBtn = document.getElementById("prev-img");
+    const nextBtn = document.getElementById("next-img");
+
+    const adminLoginBtn = document.getElementById("admin-login-btn");
+    const adminSection = document.getElementById("admin-section");
+    let isAdmin = false;
+
+    async function loadFridges() {
+      container.innerHTML = "";
+      const querySnapshot = await getDocs(collection(db, "fridges"));
+      querySnapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        createFridgeCard(docSnap.id, data);
+      });
+    }
+
+    function createFridgeCard(id, fridge) {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const carousel = document.createElement("div");
+      carousel.className = "carousel";
+      (fridge.images || []).forEach((src, i) => {
+        const img = document.createElement("img");
+        img.src = src;
+        if (i === 0) img.classList.add("active");
+        carousel.appendChild(img);
+      });
+
+      const info = document.createElement("div");
+      info.className = "info";
+      info.innerHTML = `
+        <h2>${fridge.brand}</h2>
+        <p class="price">$${fridge.price}</p>
+        <p>Size: ${fridge.size}</p>
+      `;
+
+      card.appendChild(carousel);
+      card.appendChild(info);
+
+      card.addEventListener("click", () => openModal(fridge, carousel));
+
+      // Admin controls
+      if (isAdmin) {
+        const controls = document.createElement("div");
+        controls.className = "admin-controls";
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit";
+        editBtn.textContent = "Edit";
+        editBtn.onclick = (e) => {
+          e.stopPropagation(); // ✅ prevent opening modal
+          editFridge(id, fridge);
+        };
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "delete";
+        delBtn.textContent = "Delete";
+        delBtn.onclick = async (e) => {
+          e.stopPropagation(); // ✅ prevent opening modal
+          await deleteDoc(doc(db, "fridges", id));
+          loadFridges();
+        };
+
+        controls.appendChild(editBtn);
+        controls.appendChild(delBtn);
+        card.appendChild(controls);
+      }
+
+      container.appendChild(card);
+    }
+
+    function openModal(fridge, cardCarousel) {
+      modalBrand.textContent = fridge.brand;
+      modalPrice.textContent = `$${fridge.price}`;
+      modalSize.textContent = `Size: ${fridge.size}`;
+      modalDetails.textContent = fridge.details || "No extra details.";
+      modalFeatures.innerHTML = "";
+      (fridge.features || []).forEach(f => {
+        const li = document.createElement("li");
+        li.textContent = f;
+        modalFeatures.appendChild(li);
+      });
+
+      // Clone existing carousel images
+      const imgs = cardCarousel.querySelectorAll("img");
+      modalImages = Array.from(imgs).map(img => img.src);
+      currentImg = 0;
+      updateModalImage();
+
+      modal.style.display = "block";
+    }
+
+    function updateModalImage() {
+      const controls = document.querySelector(".carousel-controls");
+      modalCarousel.innerHTML = "";
+      if (modalImages.length > 0) {
+        const img = document.createElement("img");
+        img.src = modalImages[currentImg];
+        img.style.width = "100%";
+        img.style.height = "300px";
+        img.style.objectFit = "cover";
+        img.style.display = "block";
+        modalCarousel.appendChild(img);
+      }
+      modalCarousel.appendChild(controls);
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (modalImages.length > 0) {
+        currentImg = (currentImg - 1 + modalImages.length) % modalImages.length;
+        updateModalImage();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (modalImages.length > 0) {
+        currentImg = (currentImg + 1) % modalImages.length;
+        updateModalImage();
+      }
+    });
+
+    closeModal.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    // ✅ Swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    modal.addEventListener("touchstart", (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    modal.addEventListener("touchend", (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+
+    function handleSwipe() {
+      const threshold = 50; 
+      if (touchEndX < touchStartX - threshold) {
+        nextBtn.click();
+      }
+      if (touchEndX > touchStartX + threshold) {
+        prevBtn.click();
+      }
+    }
+
+    // Admin login
+    adminLoginBtn.addEventListener("click", async () => {
+      const inputPass = prompt("Enter admin password:");
+      const passDoc = await getDoc(doc(db, "config", "admin"));
+      if (passDoc.exists() && inputPass === passDoc.data().password) {
+        isAdmin = true;
+        adminSection.style.display = "block";
+        alert("Admin access granted.");
+        loadFridges();
+      } else {
+        alert("Incorrect password.");
+      }
+    });
+
+    // Admin form
+    document.getElementById("admin-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const id = document.getElementById("fridge-id").value;
+      const fridge = {
+        brand: document.getElementById("brand").value,
+        price: Number(document.getElementById("price").value),
+        size: document.getElementById("size").value,
+        images: document.getElementById("images").value.split(",").map(s => s.trim()),
+        details: document.getElementById("details").value,
+        features: document.getElementById("features").value.split(",").map(s => s.trim())
+      };
+
+      if (id) {
+        await updateDoc(doc(db, "fridges", id), fridge);
+      } else {
+        await addDoc(collection(db, "fridges"), fridge);
+      }
+      e.target.reset();
+      document.getElementById("fridge-id").value = "";
+      loadFridges();
+    });
+
+    function editFridge(id, fridge) {
+      document.getElementById("fridge-id").value = id;
+      document.getElementById("brand").value = fridge.brand;
+      document.getElementById("price").value = fridge.price;
+      document.getElementById("size").value = fridge.size;
+      document.getElementById("images").value = (fridge.images || []).join(", ");
+      document.getElementById("details").value = fridge.details || "";
+      document.getElementById("features").value = (fridge.features || []).join(", ");
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    loadFridges();
+  </script>
+</body>
+</html>
