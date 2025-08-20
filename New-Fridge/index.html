@@ -39,7 +39,7 @@
       position: absolute;
       right: 1rem;
       top: 1rem;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       width: 36px;
@@ -66,6 +66,7 @@
       overflow: hidden;
       transition: transform 0.2s ease;
       cursor: pointer;
+      position: relative; /* anchor heart button */
     }
 
     .card:hover {
@@ -102,6 +103,24 @@
       font-weight: bold;
       color: #1e90ff;
       margin-top: 0.5rem;
+    }
+
+    /* Favorite button */
+    .favorite-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      cursor: pointer;
+      color: #aaa;
+      transition: color 0.2s ease;
+      z-index: 2;
+    }
+
+    .favorite-btn.active {
+      color: #ff4d4d;
     }
 
     /* Fullscreen Modal */
@@ -150,17 +169,15 @@
     }
 
     .carousel-controls button {
-      background: rgba(0, 0, 0, 0.4);
+      background: transparent;
       border: none;
-      color: black;
-      font-size: 1.5rem;
-      padding: 0.5rem 1.0rem;
+      color: rgba(0, 0, 0, 0.4);
+      font-size: 5rem;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       cursor: pointer;
       pointer-events: all;
-      backdrop-filter: blur(5px);
-      margin-left: 5px;
-      margin-right: 5px;
     }
 
     .features {
@@ -234,13 +251,13 @@
     .admin-controls .edit {
       background: #28a745;
     }
-    #modal-carousel img {
-  display: block;
-  max-width: 100%;
-  height: 0.5rem;
-  object-fit: fill;
-}
 
+    #modal-carousel img {
+      display: block;
+      max-width: 100%;
+      height: 300px;
+      object-fit: cover;
+    }
   </style>
 </head>
 <body>
@@ -288,19 +305,18 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { 
-      getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, getDoc 
+      getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, getDoc, setDoc
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     // 🔑 Replace with your Firebase project details
     const firebaseConfig = {
-            apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
-            authDomain: "morrow-industries.firebaseapp.com",
-            databaseURL: "https://morrow-industries-default-rtdb.firebaseio.com",
-            projectId: "morrow-industries",
-            storageBucket: "morrow-industries.appspot.com",
-            messagingSenderId: "75190213345",
-            appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
-        };
+      apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
+      authDomain: "morrow-industries.firebaseapp.com",
+      projectId: "morrow-industries",
+      storageBucket: "morrow-industries.appspot.com",
+      messagingSenderId: "75190213345",
+      appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -323,9 +339,19 @@
     const adminLoginBtn = document.getElementById("admin-login-btn");
     const adminSection = document.getElementById("admin-section");
     let isAdmin = false;
+    let currentFavoriteId = null;
 
     async function loadFridges() {
       container.innerHTML = "";
+
+      // Load current favorite
+      const favDoc = await getDoc(doc(db, "config", "favorite"));
+      if (favDoc.exists()) {
+        currentFavoriteId = favDoc.data().fridgeId;
+      } else {
+        currentFavoriteId = null;
+      }
+
       const querySnapshot = await getDocs(collection(db, "fridges"));
       querySnapshot.forEach(docSnap => {
         const data = docSnap.data();
@@ -336,6 +362,20 @@
     function createFridgeCard(id, fridge) {
       const card = document.createElement("div");
       card.className = "card";
+
+      // Favorite button
+      const favBtn = document.createElement("button");
+      favBtn.className = "favorite-btn";
+      favBtn.innerHTML = "❤";
+      if (currentFavoriteId === id) {
+        favBtn.classList.add("active");
+      }
+      favBtn.onclick = async (e) => {
+        e.stopPropagation();
+        await setDoc(doc(db, "config", "favorite"), { fridgeId: id });
+        loadFridges();
+      };
+      card.appendChild(favBtn);
 
       const carousel = document.createElement("div");
       carousel.className = "carousel";
@@ -368,7 +408,7 @@
         editBtn.className = "edit";
         editBtn.textContent = "Edit";
         editBtn.onclick = (e) => {
-          e.stopPropagation(); // ✅ prevent opening modal
+          e.stopPropagation();
           editFridge(id, fridge);
         };
 
@@ -376,7 +416,7 @@
         delBtn.className = "delete";
         delBtn.textContent = "Delete";
         delBtn.onclick = async (e) => {
-          e.stopPropagation(); // ✅ prevent opening modal
+          e.stopPropagation();
           await deleteDoc(doc(db, "fridges", id));
           loadFridges();
         };
@@ -401,7 +441,6 @@
         modalFeatures.appendChild(li);
       });
 
-      // Clone existing carousel images
       const imgs = cardCarousel.querySelectorAll("img");
       modalImages = Array.from(imgs).map(img => img.src);
       currentImg = 0;
@@ -443,7 +482,7 @@
       modal.style.display = "none";
     });
 
-    // ✅ Swipe support
+    // Swipe support
     let touchStartX = 0;
     let touchEndX = 0;
 
