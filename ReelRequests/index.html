@@ -25,13 +25,10 @@
     .dot.pending{background:#f5c84c;}
     .dot.comingsoon{background:#5b8aff;}
     .dot.completed{background:#16c784;}
-
-    .badge{font-size:12px;padding:5px 10px;border-radius:999px;font-weight:700;
-      background:linear-gradient(135deg,var(--accent),var(--primary));
-      color:#00152d;animation:pulseGlow 2s infinite;}
+    .badge{font-size:12px;padding:5px 10px;border-radius:999px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--primary));color:#00152d;animation:pulseGlow 2s infinite;}
     .empty{color:var(--muted);font-size:13px;text-align:center;padding:12px;}
+    .date-label{font-size:12px;color:var(--muted);margin-top:2px;}
 
-    /* Input + button alignment */
     #requestForm{display:flex;gap:8px;flex-wrap:wrap;}
     .input{flex:1;min-width:0;padding:12px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text);}
     .btn{padding:12px 16px;border:0;border-radius:12px;background:var(--primary);color:#fff;font-weight:600;cursor:pointer;transition:background .2s, transform .15s;}
@@ -46,6 +43,7 @@
     .admin-content{max-height:1000px;overflow:hidden;transition:max-height .4s ease,padding .3s ease;padding:14px 16px;}
     .admin.collapsed .admin-content{max-height:0;padding:0 16px;}
 
+    .admin-list-wrapper{max-height:300px;overflow-y:auto;padding-right:6px;}
     .admin-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:10px;}
     .admin-title{display:flex;align-items:center;gap:8px;font-weight:500;}
     .action-group{display:flex;gap:6px;}
@@ -54,88 +52,28 @@
     .action-btn.next{background:var(--accent);color:#001;}
     .action-btn.soon{background:var(--primary);color:#fff;}
     .action-btn.done{background:var(--green);color:#001;}
-
-    /* Batch input */
-    .batch-section {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding:14px;
-      margin-top: 10px;
-    }
-    .textarea {
-      margin-left:-14px;
-      width: 100%;
-      min-height: 100px;
-      max-height: 250px;
-      padding: 12px;
-      border-radius: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-size: 14px;
-      resize: none;
-      overflow-y: auto;
-      word-wrap: break-word;
-      line-height: 1.4;
-    }
-    .btn.batch {
-      align-self: flex-end;
-      padding: 10px 18px;
-      border: 0;
-      border-radius: 12px;
-      background: var(--primary);
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.15s ease;
-    }
-    .btn.batch:hover { transform: translateY(-1px); }
-    .btn.batch:active::after {
-      content: "";
-      position: absolute;
-      left: 50%; top: 50%;
-      width: 0; height: 0;
-      background: rgba(124,248,210,0.6);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      animation: ripple 0.6s ease-out;
+    /* Highlight border for active state */
+    .action-btn.active {
+      border: 2px solid var(--text);
+      box-shadow: 0 0 6px rgba(255,255,255,0.4);
     }
 
-    /* Toast notifications */
-    .toast-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      display: flex;
-      flex-direction: column-reverse;
-      gap: 10px;
-      z-index: 9999;
-    }
-    .toast {
-      background: #1f2937;
-      color: #fff;
-      padding: 12px 18px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 500;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      opacity: 0;
-      transform: translateY(20px);
-      animation: slideIn .4s forwards, fadeOut .4s forwards 3s;
-    }
-    .toast.success { border-left: 4px solid var(--green); }
-    .toast.info { border-left: 4px solid var(--primary); }
-    .toast.error { border-left: 4px solid #e63946; }
+    /* Toggle */
+    .toggle-wrapper{margin:10px 0;display:flex;align-items:center;gap:8px;}
+    .toggle-wrapper span{font-size:13px;color:var(--muted);}
+    .toggle-checkbox{width:40px;height:20px;background:#444;border-radius:20px;position:relative;cursor:pointer;flex-shrink:0;display:inline-block;}
+    .toggle-checkbox input{opacity:0;width:100%;height:100%;margin:0;position:absolute;top:0;left:0;cursor:pointer;}
+    .toggle-slider{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:.3s;}
+    .toggle-checkbox input:checked + .toggle-slider{transform:translateX(20px);background:var(--accent);}
+
+    /* Batch */
+    .batch-section{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
+    .textarea{width:100%;min-height:100px;max-height:250px;padding:12px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:14px;resize:none;overflow-y:auto;word-wrap:break-word;line-height:1.4;}
+    .btn.batch{align-self:flex-end;padding:10px 18px;border:0;border-radius:12px;background:var(--primary);color:#fff;font-weight:600;cursor:pointer;}
 
     /* Animations */
     @keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
     @keyframes pulseGlow{0%,100%{box-shadow:0 0 6px rgba(124,248,210,0.6);}50%{box-shadow:0 0 14px rgba(124,248,210,1);}}
-    @keyframes ripple { from { width: 0; height: 0; opacity: 0.6; } to { width: 220%; height: 220%; opacity: 0; } }
-    @keyframes slideIn { from { opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
-    @keyframes fadeOut { from {opacity:1; transform:translateY(0);} to {opacity:0; transform:translateY(20px);} }
   </style>
 </head>
 <body>
@@ -171,20 +109,25 @@
       <div id="completed" class="grid"></div>
     </section>
 
-    <!-- All Requests (hidden by default) -->
-    <section id="allRequestsSection" class="card" style="display:none;">
-      <h2>All Requests</h2>
-      <div id="allRequests" class="grid"></div>
-    </section>
-
-    <!-- Admin panel -->
+    <!-- Admin -->
     <section id="adminPanel" class="admin collapsed" style="display:none;">
       <div class="admin-header">
         <div>Admin Panel</div>
         <span>▾</span>
       </div>
       <div class="admin-content">
-        <div id="adminList" class="grid"></div>
+        <!-- Toggle -->
+        <div class="toggle-wrapper">
+          <label class="toggle-checkbox">
+            <input type="checkbox" id="toggleCompleted"/>
+            <span class="toggle-slider"></span>
+          </label>
+          <span>Show Completed</span>
+        </div>
+        <!-- Scrollable list -->
+        <div class="admin-list-wrapper">
+          <div id="adminList" class="grid"></div>
+        </div>
         <hr style="margin:14px 0;border:0;border-top:1px solid var(--border)">
         <h4>Batch add Coming Soon</h4>
         <div class="batch-section">
@@ -195,12 +138,9 @@
     </section>
   </div>
 
-  <!-- Toast container -->
-  <div class="toast-container" id="toastContainer"></div>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, where, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
@@ -218,116 +158,72 @@
     const elPending=document.getElementById("pending");
     const elSoon=document.getElementById("comingSoon");
     const elDone=document.getElementById("completed");
-    const elAll=document.getElementById("allRequests");
-    const allRequestsSection=document.getElementById("allRequestsSection");
     const adminPanel=document.getElementById("adminPanel");
     const adminList=document.getElementById("adminList");
+    const toggleCompleted=document.getElementById("toggleCompleted");
 
     const showAdmin=new URLSearchParams(location.search).get("admin")==="1";
-    if(showAdmin) {
-      adminPanel.style.display="block";
-      allRequestsSection.style.display="block";
-      adminPanel.classList.remove("collapsed");
-    }
+    if(showAdmin) adminPanel.style.display="block";
 
-    const adminHeader = adminPanel.querySelector(".admin-header");
-    adminHeader.addEventListener("click", ()=>{ adminPanel.classList.toggle("collapsed"); });
+    adminPanel.querySelector(".admin-header").addEventListener("click",()=>adminPanel.classList.toggle("collapsed"));
 
-    function rowHTML(d){
-      return `<div class="row">
-        <span class="dot ${d.status}"></span>
-        <div class="title">${escapeHtml(d.title)}</div>
-        ${d.nextUp?'<span class="badge">Next Up</span>':''}
-      </div>`;
-    }
-    function render(el,docs,empty){
-      if(!docs.length){el.innerHTML=`<div class="empty">${empty}</div>`;return;}
-      el.innerHTML=docs.map(d=>rowHTML(d)).join("");
-    }
     function escapeHtml(s=""){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
-
-    function showToast(message, type="info") {
-      const container=document.getElementById("toastContainer");
-      const toast=document.createElement("div");
-      toast.className=`toast ${type}`;
-      toast.textContent=message;
-      container.prepend(toast);
-      setTimeout(()=> toast.remove(), 3500);
+    function rowHTML(d){
+      let dateLine="";
+      if(d.status==="completed" && d.completedAt?.seconds){
+        const date=new Date(d.completedAt.seconds*1000);
+        dateLine=`<div class="date-label">Completed on: ${date.toLocaleDateString()}</div>`;
+      }
+      return `<div class="row"><span class="dot ${d.status}"></span><div class="title">${escapeHtml(d.title)}${dateLine}</div>${d.nextUp?'<span class="badge">Next Up</span>':''}</div>`;
     }
+    function render(el,docs,empty){el.innerHTML=docs.length?docs.map(rowHTML).join(""):`<div class="empty">${empty}</div>`;}
+
+    // Requests listener
+    onSnapshot(collection(db,"requests"),s=>{
+      const arr=s.docs.map(d=>({id:d.id,...d.data()}));
+      render(elPending,arr.filter(d=>d.status==="pending"),"No pending");
+      render(elSoon,arr.filter(d=>d.status==="comingsoon"),"No upcoming");
+      render(elDone,arr.filter(d=>d.status==="completed"),"No completed");
+      if(showAdmin) renderAdmin(arr);
+    });
+
+    function renderAdmin(docs){
+      let filtered=docs;
+      if(!toggleCompleted.checked){ filtered=docs.filter(d=>d.status!=="completed"); }
+      adminList.innerHTML=filtered.map(d=>`
+        <div class="admin-row">
+          <div class="admin-title"><span class="dot ${d.status}"></span>${escapeHtml(d.title)} ${d.nextUp?'<span class="badge">Next Up</span>':''}</div>
+          <div class="action-group">
+            <button class="action-btn next ${d.nextUp ? 'active' : ''}" onclick="toggleNextUp('${d.id}',${!d.nextUp})">Next</button>
+            <button class="action-btn soon ${d.status==='comingsoon' ? 'active' : ''}" onclick="setStatus('${d.id}','comingsoon')">Soon</button>
+            <button class="action-btn done ${d.status==='completed' ? 'active' : ''}" onclick="setStatus('${d.id}','completed')">Done</button>
+          </div>
+        </div>`).join("");
+    }
+
+    toggleCompleted.addEventListener("change",()=>onSnapshot(collection(db,"requests"),s=>{
+      const arr=s.docs.map(d=>({id:d.id,...d.data()}));
+      renderAdmin(arr);
+    }));
+
+    window.toggleNextUp=async(id,val)=>{await updateDoc(doc(db,"requests",id),{nextUp:val});};
+    window.setStatus=async(id,status)=>{
+      const updateData={status:status,nextUp:false};
+      if(status==="completed"){updateData.completedAt=serverTimestamp();}
+      await updateDoc(doc(db,"requests",id),updateData);
+    };
 
     form.addEventListener("submit",async e=>{
       e.preventDefault();
       const t=titleInput.value.trim(); if(!t) return;
       await addDoc(collection(db,"requests"),{title:t,status:"pending",nextUp:false,createdAt:serverTimestamp()});
       titleInput.value="";
-      showToast(`🎬 "${t}" added to requests!`,"success");
     });
-
-    const qPending=query(collection(db,"requests"),where("status","==","pending"));
-    const qSoon=query(collection(db,"requests"),where("status","==","comingsoon"));
-    const qDone=query(collection(db,"requests"),where("status","==","completed"));
-
-    onSnapshot(qPending,s=>{
-      const arr=s.docs.map(d=>d.data());
-      arr.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-      render(elPending,arr,"No pending requests");
-    });
-    onSnapshot(qSoon,s=>{
-      const arr=s.docs.map(d=>d.data());
-      arr.sort((a,b)=>{ if(a.nextUp===b.nextUp){return(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0);} return b.nextUp-a.nextUp; });
-      render(elSoon,arr,"No upcoming");
-    });
-    onSnapshot(qDone,s=>{
-      const arr=s.docs.map(d=>d.data());
-      arr.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-      render(elDone,arr,"No completed");
-    });
-    onSnapshot(collection(db,"requests"),s=>{
-      const arr=s.docs.map(d=>({id:d.id,...d.data()}));
-      arr.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-      if(showAdmin){ render(elAll,arr,"No requests"); renderAdmin(arr); }
-    });
-
-    function renderAdmin(docs){
-      adminList.innerHTML=docs.map(d=>{
-        return `
-          <div class="admin-row">
-            <div class="admin-title">
-              <span class="dot ${d.status}"></span>
-              <div>${escapeHtml(d.title)}</div>
-              ${d.nextUp?'<span class="badge">Next Up</span>':''}
-            </div>
-            <div class="action-group">
-              <button class="action-btn next" onclick="toggleNextUp('${d.id}',${!d.nextUp})">${d.nextUp?'Clear':'Set'} Next</button>
-              <button class="action-btn soon" onclick="setStatus('${d.id}','comingsoon')">Soon</button>
-              <button class="action-btn done" onclick="setStatus('${d.id}','completed')">Done</button>
-            </div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    window.toggleNextUp=async(id,val)=>{
-      await updateDoc(doc(db,"requests",id),{nextUp:val});
-      showToast(val?"⭐ Marked as Next Up":"❌ Cleared Next Up","info");
-    };
-    window.setStatus=async(id,status)=>{
-      await updateDoc(doc(db,"requests",id),{status:status.toLowerCase(),nextUp:false});
-      if(status==="comingsoon") showToast("📅 Moved to Coming Soon","info");
-      if(status==="completed") showToast("✅ Marked as Completed","success");
-    };
 
     document.getElementById("batchBtn").addEventListener("click",async()=>{
       const lines=document.getElementById("batchTitles").value.split(/\n/).map(l=>l.trim()).filter(Boolean);
-      for(const t of lines){
-        await addDoc(collection(db,"requests"),{title:t,status:"comingsoon",nextUp:false,createdAt:serverTimestamp()});
-      }
-      const box=document.getElementById("batchTitles");
-      box.value="";
-      box.style.transition="opacity 0.4s";
-      box.style.opacity="0";
-      setTimeout(()=>{ box.style.opacity="1"; },400);
-      if(lines.length) showToast(`📦 Added ${lines.length} to Coming Soon`,"success");
+      for(const t of lines){await addDoc(collection(db,"requests"),{title:t,status:"comingsoon",nextUp:false,createdAt:serverTimestamp()});}
+      document.getElementById("batchTitles").value="";
     });
   </script>
 </body>
