@@ -1,15 +1,17 @@
-/* Replace Jellyfin header/logo */
+/* === Jellyfin Cinematic Home Theater Branding === */
+
+/* Header + navigation logo */
 .logoHeader img,
 .pageTitleWithLogo img,
 .pageTitleWithDefaultLogo img,
 div[aria-label="Jellyfin Logo"] img {
-    content: url("https://rmorrow23.github.io/Movies/home_theater_logo.png") !important;
+    content: url("home_theater_logo.png") !important; /* Local path, see below */
     height: 60px !important;
     width: auto !important;
     object-fit: contain;
 }
 
-/* Hide default SVG logos */
+/* Hide default SVGs so no overlap */
 .logoHeader svg,
 .pageTitleWithLogo svg,
 .pageTitleWithDefaultLogo svg {
@@ -19,17 +21,18 @@ div[aria-label="Jellyfin Logo"] img {
 /* Login page logo */
 .loginPage .pageTitleWithLogo img,
 .loginPage .pageTitleWithDefaultLogo img {
-    content: url("https://rmorrow23.github.io/Movies/home_theater_logo.png") !important;
+    content: url("home_theater_logo.png") !important;
     height: 80px !important;
     object-fit: contain;
 }
 
 /* Cinematic login background */
 .loginPage {
-    background: url("https://rmorrow23.github.io/Movies/cinematic_bg.jpg") no-repeat center center fixed !important;
+    background: url("cinematic_bg.png") no-repeat center center fixed !important;
     background-size: cover !important;
 }
 
+/* Dark overlay for readability */
 .loginPage::before {
     content: "";
     position: absolute;
