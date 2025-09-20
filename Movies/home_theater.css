@@ -1,0 +1,39 @@
+/* Replace header/logo everywhere */
+.logoHeader img,
+.pageTitleWithLogo img,
+.pageTitleWithDefaultLogo img,
+div[aria-label="Jellyfin Logo"] img {
+    content: url("https://morrow-industries.com/Movies/home_theater_logo.png") !important;
+    height: 60px !important;
+    width: auto !important;
+    object-fit: contain;
+}
+
+/* Hide default SVGs */
+.logoHeader svg,
+.pageTitleWithLogo svg,
+.pageTitleWithDefaultLogo svg {
+    display: none !important;
+}
+
+/* Login page logo */
+.loginPage .pageTitleWithLogo img,
+.loginPage .pageTitleWithDefaultLogo img {
+    content: url("https://morrow-industries.com/Movies/home_theater_logo.png") !important;
+    height: 80px !important;
+    object-fit: contain;
+}
+
+/* Cinematic login background */
+.loginPage {
+    background: url("https://morrow-industries.com/Movies/cinematic_bg.png") no-repeat center center fixed !important;
+    background-size: cover !important;
+}
+
+.loginPage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: -1;
+}
