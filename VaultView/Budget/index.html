@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#060a12" />
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finance Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
+
+  <script type="module">
+    // ===== FIREBASE SETUP =====
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, setDoc, updateDoc,
+      collection, addDoc, query, orderBy, getDocs, serverTimestamp, deleteDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+
+  apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
+
+  authDomain: "morrow-industries.firebaseapp.com",
+
+  databaseURL: "https://morrow-industries-default-rtdb.firebaseio.com",
+
+  projectId: "morrow-industries",
+
+  storageBucket: "morrow-industries.appspot.com",
+
+  messagingSenderId: "75190213345",
+
+  appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
+
+};
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    // ===== GLOBAL STATE & UTILITIES =====
+    let currentUID = null;
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+    function toast(msg, type = "info") {
+      const el = document.createElement('div');
+      const typeClasses = {
+        error: 'bg-red-600',
+        success: 'bg-emerald-600',
+        info: 'bg-slate-800'
+      };
+      el.className = `fixed bottom-20 md:bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl shadow-lg text-sm text-white z-50 ${typeClasses[type]}`;
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2400);
+    }
+    
+    // An empty state message for when there's no data
+    const createEmptyState = (message) => `<div class="text-center py-10 px-4 rounded-lg bg-slate-900/50 border border-dashed border-slate-700"><p class="text-slate-400">${message}</p></div>`;
+
+
+    // ===== AUTHENTICATION =====
+    const handleAuthState = async (user) => {
+      if (user) {
+        currentUID = user.uid;
+        $('#app-container').classList.remove('hidden');
+        $('#login-screen').classList.add('hidden');
+        $('#userInfo').textContent = user.displayName || user.email;
+        $('#logoutBtn').classList.remove('hidden');
+
+        await ensureUserCollections(currentUID);
+        renderAllTabs();
+        switchTab('bills'); // Default to bills tab on login
+      } else {
+        currentUID = null;
+        $('#app-container').classList.add('hidden');
+        $('#login-screen').classList.remove('hidden');
+        $('#userInfo').textContent = 'Not signed in';
+        $('#logoutBtn').classList.add('hidden');
+      }
+    };
+    
+    // ===== DATA HELPERS =====
+    const PERIOD_DAYS = 14;
+    function daysBetween(a, b) {
+      const ms = Math.abs(new Date(a).setHours(0, 0, 0, 0) - new Date(b).setHours(0, 0, 0, 0));
+      return Math.floor(ms / (1000 * 60 * 60 * 24));
+    }
+
+    async function ensureUserCollections(uid) {
+      const userRef = doc(db, `users/${uid}`);
+      const billsRef = doc(db, `users/${uid}/bills/checklist`);
+      if (!(await getDoc(userRef)).exists()) {
+        await setDoc(userRef, { createdAt: serverTimestamp() });
+        await setDoc(billsRef, { startDate: new Date(), items: [] });
+      }
+    }
+    
+    async function maybeAutoResetChecklist() {
+        if (!currentUID) return;
+        const listRef = doc(db, `users/${currentUID}/bills/checklist`);
+        const snap = await getDoc(listRef);
+        if (!snap.exists()) return;
+
+        const data = snap.data();
+        const start = data.startDate?.toDate ? data.startDate.toDate() : new Date(data.startDate);
+        if (daysBetween(start, new Date()) >= PERIOD_DAYS) {
+            const resetItems = (data.items || []).map(it => ({ ...it, paid: false }));
+            await updateDoc(listRef, { items: resetItems, startDate: new Date() });
+            toast('Checklist auto-reset for new pay period', 'success');
+        }
+    }
+
+
+    // ===== BILLS TAB =====
+    async function renderChecklist() {
+      if (!currentUID) return;
+      await maybeAutoResetChecklist();
+      const listRef = doc(db, `users/${currentUID}/bills/checklist`);
+      const snap = await getDoc(listRef);
+      const container = $('#billItems');
+
+      if (!snap.exists() || !snap.data().items || snap.data().items.length === 0) {
+        container.innerHTML = createEmptyState("No bills added yet. Add one to get started!");
+        return;
+      }
+      
+      const data = snap.data();
+      container.innerHTML = '';
+      (data.items || []).forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700 mb-2';
+        row.innerHTML = `
+          <input type="checkbox" class="h-5 w-5 accent-emerald-500" ${item.paid ? 'checked' : ''} data-idx="${idx}"/>
+          <div>
+            <div class="font-medium">${item.name}</div>
+            <div class="text-xs text-slate-300">$${Number(item.amount).toFixed(2)} bi-weekly</div>
+          </div>
+          <button class="px-3 py-1 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors" data-edit="${idx}">Edit</button>
+          <button class="px-3 py-1 text-xs rounded-lg bg-rose-600 hover:bg-rose-500 transition-colors" data-del="${idx}">Delete</button>`;
+        container.appendChild(row);
+      });
+      const startLabel = data.startDate?.toDate ? data.startDate.toDate() : new Date(data.startDate);
+      $('#periodInfo').textContent = `Period start: ${startLabel.toLocaleDateString()} • Resets every ${PERIOD_DAYS} days`;
+    }
+
+    async function upsertBillItem() {
+      const name = $('#billName').value.trim();
+      const amount = parseFloat($('#billAmt').value || '0');
+      const idxStr = $('#billIndex').value;
+      if (!name || isNaN(amount)) return toast('Enter a valid name and amount', 'error');
+
+      const listRef = doc(db, `users/${currentUID}/bills/checklist`);
+      const data = (await getDoc(listRef)).data();
+      const items = data.items || [];
+
+      if (idxStr) { // Editing existing item
+        items[Number(idxStr)] = { ...items[Number(idxStr)], name, amount };
+      } else { // Adding new item
+        items.push({ name, amount, paid: false });
+      }
+      
+      await updateDoc(listRef, { items });
+      resetBillForm();
+      await renderChecklist();
+      toast(idxStr ? 'Bill updated' : 'Bill added', 'success');
+    }
+
+    function resetBillForm() {
+        $('#billName').value = '';
+        $('#billAmt').value = '';
+        $('#billIndex').value = '';
+        $('#addBillBtn').textContent = 'Add Bill';
+        $('#cancelEditBtn').classList.add('hidden');
+    }
+
+    async function handleBillActions(e) {
+        const idx = e.target.dataset.idx ?? e.target.dataset.edit ?? e.target.dataset.del;
+        if (idx === undefined) return;
+        
+        const listRef = doc(db, `users/${currentUID}/bills/checklist`);
+        const snap = await getDoc(listRef);
+        if (!snap.exists()) return;
+        const items = snap.data().items || [];
+        const itemIndex = Number(idx);
+
+        // Toggle Paid Status
+        if (e.target.matches('input[type="checkbox"]')) {
+            items[itemIndex].paid = e.target.checked;
+            await updateDoc(listRef, { items });
+            toast(items[itemIndex].paid ? 'Marked as Paid' : 'Marked as Unpaid');
+        }
+        // Delete Item
+        else if (e.target.matches('[data-del]')) {
+            if (!confirm(`Are you sure you want to delete "${items[itemIndex].name}"?`)) return;
+            items.splice(itemIndex, 1);
+            await updateDoc(listRef, { items });
+            toast('Bill deleted', 'success');
+            await renderChecklist();
+        }
+        // Edit Item
+        else if (e.target.matches('[data-edit]')) {
+            const itemToEdit = items[itemIndex];
+            $('#billName').value = itemToEdit.name;
+            $('#billAmt').value = itemToEdit.amount;
+            $('#billIndex').value = itemIndex;
+            $('#addBillBtn').textContent = 'Save Changes';
+            $('#cancelEditBtn').classList.remove('hidden');
+            $('#billName').focus();
+        }
+    }
+
+
+    // ===== SAVINGS TAB =====
+    async function renderSavings() {
+      if (!currentUID) return;
+      const monthStr = $('#saveMonth').value || new Date().toISOString().slice(0, 7);
+      $('#saveMonth').value = monthStr;
+      const [y, m] = monthStr.split('-').map(Number);
+      const start = new Date(y, m - 1, 1);
+      const end = new Date(y, m, 1);
+      
+      const snaps = await getDocs(query(collection(db, `users/${currentUID}/savings`), orderBy('createdAt', 'asc')));
+      let total = 0;
+      let rows = [];
+      snaps.forEach(d => {
+        const v = d.data();
+        const t = v.createdAt?.toDate ? v.createdAt.toDate() : new Date();
+        if (t >= start && t < end) {
+          total += Number(v.amount) || 0;
+          rows.push({ date: t.toLocaleDateString(), amount: v.amount, note: v.note || '' });
+        }
+      });
+      
+      const tbody = $('#saveTableBody');
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3">${createEmptyState("No savings logged for this month.")}</td></tr>`;
+      } else {
+        tbody.innerHTML = '';
+        rows.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.className = "border-b border-slate-800";
+          tr.innerHTML = `<td class="px-3 py-2">${r.date}</td><td class="px-3 py-2">$${Number(r.amount).toFixed(2)}</td><td class="px-3 py-2">${r.note}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+      $('#saveTotal').textContent = `$${total.toFixed(2)}`;
+    }
+    async function addSavings() {
+        const amt = parseFloat($('#saveAmt').value || '0');
+        const note = $('#saveNote').value.trim();
+        if (isNaN(amt) || amt <= 0) return toast('Enter a valid amount', 'error');
+        await addDoc(collection(db, `users/${currentUID}/savings`), { amount: amt, note, createdAt: serverTimestamp() });
+        $('#saveAmt').value = ''; $('#saveNote').value = '';
+        toast('Savings logged', 'success');
+        await renderSavings();
+    }
+
+
+    // ===== GIGS TAB =====
+    async function renderGigs() {
+        if (!currentUID) return;
+        const monthStr = $('#gigMonth').value || new Date().toISOString().slice(0, 7);
+        $('#gigMonth').value = monthStr;
+        const [y, m] = monthStr.split('-').map(Number);
+        const start = new Date(y, m - 1, 1);
+        const end = new Date(y, m, 1);
+        const snaps = await getDocs(query(collection(db, `users/${currentUID}/gigs`), orderBy('date', 'asc')));
+        
+        let totals = { miles: 0, earn: 0, cost: 0, net: 0 };
+        let rows = [];
+        snaps.forEach(d => {
+            const v = d.data();
+            const t = new Date(v.date);
+            if (t >= start && t < end) {
+                totals.miles += Number(v.miles) || 0;
+                totals.earn += Number(v.earnings) || 0;
+                totals.cost += Number(v.estCost) || 0;
+                totals.net += Number(v.net) || 0;
+                rows.push(v);
+            }
+        });
+
+        const tbody = $('#gigTableBody');
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6">${createEmptyState("No gigs logged for this month.")}</td></tr>`;
+        } else {
+            tbody.innerHTML = '';
+            rows.forEach(v => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-800";
+                tr.innerHTML = `<td class="px-3 py-2 whitespace-nowrap">${new Date(v.date).toLocaleDateString()}</td><td class="px-3 py-2">${v.platform}</td><td class="px-3 py-2">${v.miles}</td><td class="px-3 py-2">$${Number(v.earnings).toFixed(2)}</td><td class="px-3 py-2">$${Number(v.estCost).toFixed(2)}</td><td class="px-3 py-2 font-semibold">$${Number(v.net).toFixed(2)}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        $('#gigTotals').textContent = `Miles: ${totals.miles.toFixed(1)} | Earn: $${totals.earn.toFixed(2)} | Net: $${totals.net.toFixed(2)}`;
+    }
+    async function addGig() {
+        const COST_PER_MILE = 30 / 400; // Example: $30 for 400 miles
+        const date = $('#gigDate').value || new Date().toISOString().slice(0, 10);
+        const platform = $('#gigPlatform').value;
+        const miles = parseFloat($('#gigMiles').value || '0');
+        const earn = parseFloat($('#gigEarn').value || '0');
+        if (!platform || isNaN(miles) || isNaN(earn)) return toast('Please fill all gig fields correctly', 'error');
+
+        const cost = miles * COST_PER_MILE;
+        const net = earn - cost;
+        await addDoc(collection(db, `users/${currentUID}/gigs`), { date, platform, miles, earnings: earn, estCost: cost, net, createdAt: serverTimestamp() });
+        $('#gigMiles').value = ''; $('#gigEarn').value = '';
+        toast('Gig logged', 'success');
+        await renderGigs();
+    }
+
+
+    // ===== EXPORT TAB =====
+    async function exportMonthlyPDF() {
+      if (!currentUID) return;
+      const btn = $('#exportPDFBtn');
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+
+      const { jsPDF } = window.jspdf;
+      const docPDF = new jsPDF({ unit: 'pt', format: 'letter' });
+      const month = $('#pdfMonth').value || new Date().toISOString().slice(0, 7);
+      const [y, m] = month.split('-').map(Number);
+      const start = new Date(y, m - 1, 1);
+      const end = new Date(y, m, 1);
+
+      docPDF.setFont('helvetica', 'bold');
+      docPDF.setFontSize(16);
+      docPDF.text(`Monthly Finance Report — ${month}`, 40, 40);
+
+      // Savings Data
+      const savSnaps = await getDocs(query(collection(db, `users/${currentUID}/savings`), orderBy('createdAt', 'asc')));
+      const savRows = [];
+      let savTotal = 0;
+      savSnaps.forEach(d => {
+        const v = d.data();
+        const t = v.createdAt?.toDate ? v.createdAt.toDate() : new Date();
+        if (t >= start && t < end) {
+          savRows.push([t.toLocaleDateString(), `$${Number(v.amount).toFixed(2)}`, v.note || '']);
+          savTotal += Number(v.amount) || 0;
+        }
+      });
+      docPDF.autoTable({ startY: 60, head: [['Savings: Date', 'Amount', 'Note']], body: savRows });
+      docPDF.text(`Total Savings this month: $${savTotal.toFixed(2)}`, 40, docPDF.lastAutoTable.finalY + 20);
+
+      // Gig Data
+      const gigSnaps = await getDocs(query(collection(db, `users/${currentUID}/gigs`), orderBy('date', 'asc')));
+      const gigRows = [];
+      let gm=0, ge=0, gc=0, gn=0;
+      gigSnaps.forEach(d => {
+          const v = d.data(); const t = new Date(v.date);
+          if(t >= start && t < end) {
+              gm += Number(v.miles)||0; ge += Number(v.earnings)||0; gc += Number(v.estCost)||0; gn += Number(v.net)||0;
+              gigRows.push([t.toLocaleDateString(), v.platform, v.miles, `$${Number(v.earnings).toFixed(2)}`, `$${Number(v.estCost).toFixed(2)}`, `$${Number(v.net).toFixed(2)}`]);
+          }
+      });
+      docPDF.autoTable({ startY: docPDF.lastAutoTable.finalY + 40, head: [['Gig Work: Date', 'Platform', 'Miles', 'Gross', 'Fuel Est.', 'Net']], body: gigRows });
+      docPDF.text(`Gig Totals — Net: $${gn.toFixed(2)} | Gross: $${ge.toFixed(2)} | Miles: ${gm.toFixed(1)}`, 40, docPDF.lastAutoTable.finalY + 20);
+
+      docPDF.save(`report-${month}.pdf`);
+      toast('PDF exported', 'success');
+      btn.disabled = false;
+      btn.textContent = 'Export PDF';
+    }
+
+
+    // ===== UI & NAVIGATION =====
+    function switchTab(tabId) {
+      $$('.tab').forEach(el => el.classList.add('hidden'));
+      $(`#${tabId}`).classList.remove('hidden');
+      
+      $$('[data-tab]').forEach(b => {
+        b.classList.remove('bg-emerald-600', 'text-white');
+        b.classList.add('text-slate-400', 'hover:bg-slate-700');
+        if (b.dataset.tab === tabId) {
+          b.classList.add('bg-emerald-600', 'text-white');
+          b.classList.remove('text-slate-400', 'hover:bg-slate-700');
+        }
+      });
+    }
+
+    function renderAllTabs() {
+        renderChecklist();
+        renderSavings();
+        renderGigs();
+    }
+
+
+    // ===== INITIALIZATION & EVENT LISTENERS =====
+    document.addEventListener('DOMContentLoaded', () => {
+      onAuthStateChanged(auth, handleAuthState);
+
+      $('#loginBtn').onclick = () => signInWithPopup(auth, provider);
+      $('#logoutBtn').onclick = () => signOut(auth);
+      
+      $$('[data-tab]').forEach(button => {
+        button.addEventListener('click', () => switchTab(button.dataset.tab));
+      });
+
+      // Bill listeners
+      $('#addBillBtn').addEventListener('click', upsertBillItem);
+      $('#cancelEditBtn').addEventListener('click', resetBillForm);
+      $('#billItems').addEventListener('click', handleBillActions);
+
+      // Savings listeners
+      $('#saveAddBtn').addEventListener('click', addSavings);
+      $('#saveMonth').addEventListener('change', renderSavings);
+
+      // Gigs listeners
+      $('#gigAddBtn').addEventListener('click', addGig);
+      $('#gigMonth').addEventListener('change', renderGigs);
+
+      // Export listener
+      $('#exportPDFBtn').addEventListener('click', exportMonthlyPDF);
+      
+      // Set default month/date values
+      const today = new Date();
+      const monthStr = today.toISOString().slice(0, 7);
+      const dateStr = today.toISOString().slice(0, 10);
+      $('#saveMonth').value = monthStr;
+      $('#gigMonth').value = monthStr;
+      $('#pdfMonth').value = monthStr;
+      $('#gigDate').value = dateStr;
+    });
+          // ===== PWA Service Worker Registration =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('Service Worker registered successfully:', registration);
+      })
+      .catch(error => {
+        console.log('Service Worker registration failed:', error);
+      });
+  });
+}
+
+  </script>
+
+  <style>
+    body { background: radial-gradient(1200px 800px at 10% 10%, #0b1220 0%, #060a12 40%, #03060b 100%); }
+    /* Hide scrollbar for aesthetics, but still allow scrolling */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen">
+  
+  <div id="login-screen" class="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+    <h1 class="text-4xl font-bold mb-2">Finance Tracker</h1>
+    <p class="text-slate-300 mb-6">Track your bi-weekly bills, savings, and gig work.</p>
+    <button id="loginBtn" class="flex items-center gap-3 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
+      <span>Login with Google</span>
+    </button>
+  </div>
+  
+  <div id="app-container" class="max-w-5xl mx-auto p-4 pb-24 md:pb-4 hidden">
+    <header class="flex items-center justify-between mb-6">
+      <h1 class="text-xl font-semibold">Finance Tracker</h1>
+      <div class="hidden md:flex items-center gap-2" id="nav-desktop">
+        <button data-tab="bills" class="px-3 py-2 rounded-lg text-sm font-medium transition-colors">Bills</button>
+        <button data-tab="savings" class="px-3 py-2 rounded-lg text-sm font-medium transition-colors">Savings</button>
+        <button data-tab="gigs" class="px-3 py-2 rounded-lg text-sm font-medium transition-colors">Gig Work</button>
+        <button data-tab="export" class="px-3 py-2 rounded-lg text-sm font-medium transition-colors">Export</button>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="userInfo" class="text-sm text-slate-300 hidden md:block"></span>
+        <button id="logoutBtn" class="px-3 py-2 text-sm rounded-xl bg-slate-700 hover:bg-slate-600 transition-colors hidden">Logout</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="bills" class="tab">
+        <div class="mb-4 text-sm text-slate-300" id="periodInfo">&nbsp;</div>
+        <div class="grid md:grid-cols-[1fr_340px] gap-6">
+          <div><div id="billItems"></div></div>
+          <aside class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 self-start">
+            <h2 class="font-semibold mb-3">Add / Edit Bill</h2>
+            <input id="billName" placeholder="Name (e.g., Rent, Netflix)" class="w-full mb-2 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 placeholder-slate-500" />
+            <input id="billAmt" type="number" step="0.01" placeholder="Bi-weekly amount" class="w-full mb-3 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 placeholder-slate-500" />
+            <input id="billIndex" type="hidden" />
+            <div class="flex gap-2">
+              <button id="addBillBtn" class="flex-grow px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 transition-colors">Add Bill</button>
+              <button id="cancelEditBtn" class="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 transition-colors hidden">Cancel</button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="savings" class="tab hidden">
+        <div class="md:flex items-end gap-3 mb-4">
+          <div><label class="block text-sm mb-1">Month</label><input id="saveMonth" type="month" class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700" /></div>
+          <div class="grow"></div>
+          <div class="text-right mt-4 md:mt-0"><div class="text-sm text-slate-300">Total this month</div><div id="saveTotal" class="text-2xl font-semibold">$0.00</div></div>
+        </div>
+        <div class="overflow-x-auto no-scrollbar rounded-lg border border-slate-800">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-900/70"><tr><th class="text-left px-3 py-2 font-medium">Date</th><th class="text-left px-3 py-2 font-medium">Amount</th><th class="text-left px-3 py-2 font-medium">Note</th></tr></thead>
+            <tbody id="saveTableBody"></tbody>
+          </table>
+        </div>
+        <aside class="mt-6 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+          <h2 class="font-semibold mb-3">Add Savings Entry</h2>
+          <div class="grid md:grid-cols-[1fr_2fr_auto] gap-3">
+              <input id="saveAmt" type="number" step="0.01" placeholder="Amount" class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700" />
+              <input id="saveNote" placeholder="Note (e.g., Paycheck, Gift)" class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700" />
+              <button id="saveAddBtn" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 transition-colors">Add</button>
+          </div>
+        </aside>
+      </section>
+
+      <section id="gigs" class="tab hidden">
+        <div class="md:flex items-end gap-3 mb-4">
+          <div><label class="block text-sm mb-1">Month</label><input id="gigMonth" type="month" class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700" /></div>
+          <div class="grow"></div>
+          <div class="text-right mt-4 md:mt-0"><div class="text-sm text-slate-300">Totals for this month</div><div id="gigTotals" class="text-sm font-medium"></div></div>
+        </div>
+        <div class="overflow-x-auto no-scrollbar rounded-lg border border-slate-800">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-900/70"><tr><th class="px-3 py-2 text-left font-medium">Date</th><th class="px-3 py-2 text-left font-medium">Platform</th><th class="px-3 py-2 text-left font-medium">Miles</th><th class="px-3 py-2 text-left font-medium">Gross</th><th class="px-3 py-2 text-left font-medium">Fuel Est.</th><th class="px-3 py-2 text-left font-medium">Net</th></tr></thead>
+              <tbody id="gigTableBody"></tbody>
+            </table>
+        </div>
+        <aside class="mt-6 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+          <h2 class="font-semibold mb-3">Add Gig Entry</h2>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <input id="gigDate" type="date" class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700" />
+            <select id="gigPlatform" class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700"><option value="">Platform...</option><option>Spark</option><option>Amazon Flex</option><option>Uber X</option><option>DoorDash</option><option>Other</option></select>
+            <input id="gigMiles" type="number" step="0.1" placeholder="Miles" class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700" />
+            <input id="gigEarn" type="number" step="0.01" placeholder="Gross $" class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700" />
+            <button id="gigAddBtn" class="col-span-2 md:col-span-1 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 transition-colors">Add Gig</button>
+          </div>
+        </aside>
+      </section>
+
+      <section id="export" class="tab hidden">
+        <div class="max-w-md p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
+          <h2 class="font-semibold text-lg mb-2">Export Monthly PDF</h2>
+          <p class="text-sm text-slate-300 mb-4">Generate a PDF summary of your savings and gig work for the selected month.</p>
+          <label class="block text-sm mb-1">Month</oabel>
+          <input id="pdfMonth" type="month" class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 mb-4" />
+          <button id="exportPDFBtn" class="w-full px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors">Export PDF</button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-sm border-t border-slate-800 grid grid-cols-4 gap-1 p-1">
+      <button data-tab="bills" class="flex flex-col items-center justify-center p-2 rounded-lg text-xs transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mb-1" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>
+        <span>Bills</span>
+      </button>
+      <button data-tab="savings" class="flex flex-col items-center justify-center p-2 rounded-lg text-xs transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mb-1" viewBox="0 0 20 20" fill="currentColor"><path d="M8.433 7.418c.158-.103.346-.196.567-.267v1.698a2.5 2.5 0 00-.567-.267z" /><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.732-4.062a.75.75 0 00-1.464 0l.001.001.001.001a.75.75 0 001.464 0l-.001-.001zM9 10.5a.75.75 0 01.75-.75h.5a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3z" clip-rule="evenodd" /></svg>
+        <span>Savings</span>
+      </button>
+      <button data-tab="gigs" class="flex flex-col items-center justify-center p-2 rounded-lg text-xs transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mb-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.5 2A3.5 3.5 0 002 5.5v1.25a.75.75 0 001.5 0V5.5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2H5.5a2 2 0 01-2-2V13a.75.75 0 00-1.5 0v1.5A3.5 3.5 0 005.5 18h9a3.5 3.5 0 003.5-3.5v-9A3.5 3.5 0 0014.5 2h-9z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M5 6.5a.75.75 0 00-.75.75v5.5a.75.75 0 001.5 0v-5.5A.75.75 0 005 6.5z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M8 6.5a.75.75 0 00-.75.75v2.5a.75.75 0 001.5 0v-2.5A.75.75 0 008 6.5z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M11 6.5a.75.75 0 00-.75.75v8.5a.75.75 0 001.5 0v-8.5A.75.75 0 0011 6.5z" clip-rule="evenodd" /></svg>
+        <span>Gig Work</span>
+      </button>
+      <button data-tab="export" class="flex flex-col items-center justify-center p-2 rounded-lg text-xs transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mb-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>
+        <span>Export</span>
+      </button>
+    </nav>
+
+  </div>
+</body>
+</html>
+
