@@ -1,0 +1,168 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Morrow Industries — Request a Print</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{--bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
+.glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border)}
+.gold{color:var(--gold)}
+.btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease}
+.btn-primary{border-color:#d4af37}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.navbar a{opacity:.9}
+.navbar a:hover{opacity:1}
+</style>
+
+</head><body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
+
+<header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+  <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
+    <nav class="hidden md:flex gap-6 text-sm navbar">
+      <a href="/" >Home</a>
+      <a href="/projects" >Projects</a>
+      <a href="/printing/request" class='opacity-100'>3D Printing</a>
+      <a href="/about" >About</a>
+      <a href="/contact" >Contact</a>
+      <a href="/admin" >Admin</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
+      <button id="authBtn" class="md:inline btn">Sign in</button>
+      <button id="mobileBtn" class="md:hidden btn">Menu</button>
+    </div>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)]">
+    <div class="px-4 py-3 space-y-2">
+      <a class="block py-1" href="/">Home</a>
+      <a class="block py-1" href="/projects">Projects</a>
+      <a class="block py-1" href="/printing/request">3D Printing</a>
+      <a class="block py-1" href="/about">About</a>
+      <a class="block py-1" href="/contact">Contact</a>
+      <a class="block py-1" href="/admin">Admin</a>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-4xl px-4 py-10">
+  <h1 class="font-serif text-4xl">Request a 3D Print</h1>
+  <p class="mt-2 text-[var(--muted)]">Sign in, upload your STL, and submit your job. You’ll see it in your dashboard.</p>
+
+  <form id="reqForm" class="mt-6 glass rounded-xl p-6 grid md:grid-cols-2 gap-4">
+    <div class="md:col-span-2">
+      <label class="text-sm block mb-1">STL File</label>
+      <input id="stlFile" type="file" accept=".stl" class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3" required/>
+    </div>
+    <div>
+      <label class="text-sm block mb-1">Material</label>
+      <select id="material" class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3">
+        <option>PLA</option><option>ABS</option><option>PETG</option><option>TPU</option>
+      </select>
+    </div>
+    <div>
+      <label class="text-sm block mb-1">Color</label>
+      <input id="color" placeholder="Black / White / Specify" class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3"/>
+    </div>
+    <div>
+      <label class="text-sm block mb-1">Scale</label>
+      <input id="scale" placeholder="100% (1.0)" class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3" value="100%"/>
+    </div>
+    <div>
+      <label class="text-sm block mb-1">Quantity</label>
+      <input id="qty" type="number" min="1" value="1" class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3"/>
+    </div>
+    <div class="md:col-span-2">
+      <label class="text-sm block mb-1">Notes</label>
+      <textarea id="notes" rows="4" class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3" placeholder="Dimensions, tolerances, deadlines…"></textarea>
+    </div>
+    <div class="md:col-span-2 flex gap-3">
+      <button class="btn btn-primary" type="submit">Submit Request</button>
+      <a class="btn" href="/printing/dashboard">Go to Dashboard</a>
+      <span id="status" class="text-sm text-[var(--muted)]"></span>
+    </div>
+  </form>
+</main>
+
+<footer class="mt-10 border-t border-[var(--border)]">
+  <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+    <div>© <span id="year"></span> Morrow Industries</div>
+    <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+  </div>
+</footer>
+<script>
+document.getElementById('mobileBtn').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('hidden'));
+document.getElementById('year').textContent=new Date().getFullYear();
+</script>
+
+
+<script type="module">
+import { auth, db, storage } from "/assets/js/firebase-init.js";
+import { addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+const form = document.getElementById('reqForm');
+const statusEl = document.getElementById('status');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const user = auth.currentUser;
+  if (!user) { alert("Please sign in first (top right)."); return; }
+  try {
+    statusEl.textContent = "Uploading…";
+    const file = document.getElementById('stlFile').files[0];
+    if (!file) throw new Error("No STL selected");
+    const path = `orders/${user.uid}/${Date.now()}-${file.name}`;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+
+    const material = document.getElementById('material').value;
+    const color = document.getElementById('color').value.trim();
+    const scale = document.getElementById('scale').value.trim();
+    const qty = Number(document.getElementById('qty').value || 1);
+    const notes = document.getElementById('notes').value.trim();
+
+    await addDoc(collection(db,'orders'), {
+      userId: user.uid,
+      filePath: path,
+      fileUrl: url,
+      material, color, scale, qty, notes,
+      status: 'Quoted',
+      createdAt: serverTimestamp()
+    });
+    statusEl.textContent = "Submitted! Check your Dashboard.";
+    form.reset();
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = "Error: " + (e?.message || e);
+  }
+});
+</script>
+
+
+<script type="module">
+import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
+
+const authBtn = document.getElementById('authBtn');
+const userLabel = document.getElementById('userLabel');
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    userLabel.textContent = user.displayName || user.email;
+    authBtn.textContent = 'Sign out';
+  } else {
+    userLabel.textContent = '';
+    authBtn.textContent = 'Sign in';
+  }
+});
+
+authBtn?.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  try {
+    if (user) await signOut(auth);
+    else await signInWithPopup(auth, provider);
+  } catch (e) { alert('Auth error: ' + (e?.message || e)); }
+});
+</script>
+
+</body></html>

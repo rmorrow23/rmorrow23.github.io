@@ -1,0 +1,128 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Morrow Industries — Printing Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{--bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
+.glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border)}
+.gold{color:var(--gold)}
+.btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease}
+.btn-primary{border-color:#d4af37}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.navbar a{opacity:.9}
+.navbar a:hover{opacity:1}
+</style>
+
+</head><body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
+
+<header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+  <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
+    <nav class="hidden md:flex gap-6 text-sm navbar">
+      <a href="/" >Home</a>
+      <a href="/projects" >Projects</a>
+      <a href="/printing/request" class='opacity-100'>3D Printing</a>
+      <a href="/about" >About</a>
+      <a href="/contact" >Contact</a>
+      <a href="/admin" >Admin</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
+      <button id="authBtn" class="md:inline btn">Sign in</button>
+      <button id="mobileBtn" class="md:hidden btn">Menu</button>
+    </div>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)]">
+    <div class="px-4 py-3 space-y-2">
+      <a class="block py-1" href="/">Home</a>
+      <a class="block py-1" href="/projects">Projects</a>
+      <a class="block py-1" href="/printing/request">3D Printing</a>
+      <a class="block py-1" href="/about">About</a>
+      <a class="block py-1" href="/contact">Contact</a>
+      <a class="block py-1" href="/admin">Admin</a>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-6xl px-4 py-10">
+  <h1 class="font-serif text-4xl">Your Orders</h1>
+  <p class="mt-2 text-[var(--muted)]">Sign in to view your print jobs.</p>
+
+  <div id="orders" class="mt-6 grid md:grid-cols-2 gap-5"></div>
+</main>
+
+<footer class="mt-10 border-t border-[var(--border)]">
+  <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+    <div>© <span id="year"></span> Morrow Industries</div>
+    <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+  </div>
+</footer>
+<script>
+document.getElementById('mobileBtn').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('hidden'));
+document.getElementById('year').textContent=new Date().getFullYear();
+</script>
+
+
+<script type="module">
+import { auth, db } from "/assets/js/firebase-init.js";
+import { collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const container = document.getElementById('orders');
+
+function renderCard(o) {
+  const pct = Number(o.progress||0);
+  return `
+  <div class="glass rounded-xl p-5 border border-[var(--border)]">
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold">${o.title || (o.filePath?.split('/').pop()||'Order')}</h2>
+      <span class="text-sm border border-[var(--border)] rounded px-2 py-1" style="${o.status==='Printing'?'color:#d4af37;border-color:#d4af37':''}">${o.status||'Quoted'}</span>
+    </div>
+    <p class="mt-1 text-sm text-[var(--muted)]">${o.material||''} ${o.color?('• '+o.color):''} ${o.qty?('• Qty '+o.qty):''}</p>
+    <div class="mt-3 h-2 rounded bg-white/5 overflow-hidden"><div class="h-full" style="background:#d4af37;width:${pct}%"></div></div>
+    <div class="mt-3 text-sm text-[var(--muted)]">File: <a class="underline" href="${o.fileUrl||'#'}" target="_blank" rel="noopener">download</a></div>
+  </div>`;
+}
+
+function requireAuth() {
+  container.innerHTML = `<div class='text-[var(--muted)]'>Please sign in (top right) to see your orders.</div>`;
+}
+
+auth.onAuthStateChanged(async (user) => {
+  if (!user) return requireAuth();
+  const q = query(collection(db,'orders'), where('userId','==', user.uid), orderBy('createdAt','desc'));
+  onSnapshot(q, (snap) => {
+    if (snap.empty) { container.innerHTML = "<div class='text-[var(--muted)]'>No orders yet.</div>"; return; }
+    const html = [];
+    snap.forEach(doc => html.push(renderCard(doc.data())));
+    container.innerHTML = html.join("");
+  }, (err)=>{ container.innerHTML = "Failed to load: " + (err?.message||err); });
+});
+</script>
+
+
+<script type="module">
+import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
+
+const authBtn = document.getElementById('authBtn');
+const userLabel = document.getElementById('userLabel');
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    userLabel.textContent = user.displayName || user.email;
+    authBtn.textContent = 'Sign out';
+  } else {
+    userLabel.textContent = '';
+    authBtn.textContent = 'Sign in';
+  }
+});
+
+authBtn?.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  try {
+    if (user) await signOut(auth);
+    else await signInWithPopup(auth, provider);
+  } catch (e) { alert('Auth error: ' + (e?.message || e)); }
+});
+</script>
+
+</body></html>

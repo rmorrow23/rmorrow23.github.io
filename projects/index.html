@@ -1,0 +1,139 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Morrow Industries — Projects</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{--bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
+.glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border)}
+.gold{color:var(--gold)}
+.btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease}
+.btn-primary{border-color:#d4af37}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.navbar a{opacity:.9}
+.navbar a:hover{opacity:1}
+</style>
+
+</head><body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
+
+<header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+  <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
+    <nav class="hidden md:flex gap-6 text-sm navbar">
+      <a href="/" >Home</a>
+      <a href="/projects" class='opacity-100'>Projects</a>
+      <a href="/printing/request" >3D Printing</a>
+      <a href="/about" >About</a>
+      <a href="/contact" >Contact</a>
+      <a href="/admin" >Admin</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
+      <button id="authBtn" class="md:inline btn">Sign in</button>
+      <button id="mobileBtn" class="md:hidden btn">Menu</button>
+    </div>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)]">
+    <div class="px-4 py-3 space-y-2">
+      <a class="block py-1" href="/">Home</a>
+      <a class="block py-1" href="/projects">Projects</a>
+      <a class="block py-1" href="/printing/request">3D Printing</a>
+      <a class="block py-1" href="/about">About</a>
+      <a class="block py-1" href="/contact">Contact</a>
+      <a class="block py-1" href="/admin">Admin</a>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-7xl px-4 py-10">
+  <h1 class="font-serif text-4xl">Projects</h1>
+  <p class="mt-2 text-[var(--muted)]">Loaded live from Firestore.</p>
+
+  <div class="mt-6 flex flex-wrap gap-2 text-sm">
+    <button class="btn" data-filter="all">All</button>
+    <button class="btn" data-filter="school">School</button>
+    <button class="btn" data-filter="personal">Personal</button>
+    <button class="btn" data-filter="hardware">Hardware</button>
+    <button class="btn" data-filter="web">Web</button>
+    <button class="btn" data-filter="android">Android</button>
+  </div>
+
+  <section id="grid" class="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></section>
+</main>
+
+<footer class="mt-10 border-t border-[var(--border)]">
+  <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+    <div>© <span id="year"></span> Morrow Industries</div>
+    <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+  </div>
+</footer>
+<script>
+document.getElementById('mobileBtn').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('hidden'));
+document.getElementById('year').textContent=new Date().getFullYear();
+</script>
+
+
+<script type="module">
+import { db } from "/assets/js/firebase-init.js";
+import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const grid = document.getElementById('grid');
+let cache = [];
+
+async function loadProjects() {
+  const q = query(collection(db,'projects'), orderBy('updatedAt','desc'));
+  const snaps = await getDocs(q);
+  cache = snaps.docs.map(d => ({ id:d.id, ...d.data() }));
+  render('all');
+}
+
+function card(p) {
+  const type = (p.type||'Project');
+  const tags = (p.tags||[]).join(' • ');
+  const progress = Number(p.progress||0);
+  return `
+    <article class="glass rounded-xl p-5 border border-[var(--border)]">
+      <div class="text-xs text-[var(--muted)]">${type}${tags?` • ${tags}`:''}</div>
+      <h2 class="mt-1 text-lg font-semibold">${p.title||'Untitled'}</h2>
+      <p class="mt-2 text-sm text-[var(--muted)]">${p.summary||''}</p>
+      <div class="mt-3 h-2 rounded bg-white/5 overflow-hidden">
+        <div class="h-full" style="background:var(--gold);width:${Math.max(0,Math.min(progress,100))}%"></div>
+      </div>
+    </article>`;
+}
+
+function render(filter) {
+  const items = cache.filter(p => filter==='all' ? true : ((p.type||'').toLowerCase()===filter || (p.tags||[]).map(t=>t.toLowerCase()).includes(filter)));
+  grid.innerHTML = items.map(card).join('') || `<div class='text-[var(--muted)]'>No matching projects.</div>`;
+}
+
+document.querySelectorAll('button[data-filter]').forEach(btn=>btn.addEventListener('click',()=>render(btn.dataset.filter)));
+loadProjects().catch(e=>{ console.error(e); grid.innerHTML="<div class='text-[var(--muted)]'>Failed to load.</div>"; });
+</script>
+
+
+<script type="module">
+import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
+
+const authBtn = document.getElementById('authBtn');
+const userLabel = document.getElementById('userLabel');
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    userLabel.textContent = user.displayName || user.email;
+    authBtn.textContent = 'Sign out';
+  } else {
+    userLabel.textContent = '';
+    authBtn.textContent = 'Sign in';
+  }
+});
+
+authBtn?.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  try {
+    if (user) await signOut(auth);
+    else await signInWithPopup(auth, provider);
+  } catch (e) { alert('Auth error: ' + (e?.message || e)); }
+});
+</script>
+
+</body></html>

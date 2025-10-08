@@ -1,0 +1,128 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Contact — Morrow Industries</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{--bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
+.glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border)}
+.gold{color:var(--gold)}
+.btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease}
+.btn-primary{border-color:#d4af37}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.navbar a{opacity:.9}
+.navbar a:hover{opacity:1}
+</style>
+
+</head><body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
+
+<header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+  <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
+    <nav class="hidden md:flex gap-6 text-sm navbar">
+      <a href="/" >Home</a>
+      <a href="/projects" >Projects</a>
+      <a href="/printing/request" >3D Printing</a>
+      <a href="/about" >About</a>
+      <a href="/contact" class='opacity-100'>Contact</a>
+      <a href="/admin" >Admin</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
+      <button id="authBtn" class="md:inline btn">Sign in</button>
+      <button id="mobileBtn" class="md:hidden btn">Menu</button>
+    </div>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)]">
+    <div class="px-4 py-3 space-y-2">
+      <a class="block py-1" href="/">Home</a>
+      <a class="block py-1" href="/projects">Projects</a>
+      <a class="block py-1" href="/printing/request">3D Printing</a>
+      <a class="block py-1" href="/about">About</a>
+      <a class="block py-1" href="/contact">Contact</a>
+      <a class="block py-1" href="/admin">Admin</a>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-3xl px-4 py-10">
+  <h1 class="font-serif text-4xl">Contact / Support</h1>
+  <p class="mt-2 text-[var(--muted)]">Have a question or custom request? Send a message below.</p>
+
+  <form id="contactForm" class="mt-6 grid sm:grid-cols-2 gap-4 glass rounded-xl p-6">
+    <input id="name" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3" placeholder="Name" required/>
+    <input id="email" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3" placeholder="Email" type="email" required/>
+    <input id="subject" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3 sm:col-span-2" placeholder="Subject" required/>
+    <textarea id="message" rows="5" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3 sm:col-span-2" placeholder="Message" required></textarea>
+    <button class="btn btn-primary sm:w-max" type="submit">Send</button>
+    <span id="status" class="text-sm text-[var(--muted)]"></span>
+  </form>
+</main>
+
+<footer class="mt-10 border-t border-[var(--border)]">
+  <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+    <div>© <span id="year"></span> Morrow Industries</div>
+    <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+  </div>
+</footer>
+<script>
+document.getElementById('mobileBtn').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('hidden'));
+document.getElementById('year').textContent=new Date().getFullYear();
+</script>
+
+
+<script type="module">
+import { db, auth } from "/assets/js/firebase-init.js";
+import { addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const form = document.getElementById('contactForm');
+const statusEl = document.getElementById('status');
+
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  try {
+    statusEl.textContent = "Sending…";
+    const payload = {
+      name: document.getElementById('name').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      subject: document.getElementById('subject').value.trim(),
+      message: document.getElementById('message').value.trim(),
+      userId: auth.currentUser?.uid || null,
+      createdAt: serverTimestamp()
+    };
+    await addDoc(collection(db,'support'), payload);
+    statusEl.textContent = "Sent! I’ll reply soon.";
+    form.reset();
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = "Error: " + (e?.message||e);
+  }
+});
+</script>
+
+
+<script type="module">
+import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
+
+const authBtn = document.getElementById('authBtn');
+const userLabel = document.getElementById('userLabel');
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    userLabel.textContent = user.displayName || user.email;
+    authBtn.textContent = 'Sign out';
+  } else {
+    userLabel.textContent = '';
+    authBtn.textContent = 'Sign in';
+  }
+});
+
+authBtn?.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  try {
+    if (user) await signOut(auth);
+    else await signInWithPopup(auth, provider);
+  } catch (e) { alert('Auth error: ' + (e?.message || e)); }
+});
+</script>
+
+</body></html>

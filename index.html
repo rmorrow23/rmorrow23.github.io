@@ -1,382 +1,198 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Morrow Industries — Home</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{--bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
+.glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border)}
+.gold{color:var(--gold)}
+.btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease}
+.btn-primary{border-color:#d4af37}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.navbar a{opacity:.9}
+.navbar a:hover{opacity:1}
+</style>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Randal Morrow | Under Construction</title>
-    <link rel="icon" type="image/x-icon" href="/morIcon.ico">
-    <link rel="manifest" href="manifest.json" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-    <style>
-        html,
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: url('Tech.jpg') no-repeat center center fixed;
-            background-size: cover;
-            color: white;
-            display: flex;
-            justify-content: center;
-            text-align: center;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-
-        }
-
-        .overlay {
-            height: 100vh;
-            width: 100vw;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            backdrop-filter: blur(15px);
-            background: rgba(0, 0, 20, 0.5);
-            z-index: 0;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            z-index: 1;
-            background: rgba(200, 200, 200, 0);
-            padding: 10% 5% 10% 5%;
-            border-radius: 20px;
-            height: 100vh;
-            width: 100vw;
-            margin-top: 0;
-            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0);
-
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            margin-left: -25%;
-            color: #00ffcc;
-            width: 150%;
-            animation: fadeIn .95s ease-out 1.5s forwards;
-            opacity: 0;
-        }
-
-        p {
-            font-size: 1.2rem;
-            color: #ccc;
-            width: 100%;
-            animation: fadeIn 0.95s ease-out 2.5s forwards;
-            opacity: 0;
-
-        }
-
-        .loader {
-            margin: 80px auto 0;
-            height: 5px;
-            width: 80%;
-            background: linear-gradient(90deg, #00ffcc, #006666);
-            background-size: 200% 100%;
-            animation: shimmer 2s infinite;
-            border-radius: 10px;
-        }
-
-        @keyframes shimmer {
-            0% {
-                background-position: 200% 0;
-            }
-
-            100% {
-                background-position: -200% 0;
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0px);
-            }
-        }
-
-        @keyframes fadeInLogo {
-            from {
-                opacity: 0;
-                transform: translateY(-50px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0px);
-            }
-        }
-
-        footer {
-            position: absolute;
-            bottom: 20px;
-            font-size: 0.85rem;
-            color: #888;
-            width: 100%;
-            text-align: center;
-        }
-
-        .profile-card {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .profile-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .profile-image-container {
-            position: relative;
-            display: inline-block;
-        }
-
-        .profile-card {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .profile-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-
-        .profile-pic {
-            width: 20rem;
-            height: 20rem;
-            border-radius: 5%;
-            border: 0px solid #00000000;
-            background-color: rgba(255, 255, 255, 0.1);
-            box-shadow: 0px 0px 3px rgba(255, 255, 255, 0.5);
-            object-fit: cover;
-            animation: fadeInLogo 1.5s ease-out forwards;
-            opacity: 0;
-            /* Start hidden for animation */
-        }
-
-        .construction-icon {
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
-            width: 4rem;
-            height: 4rem;
-            background: rgba(0, 0, 0, 0);
-            border-radius: 50%;
-            padding: 5px;
-            box-shadow: 0 0 8px rgba(0, 0, 0, 0);
-            display: none;
-        }
-
-        /* Mobile Styles */
-        @media (max-width: 600px) {
-
-            .divider {
-                display: none;
-            }
-
-            .mobile-overlay {
-                display: block;
-                position: absolute;
-                bottom: 0;
-                right: 0;
-                width: 3rem;
-                height: 3rem;
-                background: transparent;
-            }
-
-            .profile-card {
-                display: flex;
-                justify-content: center;
-                margin-bottom: 20px;
-            }
-
-            .profile-wrapper {
-                position: relative;
-                display: inline-block;
-            }
-
-            .profile-pic {
-                width: 15rem;
-                height: 15rem;
-                border-radius: 5%;
-                border: 0px solid #00000000;
-                object-fit: cover;
-                margin-top: -1rem;
-                background-color: rgba(255, 255, 255, 0.1);
-                box-shadow: 0px 0px 3px rgba(255, 255, 255, 0.5);
-            }
-
-            .construction-icon {
-                position: absolute;
-                bottom: -5px;
-                right: -5px;
-                width: 6rem;
-                height: 6rem;
-                background: rgba(0, 0, 0, 0.9);
-                border-radius: 50%;
-                padding: 5px;
-                box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-            }
-
-            h1 {
-                font-size: 1.75rem;
-                margin-bottom: 20px;
-                margin-left: -25%;
-                color: #00ffcc;
-                width: 150%;
-                animation: fadeIn .95s ease-out 1.5s forwards;
-                opacity: 0;
-            }
-
-        }
-
-        /* Default: hide mobile overlay */
-        .mobile-overlay {
-            display: none;
-        }
-    </style>
 </head>
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+<body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
-        authDomain: "morrow-industries.firebaseapp.com",
-        projectId: "morrow-industries",
-        messagingSenderId: "75190213345",
-        appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const week = new Date();
-    const weekKey = `week_${week.getFullYear()}_W${Math.ceil((((week - new Date(week.getFullYear(), 0, 1)) / 86400000) + 1) / 7)}`;
-
-    const btn = document.getElementById('progressButton');
-
-    async function updateChecklistProgress() {
-        const docRef = doc(db, "checklists", weekKey);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            const tasks = docSnap.data().tasks;
-            const completed = tasks.filter(t => t.done).length;
-            const percent = Math.round((completed / tasks.length) * 100);
-            if (btn) btn.innerText = `Checklist Progress: ${percent}% Complete`;
-        } else {
-            if (btn) btn.innerText = `Checklist Progress: 0% Complete`;
-        }
-    }
-
-    updateChecklistProgress();
-</script>
-
-
-<body>
-    <div class="overlay"></div>
-    <div class="container" id="container">
-        <div class="profile-card">
-            <div class="profile-wrapper">
-                <div class="profile-image-container">
-                    <img src="morindv2.png" alt="Morrow Industries" class="profile-pic">
-                    <img src="construction-icon.png" alt="Under Construction" class="construction-icon mobile-overlay">
-                </div>
-                <div class="divider"></div>
-                <img src="construction-icon.png" alt="Under Construction" class="construction-icon">
-            </div>
-        </div>
-
-        <h1>Morrow Industries</h1>
-        <p>This site is currently under construction.<br><br>
-            Check back soon to explore my portfolio and projects!</p>
-        <a href="/CheckList/index.html"
-            style="text-decoration: none; margin-top: 20px; animation: fadeIn 0.95s ease-out 3s forwards; opacity: 0;">
-            <button id="progressButton" style="
-            padding: 12px 24px;
-            font-size: 1rem;
-            background: rgba(0, 245, 294, 1);
-            color: black;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(0, 255, 294, 0.5);
-            transition: background 0.3s ease;">
-                View Weekly Checklist
-            </button>
-        </a>
-
-        </a>
-
-        <div class="loader_"></div>
+<header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+  <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
+    <nav class="hidden md:flex gap-6 text-sm navbar">
+      <a href="/" class='opacity-100'>Home</a>
+      <a href="/projects" >Projects</a>
+      <a href="/printing/request" >3D Printing</a>
+      <a href="/about" >About</a>
+      <a href="/contact" >Contact</a>
+      <a href="/admin" >Admin</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
+      <button id="authBtn" class="md:inline btn">Sign in</button>
+      <button id="mobileBtn" class="md:hidden btn">Menu</button>
     </div>
-    <footer>© 2025 Morrow Industries | All rights reserved</footer>
-</body>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)]">
+    <div class="px-4 py-3 space-y-2">
+      <a class="block py-1" href="/">Home</a>
+      <a class="block py-1" href="/projects">Projects</a>
+      <a class="block py-1" href="/printing/request">3D Printing</a>
+      <a class="block py-1" href="/about">About</a>
+      <a class="block py-1" href="/contact">Contact</a>
+      <a class="block py-1" href="/admin">Admin</a>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-7xl px-4">
+  <section class="py-12 sm:py-16">
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+      <div>
+        <h1 class="font-serif text-4xl sm:text-5xl leading-tight">
+          Building <span class="gold">innovation</span> across software & 3D printing
+        </h1>
+        <p class="mt-4 text-[var(--muted)] max-w-prose">
+          Explore a unified portfolio of school and personal projects, plus a streamlined 3D print service.
+          Track progress, request custom prints, and discover what’s <em>now printing</em>.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href="#projects" class="btn btn-primary">View Projects</a>
+          <a href="/printing/request" class="btn">Start a Print Request</a>
+        </div>
+        <div class="mt-6 glass rounded-xl p-4">
+          <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Now Printing</div>
+          <div id="nowPrinting" class="mt-1">Loading…</div>
+        </div>
+      </div>
+      <div class="rounded-2xl p-0.5" style="position:relative">
+        <div class="glass rounded-2xl p-6">
+          <div class="grid grid-cols-2 gap-4" id="heroPreviews">
+            <div class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">Preview 1</div>
+            <div class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">Preview 2</div>
+            <div class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">Preview 3</div>
+            <div class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">Preview 4</div>
+          </div>
+          <p class="mt-4 text-xs text-[var(--muted)]">Project thumbnails load from Firestore when available.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects" class="py-10 border-t border-[var(--border)]">
+    <div class="flex items-end justify-between">
+      <h2 class="font-serif text-3xl">Most Recent Projects</h2>
+      <div class="text-sm text-[var(--muted)]">Auto‑pulled from Firestore</div>
+    </div>
+    <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-5" id="recentProjects"></div>
+    <div class="mt-6 text-right"><a class="btn" href="/projects">Browse all projects</a></div>
+  </section>
+
+  <section id="printing" class="py-12 border-t border-[var(--border)]">
+    <div class="rounded-2xl p-0.5">
+      <div class="glass rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center">
+        <div class="md:w-2/3">
+          <h2 class="font-serif text-3xl">3D Printing Service</h2>
+          <p class="mt-2 text-[var(--muted)]">Upload STL, choose material & color, get a quote, and track status from “Quoted” to “Complete.”</p>
+        </div>
+        <div class="md:w-1/3 flex gap-3">
+          <a href="/printing/request" class="btn btn-primary grow text-center">Request a Print</a>
+          <a href="/printing/dashboard" class="btn grow text-center">Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="mt-10 border-t border-[var(--border)]">
+  <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+    <div>© <span id="year"></span> Morrow Industries</div>
+    <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+  </div>
+</footer>
 <script>
-    // Service Worker Registration
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(registration => {
-                    console.log('ServiceWorker registered with scope:', registration.scope);
-                })
-                .catch(error => {
-                    console.error('ServiceWorker registration failed:', error);
-                });
-        });
+document.getElementById('mobileBtn').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('hidden'));
+document.getElementById('year').textContent=new Date().getFullYear();
+</script>
+
+
+<script type="module">
+import { db } from "/assets/js/firebase-init.js";
+import { doc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+(async () => {
+  try {
+    const snap = await getDoc(doc(db, "site", "nowPrinting"));
+    const np = document.getElementById("nowPrinting");
+    if (snap.exists()) {
+      const d = snap.data();
+      np.innerHTML = (d.message ?? "—") + (d.percent ? ` — <span class='gold'>${d.percent}%</span>` : "");
+    } else np.textContent = "No current job";
+  } catch (e) {
+    console.error(e);
+    document.getElementById("nowPrinting").textContent = "Failed to load";
+  }
+})();
+
+(async () => {
+  const container = document.getElementById("recentProjects");
+  try {
+    const q = query(collection(db, "projects"), orderBy("updatedAt","desc"), limit(3));
+    const snaps = await getDocs(q);
+    if (snaps.empty) {
+      container.innerHTML = `<div class='text-[var(--muted)]'>No projects yet.</div>`;
+      return;
     }
-</script>
-<script>
-    let deferredPrompt;
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-
-        // Create and show custom install button
-        const installBtn = document.createElement('button');
-        installBtn.textContent = 'Install App';
-        installBtn.style.position = 'fixed';
-        installBtn.style.bottom = '20px';
-        installBtn.style.right = '20px';
-        installBtn.style.padding = '10px 20px';
-        installBtn.style.fontSize = '1rem';
-        installBtn.style.zIndex = '1000';
-        installBtn.style.background = '#00ffcc';
-        installBtn.style.color = '#000';
-        installBtn.style.border = 'none';
-        installBtn.style.borderRadius = '10px';
-        installBtn.style.cursor = 'pointer';
-
-        installBtn.onclick = () => {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then(choice => {
-                if (choice.outcome === 'accepted') {
-                    console.log('User accepted install');
-                } else {
-                    console.log('User dismissed install');
-                }
-                deferredPrompt = null;
-                installBtn.remove();
-            });
-        };
-
-        document.body.appendChild(installBtn);
+    const html = [];
+    snaps.forEach(docSnap => {
+      const p = docSnap.data();
+      const type = p.type ?? "Project";
+      const title = p.title ?? "Untitled";
+      const summary = p.summary ?? "";
+      const progress = Number(p.progress ?? 0);
+      html.push(`
+        <article class="glass rounded-xl p-5 border border-[var(--border)]">
+          <div class="text-sm text-[var(--muted)]">${type}</div>
+          <h3 class="mt-1 text-lg font-semibold">${title}</h3>
+          <p class="mt-2 text-sm text-[var(--muted)]">${summary}</p>
+          <div class="mt-3 h-2 rounded bg-white/5 overflow-hidden">
+            <div class="h-full" style="background:var(--gold);width:${Math.max(0,Math.min(100,progress))}%"></div>
+          </div>
+        </article>
+      `);
     });
+    container.innerHTML = html.join("");
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = `<div class='text-[var(--muted)]'>Failed to load projects.</div>`;
+  }
+})();
 </script>
 
-</html>
+
+<script type="module">
+import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
+
+const authBtn = document.getElementById('authBtn');
+const userLabel = document.getElementById('userLabel');
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    userLabel.textContent = user.displayName || user.email;
+    authBtn.textContent = 'Sign out';
+  } else {
+    userLabel.textContent = '';
+    authBtn.textContent = 'Sign in';
+  }
+});
+
+authBtn?.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  try {
+    if (user) await signOut(auth);
+    else await signInWithPopup(auth, provider);
+  } catch (e) { alert('Auth error: ' + (e?.message || e)); }
+});
+</script>
+
+</body></html>
