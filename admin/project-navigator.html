@@ -24,112 +24,187 @@
   </style>
 </head>
 <body class="min-h-screen">
-  <!-- Shell -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Header -->
-    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-3">
+
+  <!-- Auth Gate (same behavior as admin index) -->
+  <div id="gate" style="position:fixed;inset:0;display:grid;place-items:center;background:#0b0c0f;z-index:9999">
+    <div class="glass" style="padding:24px;border-radius:18px;max-width:420px;width:92%">
+      <div class="flex items-center gap-3 mb-2">
         <div class="w-10 h-10 rounded-2xl glass grid place-items-center">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" stroke="currentColor" stroke-width="1.5"/></svg>
         </div>
-        <div>
-          <h1 class="text-xl sm:text-2xl font-semibold">Morrow Industries • Project Navigator</h1>
-          <p class="text-sm text-[var(--muted)] one">Private portal for quick access to projects, demos, and files.</p>
-        </div>
+        <h2 class="text-lg font-semibold">Morrow Industries — Admin Access</h2>
       </div>
+      <p class="text-sm opacity-80 mb-4">Sign in with Google. Only users with <code>role: "admin"</code> in Firestore (<code>users/{uid}</code>) may view this page.</p>
       <div class="flex gap-2">
-        <button id="importBtn" class="btn glass px-3 py-2 rounded-xl text-sm">Import JSON</button>
-        <button id="exportBtn" class="btn glass px-3 py-2 rounded-xl text-sm">Export JSON</button>
-        <button id="addBtn" class="btn glass px-3 py-2 rounded-xl text-sm">Quick Add</button>
+        <button id="loginBtn" class="btn px-3 py-2 rounded-xl">Sign in with Google</button>
       </div>
-    </header><!-- Controls -->
-<section class="mt-6 glass rounded-2xl p-4">
-  <div class="grid lg:grid-cols-4 gap-3 items-end">
-    <label class="block lg:col-span-2">
-      <span class="text-sm text-[var(--muted)]">Search</span>
-      <div class="mt-1 flex items-center gap-2 glass rounded-xl p-2">
-        <svg class="shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" stroke="currentColor"/></svg>
-        <input id="q" placeholder="name, tag, url, notes…" class="w-full bg-transparent outline-none" />
-        <span class="text-xs text-[var(--muted)] hidden sm:inline">Press <span class="kbd px-1.5 py-0.5 rounded-lg">/</span></span>
-      </div>
-    </label>
-    <label class="block">
-      <span class="text-sm text-[var(--muted)]">Tag filter</span>
-      <select id="tagFilter" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent"></select>
-    </label>
-    <div class="flex gap-2">
-      <button id="viewCards" class="btn glass px-3 py-2 rounded-xl text-sm">Cards</button>
-      <button id="viewTree" class="btn glass px-3 py-2 rounded-xl text-sm">Tree</button>
+      <div id="gateMsg" class="mt-3 text-xs text-[var(--muted)]"></div>
     </div>
   </div>
 
-  <!-- GitHub Auto-Detect -->
-  <div class="mt-4 grid md:grid-cols-3 gap-3">
-    <label class="block">
-      <span class="text-sm text-[var(--muted)]">GitHub username or org</span>
-      <input id="ghUser" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="morrow-industries"/>
-    </label>
-    <label class="block">
-      <span class="text-sm text-[var(--muted)]">Personal Access Token (optional – for private repos)</span>
-      <input id="ghToken" type="password" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="ghp_••••••••"/>
-    </label>
-    <div class="flex items-end gap-2">
-      <button id="scanGithub" class="btn glass px-3 py-2 rounded-xl text-sm">Scan GitHub</button>
-      <button id="clearGithub" class="btn glass px-3 py-2 rounded-xl text-sm">Clear Token</button>
-    </div>
-  </div>
-  <p class="mt-2 text-xs text-[var(--muted)]">Auto-detect lists repos with <em>GitHub Pages</em> enabled. It builds links like <code>https://&lt;user&gt;.github.io/&lt;repo&gt;/</code>. For private repos, add a token with <code>repo</code> read access (stored locally only).</p>
-</section>
-
-<!-- Content -->
-<section class="mt-6 grid lg:grid-cols-3 gap-6" id="content"></section>
-
-<!-- Footer -->
-<footer class="mt-10 text-center text-xs text-[var(--muted)]">
-  <p>Tip: Protect this portal behind <strong>Cloudflare Access</strong> (email OTP) on a subdomain like <em>projects.morrow-industries.com</em> for real privacy.</p>
-</footer>
-
-  </div>  <!-- Quick Add Modal -->  <dialog id="quickAdd" class="glass rounded-2xl p-0 w-[min(680px,95vw)]">
-    <div class="p-5">
-      <div class="flex items-start justify-between">
-        <div>
-          <h2 class="text-lg font-semibold">Add Project</h2>
-          <p class="text-sm text-[var(--muted)] one">Stores locally in your browser until you export.</p>
+  <!-- App (hidden until admin verified) -->
+  <div id="app" style="display:none">
+    <!-- Shell -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <!-- Header -->
+      <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl glass grid place-items-center">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" stroke="currentColor" stroke-width="1.5"/></svg>
+          </div>
+          <div>
+            <h1 class="text-xl sm:text-2xl font-semibold">Morrow Industries • Project Navigator</h1>
+            <p class="text-sm text-[var(--muted)] one">Private portal for quick access to projects, demos, and files.</p>
+          </div>
         </div>
-        <button id="closeAdd" class="btn glass px-2 py-1 rounded-lg text-sm">Close</button>
+        <div class="flex gap-2">
+          <button id="importBtn" class="btn glass px-3 py-2 rounded-xl text-sm">Import JSON</button>
+          <button id="exportBtn" class="btn glass px-3 py-2 rounded-xl text-sm">Export JSON</button>
+          <button id="addBtn" class="btn glass px-3 py-2 rounded-xl text-sm">Quick Add</button>
+        </div>
+      </header>
+
+      <!-- Controls -->
+      <section class="mt-6 glass rounded-2xl p-4">
+        <div class="grid lg:grid-cols-4 gap-3 items-end">
+          <label class="block lg:col-span-2">
+            <span class="text-sm text-[var(--muted)]">Search</span>
+            <div class="mt-1 flex items-center gap-2 glass rounded-xl p-2">
+              <svg class="shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" stroke="currentColor"/></svg>
+              <input id="q" placeholder="name, tag, url, notes…" class="w-full bg-transparent outline-none" />
+              <span class="text-xs text-[var(--muted)] hidden sm:inline">Press <span class="kbd px-1.5 py-0.5 rounded-lg">/</span></span>
+            </div>
+          </label>
+          <label class="block">
+            <span class="text-sm text-[var(--muted)]">Tag filter</span>
+            <select id="tagFilter" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent"></select>
+          </label>
+          <div class="flex gap-2">
+            <button id="viewCards" class="btn glass px-3 py-2 rounded-xl text-sm">Cards</button>
+            <button id="viewTree" class="btn glass px-3 py-2 rounded-xl text-sm">Tree</button>
+          </div>
+        </div>
+
+        <!-- GitHub Auto-Detect -->
+        <div class="mt-4 grid md:grid-cols-3 gap-3">
+          <label class="block">
+            <span class="text-sm text-[var(--muted)]">GitHub username or org</span>
+            <input id="ghUser" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="morrow-industries"/>
+          </label>
+          <label class="block">
+            <span class="text-sm text-[var(--muted)]">Personal Access Token (optional – for private repos)</span>
+            <input id="ghToken" type="password" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="ghp_••••••••"/>
+          </label>
+          <div class="flex items-end gap-2">
+            <button id="scanGithub" class="btn glass px-3 py-2 rounded-xl text-sm">Scan GitHub</button>
+            <button id="clearGithub" class="btn glass px-3 py-2 rounded-xl text-sm">Clear Token</button>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-[var(--muted)]">Auto-detect lists repos with <em>GitHub Pages</em> enabled. It builds links like <code>https://&lt;user&gt;.github.io/&lt;repo&gt;/</code>. For private repos, add a token with <code>repo</code> read access (stored locally only).</p>
+      </section>
+
+      <!-- Content -->
+      <section class="mt-6 grid lg:grid-cols-3 gap-6" id="content"></section>
+
+      <!-- Footer -->
+      <footer class="mt-10 text-center text-xs text-[var(--muted)]">
+        <p>Tip: Protect this portal behind <strong>Cloudflare Access</strong> (email OTP) on a subdomain like <em>projects.morrow-industries.com</em> for real privacy.</p>
+      </footer>
+    </div>
+
+    <!-- Quick Add Modal -->
+    <dialog id="quickAdd" class="glass rounded-2xl p-0 w-[min(680px,95vw)]">
+      <div class="p-5">
+        <div class="flex items-start justify-between">
+          <div>
+            <h2 class="text-lg font-semibold">Add Project</h2>
+            <p class="text-sm text-[var(--muted)] one">Stores locally in your browser until you export.</p>
+          </div>
+          <button id="closeAdd" class="btn glass px-2 py-1 rounded-lg text-sm">Close</button>
+        </div>
+        <form id="addForm" class="grid sm:grid-cols-2 gap-4 mt-4">
+          <label class="block col-span-2 sm:col-span-1">
+            <span class="text-sm text-[var(--muted)]">Name</span>
+            <input name="name" required class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="VaultView"/>
+          </label>
+          <label class="block col-span-2 sm:col-span-1">
+            <span class="text-sm text-[var(--muted)]">URL</span>
+            <input name="url" required type="url" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="https://morrow-industries.github.io/vaultview/"/>
+          </label>
+          <label class="block col-span-2">
+            <span class="text-sm text-[var(--muted)]">Description</span>
+            <input name="desc" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="Finance dashboard demo"/>
+          </label>
+          <label class="block col-span-2">
+            <span class="text-sm text-[var(--muted)]">Tags (comma-separated)</span>
+            <input name="tags" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="web, firebase, demo"/>
+          </label>
+          <label class="block col-span-2 sm:col-span-1">
+            <span class="text-sm text-[var(--muted)]">Section</span>
+            <input name="section" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="Apps"/>
+          </label>
+          <label class="block col-span-2 sm:col-span-1">
+            <span class="text-sm text-[var(--muted)]">Icon (emoji or URL)</span>
+            <input name="icon" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="📁"/>
+          </label>
+          <div class="col-span-2 flex justify-end gap-2 mt-2">
+            <button type="button" id="resetAdd" class="btn glass px-3 py-2 rounded-xl text-sm">Reset</button>
+            <button class="btn glass px-3 py-2 rounded-xl text-sm">Add</button>
+          </div>
+        </form>
       </div>
-      <form id="addForm" class="grid sm:grid-cols-2 gap-4 mt-4">
-        <label class="block col-span-2 sm:col-span-1">
-          <span class="text-sm text-[var(--muted)]">Name</span>
-          <input name="name" required class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="VaultView"/>
-        </label>
-        <label class="block col-span-2 sm:col-span-1">
-          <span class="text-sm text-[var(--muted)]">URL</span>
-          <input name="url" required type="url" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="https://morrow-industries.github.io/vaultview/"/>
-        </label>
-        <label class="block col-span-2">
-          <span class="text-sm text-[var(--muted)]">Description</span>
-          <input name="desc" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="Finance dashboard demo"/>
-        </label>
-        <label class="block col-span-2">
-          <span class="text-sm text-[var(--muted)]">Tags (comma‑separated)</span>
-          <input name="tags" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="web, firebase, demo"/>
-        </label>
-        <label class="block col-span-2 sm:col-span-1">
-          <span class="text-sm text-[var(--muted)]">Section</span>
-          <input name="section" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="Apps"/>
-        </label>
-        <label class="block col-span-2 sm:col-span-1">
-          <span class="text-sm text-[var(--muted)]">Icon (emoji or URL)</span>
-          <input name="icon" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="📁"/>
-        </label>
-        <div class="col-span-2 flex justify-end gap-2 mt-2">
-          <button type="button" id="resetAdd" class="btn glass px-3 py-2 rounded-xl text-sm">Reset</button>
-          <button class="btn glass px-3 py-2 rounded-xl text-sm">Add</button>
-        </div>
-      </form>
-    </div>
-  </dialog>  <!-- File input (hidden) -->  <input type="file" id="fileInput" accept="application/json" class="hidden" />  <script>
+    </dialog>
+
+    <!-- File input (hidden) -->
+    <input type="file" id="fileInput" accept="application/json" class="hidden" />
+  </div><!-- /#app -->
+
+  <!-- Firebase Auth gate (uses your existing /assets/js/firebase-init.js) -->
+  <script type="module">
+    import { auth, provider, signInWithPopup, onAuthStateChanged } from "/assets/js/firebase-init.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const gate = document.getElementById('gate');
+    const app  = document.getElementById('app');
+    const msg  = document.getElementById('gateMsg');
+    const db   = getFirestore();
+
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      signInWithPopup(auth, provider).catch(e => msg.textContent = 'Auth error: ' + (e?.message || e));
+    });
+
+    async function isAdmin(user) {
+      try {
+        const u = await getDoc(doc(db, 'users', user.uid));
+        return !!(u.exists() && u.data().role === 'admin');
+      } catch (e) {
+        msg.textContent = 'Role check failed: ' + (e?.message || e);
+        return false;
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        gate.style.display = 'grid';
+        app.style.display  = 'none';
+        msg.textContent = 'Please sign in.';
+        return;
+      }
+      if (await isAdmin(user)) {
+        gate.style.display = 'none';
+        app.style.display  = '';
+        // Kick off the navigator only after authorization
+        window.__startProjNav?.();
+      } else {
+        gate.style.display = 'grid';
+        app.style.display  = 'none';
+        msg.textContent = 'Signed in, but not an admin.';
+      }
+    });
+  </script>
+
+  <!-- Navigator Logic -->
+  <script>
     // --- Storage helpers -----------------------------------------------------
     const LS_KEY = "mi.project.nav.v1";
     const CFG_KEY = "mi.project.nav.cfg.v1";
@@ -353,7 +428,7 @@
     }
 
     // --- Events --------------------------------------------------------------
-    document.addEventListener("keydown", (e)=>{ if(e.key==="/"){ e.preventDefault(); q.focus(); }});
+    document.addEventListener("keydown", (e)=>{ if(e.key==="/"){ if(document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){ e.preventDefault(); q.focus(); } }});
     q.addEventListener("input", ()=>{ state.q = q.value; draw(); });
     tagFilter.addEventListener("change", ()=>{ state.tag = tagFilter.value; draw(); });
     viewCards.addEventListener("click", ()=>{ state.view="cards"; localStorage.setItem("mi_view","cards"); draw(); });
@@ -399,7 +474,10 @@
       state.items.push(item); save(); draw(); dlg.close(); e.target.reset();
     });
 
-    // Init
-    (async function(){ await loadData(); renderControls(); q.value = state.q; draw(); })();
-  </script></body>
+    // Start ONLY after Firebase gate unlocks
+    window.__startProjNav = async function(){
+      await loadData(); renderControls(); q.value = state.q; draw();
+    };
+  </script>
+</body>
 </html>
