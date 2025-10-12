@@ -93,6 +93,7 @@
       try {
         const u = await getDoc(doc(db, 'users', user.uid));
         return !!(u.exists() && u.data().role === 'admin');
+        console.log('Role check', user.uid, u.data());
       } catch (e) {
         msg.textContent = 'Role check failed: ' + (e?.message || e);
         return false;
