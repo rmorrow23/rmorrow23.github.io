@@ -3,28 +3,60 @@
 <title>Contact — Morrow Industries</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-:root{--bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
-.glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border)}
+:root{--bg:#000;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
+/* background + overlay to match 404/index */
+body{
+  margin:0;min-height:100vh;color:var(--text);
+  background:var(--bg);
+  font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  position:relative;overflow-x:hidden;
+}
+.page-overlay{
+  position:fixed;inset:0;height:100vh;width:100vw;z-index:0;
+  background:rgba(0,0,20,0);backdrop-filter:blur(3px);
+}
+input, textarea{
+    background:rgba(0,0,0,0);
+}
+/* particles */
+.particles{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.particles span{
+  position:absolute;display:block;width:5px;height:5px;border-radius:9999px;background:var(--gold);opacity:.15;
+  filter:blur(.5px);animation:float var(--dur) linear infinite;left:var(--x);top:var(--y)
+}
+@keyframes float{to{transform:translateY(-300vh) translateX(var(--drift, 0px));opacity:0}}
+/* glass + brand */
+.glass{background:rgba(18,20,27,.2);backdrop-filter:saturate(10%) blur(15px);border:1px solid var(--border)}
 .gold{color:var(--gold)}
-.btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease}
+.btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease;position:relative;z-index:2}
 .btn-primary{border-color:#d4af37}
 .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .navbar a{opacity:.9}
 .navbar a:hover{opacity:1}
+/* fade-in */
+.fade-in{opacity:0;transform:translateY(6px);animation:fadeIn .6s ease forwards}
+.delay-1{animation-delay:.08s}
+@keyframes fadeIn{to{opacity:1;transform:none}}
+/* keep header above overlay/particles */
+header{position:sticky;top:0;z-index:3}
 </style>
+</head>
 
-</head><body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
+<body class="min-h-screen text-[var(--text)] selection:bg-[var(--gold)]/20">
+  <!-- overlay + particles -->
+  <div class="page-overlay"></div>
+  <div class="particles" id="particles"></div>
 
-<header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+<header class="border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
   <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
     <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
     <nav class="hidden md:flex gap-6 text-sm navbar">
-      <a href="/" >Home</a>
-      <a href="/projects" >Projects</a>
-      <a href="/printing/request" >3D Printing</a>
-      <a href="/about" >About</a>
+      <a href="/">Home</a>
+      <a href="/projects">Projects</a>
+      <a href="/printing/request">3D Printing</a>
+      <a href="/about">About</a>
       <a href="/contact" class='opacity-100'>Contact</a>
-      <a href="/admin" >Admin</a>
+      <a href="/admin">Admin</a>
     </nav>
     <div class="flex items-center gap-3">
       <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
@@ -32,7 +64,7 @@
       <button id="mobileBtn" class="md:hidden btn">Menu</button>
     </div>
   </div>
-  <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)]">
+  <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur">
     <div class="px-4 py-3 space-y-2">
       <a class="block py-1" href="/">Home</a>
       <a class="block py-1" href="/projects">Projects</a>
@@ -44,11 +76,11 @@
   </div>
 </header>
 
-<main class="mx-auto max-w-3xl px-4 py-10">
-  <h1 class="font-serif text-4xl">Contact / Support</h1>
-  <p class="mt-2 text-[var(--muted)]">Have a question or custom request? Send a message below.</p>
+<main class="mx-auto max-w-3xl px-4 py-10 relative" style="z-index:2">
+  <h1 class="font-serif text-4xl fade-in">Contact / Support</h1>
+  <p class="mt-2 text-[var(--muted)] fade-in">Have a question or custom request? Send a message below.</p>
 
-  <form id="contactForm" class="mt-6 grid sm:grid-cols-2 gap-4 glass rounded-xl p-6">
+  <form id="contactForm" class="mt-6 grid sm:grid-cols-2 gap-4 glass rounded-xl p-6 fade-in delay-1">
     <input id="name" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3" placeholder="Name" required/>
     <input id="email" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3" placeholder="Email" type="email" required/>
     <input id="subject" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3 sm:col-span-2" placeholder="Subject" required/>
@@ -58,17 +90,45 @@
   </form>
 </main>
 
-<footer class="mt-10 border-t border-[var(--border)]">
+<footer class="mt-10 border-t border-[var(--border)] relative" style="z-index:2">
   <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
     <div>© <span id="year"></span> Morrow Industries</div>
     <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
   </div>
 </footer>
+
 <script>
 document.getElementById('mobileBtn').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('hidden'));
 document.getElementById('year').textContent=new Date().getFullYear();
-</script>
 
+/* Gold dust particles — two passes to vary speeds, matching your 404/index */
+(function makeParticles() {
+  const wrap = document.getElementById('particles');
+  const count = 28;
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('span');
+    s.style.setProperty('--x', Math.random()*100 + 'vw');
+    s.style.setProperty('--y', (100 + Math.random()*40) + 'vh');
+    s.style.setProperty('--drift', (Math.random()*20-10) + 'px');
+    s.style.setProperty('--dur', (1 + Math.random()*14) + 's');
+    s.style.opacity = (0.08 + Math.random()*0.15).toFixed(2);
+    wrap.appendChild(s);
+  }
+})();
+(function makeParticles2() {
+  const wrap = document.getElementById('particles');
+  const count = 28;
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('span');
+    s.style.setProperty('--x', Math.random()*100 + 'vw');
+    s.style.setProperty('--y', (100 + Math.random()*40) + 'vh');
+    s.style.setProperty('--drift', (Math.random()*20-10) + 'px');
+    s.style.setProperty('--dur', (5 + Math.random()*14) + 's');
+    s.style.opacity = (0.08 + Math.random()*0.15).toFixed(2);
+    wrap.appendChild(s);
+  }
+})();
+</script>
 
 <script type="module">
 import { db, auth } from "/assets/js/firebase-init.js";
@@ -98,7 +158,6 @@ form.addEventListener('submit', async (e)=>{
   }
 });
 </script>
-
 
 <script type="module">
 import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
