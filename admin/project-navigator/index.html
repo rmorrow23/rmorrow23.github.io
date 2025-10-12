@@ -13,7 +13,7 @@
       --bg:#0b0c0f;--panel:#12141b;--muted:#a9b0be;--text:#e9eef8;
       --primary:#d4af37;--border:rgba(255,255,255,0.08);--hover:rgba(212,175,55,0.12);
     }
-    html,body{height:100%;}
+    html,body{height:100%}
     body{
       background:radial-gradient(80% 60% at 50% 0%, #10121a 0%, #0a0b0f 60%, #060709 100%);
       color:var(--text);
@@ -24,14 +24,14 @@
       backdrop-filter:saturate(130%) blur(14px);
       border:1px solid var(--border);
     }
-    .btn{border:1px solid var(--border);}
-    .btn:hover{background:var(--hover);}
-    .one{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;}
+    .btn{border:1px solid var(--border)}
+    .btn:hover{background:var(--hover)}
+    .one{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
   </style>
 </head>
 <body class="min-h-screen">
 
-  <!-- 🔐 Auth Gate -->
+  <!-- Auth Gate -->
   <div id="gate" style="position:fixed;inset:0;display:grid;place-items:center;background:#0b0c0f;z-index:9999">
     <div class="glass p-6 rounded-2xl max-w-md w-[92%] text-center">
       <h2 class="text-lg font-semibold mb-1">Morrow Industries — Admin Access</h2>
@@ -41,7 +41,7 @@
     </div>
   </div>
 
-  <!-- 🧭 App -->
+  <!-- App -->
   <div id="app" style="display:none">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <header class="flex items-center justify-between">
@@ -85,24 +85,19 @@
     </div>
   </div>
 
-  <!-- 🔑 Firebase Auth -->
+  <!-- Firebase Auth (imports the shared db instance, NOT getFirestore) -->
   <script type="module">
     import {
-      auth, provider, signInWithPopup, onAuthStateChanged,
-      getFirestore, doc, getDoc
+      db, auth, provider, signInWithPopup, onAuthStateChanged, doc, getDoc
     } from "/assets/js/firebase-init.js?v=20251012";
 
-    const db = getFirestore();
     const gate = document.getElementById('gate');
-    const app = document.getElementById('app');
-    const msg = document.getElementById('gateMsg');
+    const app  = document.getElementById('app');
+    const msg  = document.getElementById('gateMsg');
 
     document.getElementById('loginBtn').addEventListener('click', async ()=>{
-      try {
-        await signInWithPopup(auth, provider);
-      } catch(e) {
-        msg.textContent = 'Auth error: ' + (e?.message || e);
-      }
+      try { await signInWithPopup(auth, provider); }
+      catch(e){ msg.textContent = 'Auth error: ' + (e?.message || e); }
     });
 
     async function isAdmin(user){
@@ -128,11 +123,11 @@
     });
   </script>
 
-  <!-- 🧩 GitHub Repo Explorer -->
+  <!-- GitHub Repo Explorer via Cloudflare Worker Proxy -->
   <script>
     const GH_OWNER="rmorrow23", GH_REPO="rmorrow23.github.io", GH_BRANCH="main";
     const SITE_ROOT="https://www.morrow-industries.com/";
-    const PROXY="https://github-proxy.<your-cloudflare-subdomain>.workers.dev"; // ⚙️ Replace with your Worker URL
+    const PROXY="https://github-proxy.<your-cloudflare-subdomain>.workers.dev"; /* replace with your Worker URL */
 
     const treeEl=document.getElementById('tree'),
           listEl=document.getElementById('list'),
@@ -146,35 +141,31 @@
     let currentPath="";
 
     async function gh(u){
-      const r=await fetch(`${PROXY}?url=${encodeURIComponent(u)}`);
+      const r = await fetch(`${PROXY}?url=${encodeURIComponent(u)}`);
       if(!r.ok) throw new Error(r.status+' '+r.statusText);
       return r.json();
     }
 
     async function listPath(path=""){
-      const enc=path?encodeURIComponent(path)+"/":"";
+      const enc = path? encodeURIComponent(path) + "/" : "";
       return gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${enc}?ref=${GH_BRANCH}`);
     }
 
     async function latestCommit(path=""){
       try{
-        const c=await gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${encodeURIComponent(path)}&per_page=1&sha=${GH_BRANCH}`);
-        return (Array.isArray(c)&&c.length)?c[0].commit.author.date:null;
-      }catch(_){return null;}
+        const c = await gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${encodeURIComponent(path)}&per_page=1&sha=${GH_BRANCH}`);
+        return (Array.isArray(c) && c.length) ? c[0].commit.author.date : null;
+      }catch(_){ return null; }
     }
 
-    function hasIndex(items){
-      return items.some(x=>x.type==="file"&&/^(index\.html?|INDEX\.HTML?)$/.test(x.name));
-    }
-
-    function siteUrl(path){return SITE_ROOT+(path?path+"/":"");}
-    function codeUrl(path){return `https://github.com/${GH_OWNER}/${GH_REPO}/tree/${GH_BRANCH}/${path}`;}
+    function siteUrl(path){ return SITE_ROOT + (path ? path + "/" : ""); }
+    function codeUrl(path){ return `https://github.com/${GH_OWNER}/${GH_REPO}/tree/${GH_BRANCH}/${path}`; }
 
     async function buildTreeRoot(){
       treeEl.innerHTML='<li class="px-2 py-1 rounded-lg bg-black/20">Loading…</li>';
-      const root=await listPath("");
-      const dirs=root.filter(x=>x.type==="dir").map(x=>x.name).sort((a,b)=>a.localeCompare(b));
-      treeEl.innerHTML=[''].concat(dirs).map(name=>{
+      const root = await listPath("");
+      const dirs = root.filter(x=>x.type==="dir").map(x=>x.name).sort((a,b)=>a.localeCompare(b));
+      treeEl.innerHTML = [''].concat(dirs).map(name=>{
         const p=name;
         const id='node-'+(p||'root').replace(/[^a-z0-9]/gi,'_');
         return `<li>
@@ -184,34 +175,34 @@
           </button>
         </li>`;
       }).join("");
-      treeEl.querySelectorAll('button[data-path]').forEach(b=>b.addEventListener('click',()=>loadPath(b.dataset.path)));
+      treeEl.querySelectorAll('button[data-path]').forEach(b=> b.addEventListener('click', ()=> loadPath(b.dataset.path)));
     }
 
-    async function loadPath(path="",force=false){
-      currentPath=path;
-      headEl.textContent='/'+(path||'');
-      openBtn.onclick=()=>window.location.href=siteUrl(path);
-      codeBtn.href=codeUrl(path);
-      metaEl.textContent='Loading…';
+    async function loadPath(path="", force=false){
+      currentPath = path;
+      headEl.textContent = '/' + (path||'');
+      openBtn.onclick = ()=> window.location.href = siteUrl(path); // same-tab navigation
+      codeBtn.href = codeUrl(path);
+      metaEl.textContent = 'Loading…';
 
       try{
-        const items=await listPath(path);
-        const updated=await latestCommit(path);
-        metaEl.textContent='Items: '+items.length+(updated?(' • Updated: '+new Date(updated).toLocaleString()):'');
+        const items = await listPath(path);
+        const updated = await latestCommit(path);
+        metaEl.textContent = 'Items: ' + items.length + (updated ? (' • Updated: ' + new Date(updated).toLocaleString()) : '');
 
-        const q=(searchEl.value||'').toLowerCase().trim();
-        const filtered=items.filter(it=>!q||('/'+(path?path+'/':'')+it.name).toLowerCase().includes(q));
+        const q = (searchEl.value||'').toLowerCase().trim();
+        const filtered = items.filter(it => !q || ('/'+(path?path+'/':'')+it.name).toLowerCase().includes(q));
 
-        listEl.innerHTML=filtered.map(x=>{
-          const isDir=x.type==="dir";
-          const pth=(path?path+'/':'')+x.name;
-          const open=isDir?siteUrl(pth):x.name.match(/^index\.html?$/i)?siteUrl(path):x.html_url;
-          const openLabel=isDir?'Open':x.name.match(/^index\.html?$/i)?'Open':'View';
+        listEl.innerHTML = filtered.map(x=>{
+          const isDir = x.type==="dir";
+          const pth = (path?path+'/':'') + x.name;
+          const open = isDir ? siteUrl(pth) : x.name.match(/^index\.html?$/i) ? siteUrl(path) : x.html_url;
+          const openLabel = isDir ? 'Open' : x.name.match(/^index\.html?$/i) ? 'Open' : 'View';
           return `<article class="rounded border border-[var(--border)] p-3">
             <div class="flex items-center justify-between gap-3">
               <div class="one">${isDir?'📁':'📄'} ${x.name}</div>
               <div class="flex gap-2">
-                ${isDir?`<button data-goto="${pth}" class="btn px-2 py-1 rounded-lg text-sm goto">Browse</button>`:''}
+                ${isDir? `<button data-goto="${pth}" class="btn px-2 py-1 rounded-lg text-sm goto">Browse</button>` : ''}
                 <button class="btn px-2 py-1 rounded-lg text-sm" onclick="window.location.href='${open}'">${openLabel}</button>
                 <a class="btn px-2 py-1 rounded-lg text-sm" target="_blank" rel="noopener" href="https://github.com/${GH_OWNER}/${GH_REPO}/blob/${GH_BRANCH}/${encodeURIComponent(pth)}">Code</a>
               </div>
@@ -219,15 +210,14 @@
           </article>`;
         }).join("");
 
-        listEl.querySelectorAll('.goto').forEach(b=>b.addEventListener('click',()=>loadPath(b.dataset.goto)));
-
+        listEl.querySelectorAll('.goto').forEach(b=> b.addEventListener('click', ()=> loadPath(b.dataset.goto)));
       }catch(e){
-        metaEl.textContent='Error: '+e.message;
+        metaEl.textContent = 'Error: ' + e.message;
       }
     }
 
-    searchEl.addEventListener('input',()=>loadPath(currentPath));
-    window.__bootExplorer=async function(){await buildTreeRoot();await loadPath("");};
+    searchEl.addEventListener('input', ()=> loadPath(currentPath));
+    window.__bootExplorer = async function(){ await buildTreeRoot(); await loadPath(""); };
   </script>
 </body>
 </html>
