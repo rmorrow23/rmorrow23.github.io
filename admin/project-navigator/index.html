@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,16 +10,54 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{ --bg:#0b0c0f; --panel:#12141b; --muted:#a9b0be; --text:#e9eef8; --primary:#d4af37; --border:rgba(255,255,255,0.08); --hover:rgba(212,175,55,0.12); }
-    html,body{height:100%}
-    body{background:radial-gradient(80% 60% at 50% 0%, #10121a 0%, #0a0b0f 60%, #060709 100%); color:var(--text); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
-    .glass{background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); backdrop-filter:saturate(130%) blur(14px); border:1px solid var(--border)}
-    .btn{border:1px solid var(--border)}
-    .btn:hover{background:var(--hover)}
-    .tag{border:1px solid var(--border)}
-    .one{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical; overflow:hidden}
+    :root {
+      --bg: #0b0c0f;
+      --panel: #12141b;
+      --muted: #a9b0be;
+      --text: #e9eef8;
+      --primary: #d4af37;
+      --border: rgba(255, 255, 255, 0.08);
+      --hover: rgba(212, 175, 55, 0.12);
+    }
+
+    html,
+    body {
+      height: 100%
+    }
+
+    body {
+      background: radial-gradient(80% 60% at 50% 0%, #10121a 0%, #0a0b0f 60%, #060709 100%);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial
+    }
+
+    .glass {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+      backdrop-filter: saturate(130%) blur(14px);
+      border: 1px solid var(--border)
+    }
+
+    .btn {
+      border: 1px solid var(--border)
+    }
+
+    .btn:hover {
+      background: var(--hover)
+    }
+
+    .tag {
+      border: 1px solid var(--border)
+    }
+
+    .one {
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden
+    }
   </style>
 </head>
+
 <body class="min-h-screen">
 
   <!-- Auth Gate -->
@@ -25,11 +65,14 @@
     <div class="glass p-6 rounded-2xl max-w-md w-[92%]">
       <div class="flex items-center gap-3 mb-2">
         <div class="w-10 h-10 rounded-2xl glass grid place-items-center">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" stroke="currentColor" stroke-width="1.5"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" stroke="currentColor" stroke-width="1.5" />
+          </svg>
         </div>
         <h2 class="text-lg font-semibold">Morrow Industries — Admin Access</h2>
       </div>
-      <p class="text-sm opacity-80 mb-4">Sign in with Google. Only users with <code>role: "admin"</code> in Firestore (<code>users/{uid}</code>) may view this page.</p>
+      <p class="text-sm opacity-80 mb-4">Sign in with Google. Only users with <code>role: "admin"</code> in Firestore
+        (<code>users/{uid}</code>) may view this page.</p>
       <div class="flex gap-2">
         <button id="loginBtn" class="btn px-3 py-2 rounded-xl">Sign in with Google</button>
       </div>
@@ -43,7 +86,9 @@
       <header class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-2xl glass grid place-items-center">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" stroke="currentColor" stroke-width="1.5"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" stroke="currentColor" stroke-width="1.5" />
+            </svg>
           </div>
           <div>
             <h1 class="text-xl sm:text-2xl font-semibold">Morrow Industries • Project Navigator</h1>
@@ -57,7 +102,8 @@
         <!-- Tree -->
         <aside class="lg:col-span-1 glass rounded-2xl p-4 overflow-y-auto max-h-[80vh]">
           <div class="flex items-center gap-2">
-            <input id="search" class="w-full bg-transparent outline-none p-2 rounded-lg border border-[var(--border)]" placeholder="Filter path… (/app, /tools)"/>
+            <input id="search" class="w-full bg-transparent outline-none p-2 rounded-lg border border-[var(--border)]"
+              placeholder="Filter path… (/app, /tools)" />
             <button id="refreshBtn" class="btn px-3 py-2 rounded-lg text-sm">Refresh</button>
           </div>
           <ul id="tree" class="mt-3 space-y-1 text-sm"></ul>
@@ -84,14 +130,14 @@
     import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     const gate = document.getElementById('gate');
-    const app  = document.getElementById('app');
-    const msg  = document.getElementById('gateMsg');
+    const app = document.getElementById('app');
+    const msg = document.getElementById('gateMsg');
 
     document.getElementById('loginBtn').addEventListener('click', () =>
       signInWithPopup(auth, provider).catch(e => msg.textContent = 'Auth error: ' + (e?.message || e))
     );
 
-    async function isAdmin(user){
+    async function isAdmin(user) {
       try {
         const u = await getDoc(doc(db, 'users', user.uid));
         return !!(u.exists() && u.data().role === 'admin');
@@ -102,91 +148,93 @@
     }
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) { gate.style.display='grid'; app.style.display='none'; msg.textContent='Please sign in.'; return; }
-      if (await isAdmin(user)) { gate.style.display='none'; app.style.display=''; window.__bootExplorer?.(); }
-      else { gate.style.display='grid'; app.style.display='none'; msg.textContent='Signed in, but not an admin.'; }
+      if (!user) { gate.style.display = 'grid'; app.style.display = 'none'; msg.textContent = 'Please sign in.'; return; }
+      if (await isAdmin(user)) { gate.style.display = 'none'; app.style.display = ''; window.__bootExplorer?.(); }
+      else { gate.style.display = 'grid'; app.style.display = 'none'; msg.textContent = 'Signed in, but not an admin.'; }
     });
   </script>
 
   <!-- Explorer -->
   <script>
-    const GH_OWNER="rmorrow23", GH_REPO="rmorrow23.github.io", GH_BRANCH="main", SITE_ROOT="https://www.morrow-industries.com/";
-    const treeEl=document.getElementById('tree'), listEl=document.getElementById('list'), headEl=document.getElementById('detailHead').querySelector('h2');
-    const openBtn=document.getElementById('openBtn'), codeBtn=document.getElementById('codeBtn'), metaEl=document.getElementById('detailMeta'), searchEl=document.getElementById('search');
-    document.getElementById('refreshBtn').addEventListener('click', ()=> loadPath(currentPath,true));
+    const GH_OWNER = "rmorrow23", GH_REPO = "rmorrow23.github.io", GH_BRANCH = "main", SITE_ROOT = "https://www.morrow-industries.com/";
+    const treeEl = document.getElementById('tree'), listEl = document.getElementById('list'), headEl = document.getElementById('detailHead').querySelector('h2');
+    const openBtn = document.getElementById('openBtn'), codeBtn = document.getElementById('codeBtn'), metaEl = document.getElementById('detailMeta'), searchEl = document.getElementById('search');
+    document.getElementById('refreshBtn').addEventListener('click', () => loadPath(currentPath, true));
     let currentPath = "";
 
-    async function gh(u){ const r=await fetch(u); if(!r.ok) throw new Error(r.status+' '+r.statusText); return r.json(); }
-    async function listPath(path=""){
-      const enc = path? encodeURIComponent(path)+'/': "";
+    async function gh(u) { const r = await fetch(u); if (!r.ok) throw new Error(r.status + ' ' + r.statusText); return r.json(); }
+    async function listPath(path = "") {
+      const enc = path ? encodeURIComponent(path) + '/' : "";
       return gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${enc}?ref=${GH_BRANCH}`);
     }
-    async function latestCommit(path=""){
-      try{ const c=await gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${encodeURIComponent(path)}&per_page=1&sha=${GH_BRANCH}`);
-        return (Array.isArray(c)&&c.length)?c[0].commit.author.date:null; }catch(_){ return null; }
+    async function latestCommit(path = "") {
+      try {
+        const c = await gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${encodeURIComponent(path)}&per_page=1&sha=${GH_BRANCH}`);
+        return (Array.isArray(c) && c.length) ? c[0].commit.author.date : null;
+      } catch (_) { return null; }
     }
-    function siteUrl(path){ return SITE_ROOT + (path? encodeURIComponent(path) + "/": ""); }
-    function codeUrl(path){ return `https://github.com/${GH_OWNER}/${GH_REPO}/tree/${GH_BRANCH}/${path?encodeURIComponent(path):""}`; }
+    function siteUrl(path) { return SITE_ROOT + (path ? encodeURIComponent(path) + "/" : ""); }
+    function codeUrl(path) { return `https://github.com/${GH_OWNER}/${GH_REPO}/tree/${GH_BRANCH}/${path ? encodeURIComponent(path) : ""}`; }
 
     /* Breadcrumbs */
-    function renderBreadcrumb(path){
+    function renderBreadcrumb(path) {
       const parts = path ? path.split('/') : [];
-      const segs = [{label:'/', path:''}].concat(parts.map((p,i)=>({label:'/'+p, path: parts.slice(0,i+1).join('/')})));
-      headEl.innerHTML = segs.map(s=>`<button class="underline-offset-2 hover:underline" data-bc="${s.path}">${s.label}</button>`).join('');
-      headEl.querySelectorAll('button[data-bc]').forEach(b=> b.onclick = () => loadPath(b.dataset.bc));
+      const segs = [{ label: '/', path: '' }].concat(parts.map((p, i) => ({ label: '/' + p, path: parts.slice(0, i + 1).join('/') })));
+      headEl.innerHTML = segs.map(s => `<button class="underline-offset-2 hover:underline" data-bc="${s.path}">${s.label}</button>`).join('');
+      headEl.querySelectorAll('button[data-bc]').forEach(b => b.onclick = () => loadPath(b.dataset.bc));
     }
 
     /* Lazy Tree */
-    function makeTreeItem(name, path){
-      const id = 'node_' + (path||'root').replace(/[^a-z0-9]/gi,'_');
+    function makeTreeItem(name, path) {
+      const id = 'node_' + (path || 'root').replace(/[^a-z0-9]/gi, '_');
       return `
         <li>
           <div class="flex items-center">
             <button class="mr-2 text-xs px-1 rounded expand" data-path="${path}" aria-controls="${id}" aria-expanded="false">+</button>
             <button class="flex-1 text-left px-2 py-1 rounded-lg hover:bg-[var(--hover)] goto" data-path="${path}">
-              ${path?'/'+path:'/'}
+              ${path ? '/' + path : '/'}
             </button>
           </div>
           <ul id="${id}" class="ml-4 mt-1 space-y-1 hidden"></ul>
         </li>`;
     }
 
-    async function expandNode(path, ul){
+    async function expandNode(path, ul) {
       ul.innerHTML = '<li class="px-2 py-1 text-xs text-[var(--muted)]">Loading…</li>';
-      try{
+      try {
         const items = await listPath(path);
-        const dirs = items.filter(x=>x.type==='dir').map(x=> x.name);
-        if(!dirs.length){ ul.innerHTML = '<li class="px-2 py-1 text-xs text-[var(--muted)]">No subfolders</li>'; return; }
-        ul.innerHTML = dirs.map(d=>{
-          const p = (path? path + '/' : '') + d;
+        const dirs = items.filter(x => x.type === 'dir').map(x => x.name);
+        if (!dirs.length) { ul.innerHTML = '<li class="px-2 py-1 text-xs text-[var(--muted)]">No subfolders</li>'; return; }
+        ul.innerHTML = dirs.map(d => {
+          const p = (path ? path + '/' : '') + d;
           return makeTreeItem(d, p);
         }).join('');
         bindTree(ul);
-      }catch(e){ ul.innerHTML = `<li class="px-2 py-1 text-xs text-red-400">Error: ${e?.message||e}</li>`; }
+      } catch (e) { ul.innerHTML = `<li class="px-2 py-1 text-xs text-red-400">Error: ${e?.message || e}</li>`; }
     }
 
-    function bindTree(container){
-      container.querySelectorAll('.expand').forEach(btn=>{
+    function bindTree(container) {
+      container.querySelectorAll('.expand').forEach(btn => {
         btn.onclick = async () => {
           const path = btn.dataset.path;
-          const id = 'node_' + (path||'root').replace(/[^a-z0-9]/gi,'_');
+          const id = 'node_' + (path || 'root').replace(/[^a-z0-9]/gi, '_');
           const sub = document.getElementById(id);
-          const open = btn.getAttribute('aria-expanded')==='true';
-          if(open){ sub.classList.add('hidden'); btn.setAttribute('aria-expanded','false'); btn.textContent='+'; }
-          else { await expandNode(path, sub); sub.classList.remove('hidden'); btn.setAttribute('aria-expanded','true'); btn.textContent='–'; }
+          const open = btn.getAttribute('aria-expanded') === 'true';
+          if (open) { sub.classList.add('hidden'); btn.setAttribute('aria-expanded', 'false'); btn.textContent = '+'; }
+          else { await expandNode(path, sub); sub.classList.remove('hidden'); btn.setAttribute('aria-expanded', 'true'); btn.textContent = '–'; }
         };
       });
-      container.querySelectorAll('.goto').forEach(b=> b.onclick = ()=> loadPath(b.dataset.path));
+      container.querySelectorAll('.goto').forEach(b => b.onclick = () => loadPath(b.dataset.path));
     }
 
-    async function buildTreeRoot(){
+    async function buildTreeRoot() {
       treeEl.innerHTML = makeTreeItem('', '');
       bindTree(treeEl);
       // auto expand root
       treeEl.querySelector('.expand').click();
     }
 
-    async function loadPath(path=""){
+    async function loadPath(path = "") {
       currentPath = path;
       renderBreadcrumb(path);
       openBtn.href = siteUrl(path);
@@ -195,33 +243,39 @@
 
       const items = await listPath(path);
       const updated = await latestCommit(path);
-      metaEl.textContent = `Items: ${items.length}` + (updated? ` • Updated: ${new Date(updated).toLocaleString()}` : '');
+      metaEl.textContent = `Items: ${items.length}` + (updated ? ` • Updated: ${new Date(updated).toLocaleString()}` : '');
 
-      const q = (searchEl.value||'').toLowerCase().trim();
-      const filtered = items.filter(it => !q || (('/'+(path?path+'/':'')+it.name).toLowerCase().includes(q)));
+      const q = (searchEl.value || '').toLowerCase().trim();
+      const filtered = items.filter(it => !q || (('/' + (path ? path + '/' : '') + it.name).toLowerCase().includes(q)));
 
-      listEl.innerHTML = filtered.map(x=>{
-        const isDir = x.type==="dir";
-        const pth = (path? path + '/' : '') + x.name;
+      listEl.innerHTML = filtered.map(x => {
+        const isDir = x.type === "dir";
+        const pth = (path ? path + '/' : '') + x.name;
         const open = isDir ? siteUrl(pth) : x.name.match(/^index\.html?$/i) ? siteUrl(path) : x.html_url;
         const openLabel = isDir ? 'Open' : x.name.match(/^index\.html?$/i) ? 'Open' : 'View';
         return `<article class="rounded border border-[var(--border)] p-3">
-          <div class="flex items-center justify-between gap-3">
-            <div class="one">${isDir?'📁':'📄'} ${x.name}</div>
-            <div class="flex gap-2">
-              ${isDir? `<button data-goto="${pth}" class="btn px-2 py-1 rounded-lg text-sm goto">Browse</button>`: ''}
-              <a class="btn px-2 py-1 rounded-lg text-sm" target="_blank" rel="noopener" href="${open}">${openLabel}</a>
-              <a class="btn px-2 py-1 rounded-lg text-sm" target="_blank" rel="noopener" href="https://github.com/${GH_OWNER}/${GH_REPO}/blob/${GH_BRANCH}/${encodeURIComponent(pth)}">Code</a>
-            </div>
-          </div>
+        <div class="flex items-center justify-between gap-3">
+        <div class="one">${isDir ? '📁' : '📄'} ${x.name}</div>
+        <div class="flex gap-2">
+        ${isDir ? `<button data-goto="${pth}" class="btn px-2 py-1 rounded-lg text-sm goto">Browse</button>` : ''}
+        <button data-nav="${open}" class="btn px-2 py-1 rounded-lg text-sm">${openLabel}</button>
+        <button data-nav="https://github.com/${GH_OWNER}/${GH_REPO}/blob/${GH_BRANCH}/${encodeURIComponent(pth)}" class="btn px-2 py-1 rounded-lg text-sm">Code</button>
+        </div>
+        </div>
         </article>`;
+
       }).join("");
 
-      listEl.querySelectorAll('.goto').forEach(b=> b.onclick = ()=> loadPath(b.dataset.goto));
+      listEl.querySelectorAll('.goto').forEach(b => b.onclick = () => loadPath(b.dataset.goto));
+      listEl.querySelectorAll('[data-nav]').forEach(btn => {
+        btn.onclick = e => { window.location.href = btn.dataset.nav; };
+      });
+
     }
 
-    searchEl.addEventListener('input', ()=> loadPath(currentPath));
-    window.__bootExplorer = async function(){ await buildTreeRoot(); await loadPath(""); };
+    searchEl.addEventListener('input', () => loadPath(currentPath));
+    window.__bootExplorer = async function () { await buildTreeRoot(); await loadPath(""); };
   </script>
 </body>
+
 </html>
