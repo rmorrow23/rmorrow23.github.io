@@ -1,3 +1,4 @@
+\
 <!DOCTYPE html><html lang="en"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Admin — Morrow Industries</title>
@@ -11,8 +12,8 @@
 .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .navbar a{opacity:.9}
 .navbar a:hover{opacity:1}
+.badge{border:1px solid var(--border);padding:.15rem .5rem;border-radius:.5rem;font-size:.75rem;color:var(--muted)}
 </style>
-
 </head><body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
 
 <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
@@ -67,6 +68,16 @@
       </form>
       <div id="projList" class="mt-5 space-y-3"></div>
     </div>
+
+    <!-- NEW: Auto Recent Projects (single repo, no manual scan) -->
+    <div class="glass rounded-xl p-5 lg:col-span-2">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-xl font-semibold">Recent Projects</h2>
+        <a href="/admin/project-navigator/" class="btn px-3 py-2 rounded-lg text-sm">Open Navigator</a>
+      </div>
+      <div id="recentMsg" class="mt-2 text-sm text-[var(--muted)]"></div>
+      <div id="recentGrid" class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
   </section>
 </main>
 
@@ -81,7 +92,6 @@ document.getElementById('mobileBtn').addEventListener('click',()=>document.getEl
 document.getElementById('year').textContent=new Date().getFullYear();
 </script>
 
-
 <script type="module">
 import { db, auth } from "/assets/js/firebase-init.js";
 import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, updateDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -91,7 +101,6 @@ const area = document.getElementById('adminArea');
 
 auth.onAuthStateChanged(async (user) => {
   if (!user) { guard.textContent = "Please sign in (top right)."; area.classList.add('hidden'); return; }
-  // Simple role check via users/{uid} doc. (Replace with custom claims in production)
   const uDoc = await getDoc(doc(db,'users', user.uid)).catch(()=>null);
   const isAdmin = !!(uDoc && uDoc.exists() && (uDoc.data().role==='admin'));
   if (!isAdmin) { guard.textContent = "Signed in, but not an admin."; area.classList.add('hidden'); return; }
@@ -99,12 +108,13 @@ auth.onAuthStateChanged(async (user) => {
   area.classList.remove('hidden');
   initOrders();
   initProjects();
+  initRecentProjects(); // auto
 });
 
 function initOrders() {
   const list = document.getElementById('orders');
-  const q = query(collection(db,'orders'), orderBy('createdAt','desc'));
-  onSnapshot(q, snap => {
+  const qy = query(collection(db,'orders'), orderBy('createdAt','desc'));
+  onSnapshot(qy, snap => {
     list.innerHTML = '';
     snap.forEach(d => {
       const o = d.data();
@@ -152,8 +162,8 @@ function initProjects() {
     } catch(e) { note.textContent = "Error: " + (e?.message || e); }
   });
 
-  const q = query(collection(db,'projects'), orderBy('updatedAt','desc'));
-  onSnapshot(q, snap => {
+  const qy = query(collection(db,'projects'), orderBy('updatedAt','desc'));
+  onSnapshot(qy, snap => {
     list.innerHTML = '';
     snap.forEach(d => {
       const p = d.data();
@@ -166,32 +176,83 @@ function initProjects() {
     });
   });
 }
-</script>
 
+/* ------------------ Auto Recent Projects (single repo) ------------------ */
+const GH_OWNER = "rmorrow23";
+const GH_REPO  = "rmorrow23.github.io";
+const GH_BRANCH = "main";
+const SITE_ROOT = "https://www.morrow-industries.com/";
+
+async function initRecentProjects(){
+  const msg  = document.getElementById('recentMsg');
+  const grid = document.getElementById('recentGrid');
+  msg.textContent = "Scanning repository for deployable folders…";
+
+  async function gh(u){ const r = await fetch(u); if(!r.ok) throw new Error(r.status+' '+r.statusText); return r.json(); }
+  async function listRoot(){ return gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/?ref=${GH_BRANCH}`); }
+  async function hasIndex(path){
+    try{
+      const items = await gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(path)}?ref=${GH_BRANCH}`);
+      return items.some(x=>x.type==="file" && /^(index\.html?|INDEX\.HTML?)$/.test(x.name));
+    }catch(_){ return false; }
+  }
+  async function updatedAt(path){
+    try{
+      const commits = await gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${encodeURIComponent(path)}&per_page=1&sha=${GH_BRANCH}`);
+      return (Array.isArray(commits)&&commits.length)?commits[0].commit.author.date:null;
+    }catch(_){ return null; }
+  }
+
+  try{
+    const root = await listRoot();
+    const dirs = root.filter(x=>x.type==="dir").map(x=>x.name);
+    const found = [];
+    for(const d of dirs){
+      if(await hasIndex(d)){
+        found.push({name:d, updated: await updatedAt(d)});
+      }
+    }
+    found.sort((a,b)=> (b.updated?Date.parse(b.updated):0)-(a.updated?Date.parse(a.updated):0));
+    msg.textContent = found.length ? `Showing ${Math.min(found.length,12)} most recent projects.` : "No deployable folders found (need index.html).";
+    const top = found.slice(0,12);
+    grid.innerHTML = top.map(it=>{
+      const site = SITE_ROOT + encodeURIComponent(it.name) + "/";
+      const code = `https://github.com/${GH_OWNER}/${GH_REPO}/tree/${GH_BRANCH}/${encodeURIComponent(it.name)}`;
+      return `<article class="rounded border border-[var(--border)] p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-sm text-[var(--muted)]">/ ${it.name}</div>
+            <div class="font-semibold">${it.name}</div>
+            <div class="mt-1 text-xs text-[var(--muted)]">Updated: ${it.updated?new Date(it.updated).toLocaleString():'—'}</div>
+          </div>
+          <div class="flex gap-2">
+            <a class="btn px-3 py-1.5 rounded-lg text-sm" target="_blank" rel="noopener" href="${site}">Open</a>
+            <a class="btn px-3 py-1.5 rounded-lg text-sm" target="_blank" rel="noopener" href="${code}">Code</a>
+          </div>
+        </div>
+      </article>`;
+    }).join("");
+  }catch(e){
+    msg.textContent = "GitHub scan failed: " + (e?.message || e);
+    grid.innerHTML = "";
+  }
+}
+</script>
 
 <script type="module">
 import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
-
 const authBtn = document.getElementById('authBtn');
 const userLabel = document.getElementById('userLabel');
-
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    userLabel.textContent = user.displayName || user.email;
-    authBtn.textContent = 'Sign out';
-  } else {
-    userLabel.textContent = '';
-    authBtn.textContent = 'Sign in';
-  }
+  if (user) { userLabel.textContent = user.displayName || user.email; authBtn.textContent = 'Sign out'; }
+  else { userLabel.textContent = ''; authBtn.textContent = 'Sign in'; }
 });
-
 authBtn?.addEventListener('click', async () => {
   const user = auth.currentUser;
-  try {
-    if (user) await signOut(auth);
-    else await signInWithPopup(auth, provider);
-  } catch (e) { alert('Auth error: ' + (e?.message || e)); }
+  try { if (user) await signOut(auth); else await signInWithPopup(auth, provider); }
+  catch (e) { alert('Auth error: ' + (e?.message || e)); }
 });
 </script>
 
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"3edea265372742db9f0b75f0c30e0c5f","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body></html>

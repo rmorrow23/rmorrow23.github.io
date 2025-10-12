@@ -133,6 +133,9 @@
       top: 0;
       z-index: 3
     }
+    #admin {
+      display: none;
+    }
   </style>
 </head>
 
@@ -150,7 +153,7 @@
         <a href="/printing/request">3D Printing</a>
         <a href="/about">About</a>
         <a href="/contact">Contact</a>
-        <a href="/admin">Admin</a>
+        <a href="/admin" id="admin">Admin</a>
       </nav>
       <div class="flex items-center gap-3">
         <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
@@ -339,14 +342,16 @@
     const authBtn = document.getElementById('authBtn');
     const userLabel = document.getElementById('userLabel');
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        userLabel.textContent = user.displayName || user.email;
-        authBtn.textContent = 'Sign out';
-      } else {
-        userLabel.textContent = '';
-        authBtn.textContent = 'Sign in';
-      }
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) { guard.textContent = "Please sign in (top right)."; area.classList.add('hidden'); return; }
+      // Simple role check via users/{uid} doc. (Replace with custom claims in production)
+      const uDoc = await getDoc(doc(db, 'users', user.uid)).catch(() => null);
+      const isAdmin = !!(uDoc && uDoc.exists() && (uDoc.data().role === 'admin'));
+      if (!isAdmin) { guard.textContent = "Signed in, but not an admin."; area.classList.add('hidden'); return; }
+      guard.textContent = "Admin access granted.";
+      document.getElementById('admin').display = 'block';
+      initOrders();
+      initProjects();
     });
 
     authBtn?.addEventListener('click', async () => {
