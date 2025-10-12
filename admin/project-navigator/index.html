@@ -47,7 +47,7 @@
           </div>
           <div>
             <h1 class="text-xl sm:text-2xl font-semibold">Morrow Industries • Project Navigator</h1>
-            <p class="text-sm text-[var(--muted)] one">Auto-browsing repo folders, like a file explorer.</p>
+            <p class="text-sm text-[var(--muted)] one">Full repo browser with folder navigation & live links.</p>
           </div>
         </div>
         <a href="/admin/" class="btn px-3 py-2 rounded-xl text-sm">Back to Admin</a>
@@ -55,7 +55,7 @@
 
       <section class="mt-6 grid lg:grid-cols-3 gap-6">
         <!-- Tree -->
-        <aside class="lg:col-span-1 glass rounded-2xl p-4">
+        <aside class="lg:col-span-1 glass rounded-2xl p-4 overflow-y-auto max-h-[80vh]">
           <div class="flex items-center gap-2">
             <input id="search" class="w-full bg-transparent outline-none p-2 rounded-lg border border-[var(--border)]" placeholder="Filter path… (/app, /tools)"/>
             <button id="refreshBtn" class="btn px-3 py-2 rounded-lg text-sm">Refresh</button>
@@ -64,7 +64,7 @@
         </aside>
         <!-- Detail -->
         <main class="lg:col-span-2 glass rounded-2xl p-4">
-          <div id="detailHead" class="flex items-center justify-between">
+          <div id="detailHead" class="flex items-center justify-between flex-wrap gap-2">
             <h2 class="text-lg font-semibold">/</h2>
             <div class="flex gap-2">
               <a id="openBtn" class="btn px-3 py-2 rounded-lg text-sm" target="_blank" rel="noopener">Open</a>
@@ -78,7 +78,7 @@
     </div>
   </div>
 
-  <!-- Auth (fixed: import db from your initializer; do NOT call getFirestore()) -->
+  <!-- Auth -->
   <script type="module">
     import { db, auth, provider, signInWithPopup, onAuthStateChanged } from "/assets/js/firebase-init.js";
     import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -108,7 +108,7 @@
     });
   </script>
 
-  <!-- Explorer (unchanged) -->
+  <!-- Explorer -->
   <script>
     const GH_OWNER="rmorrow23", GH_REPO="rmorrow23.github.io", GH_BRANCH="main", SITE_ROOT="https://www.morrow-industries.com/";
     const treeEl=document.getElementById('tree'), listEl=document.getElementById('list'), headEl=document.getElementById('detailHead').querySelector('h2');
@@ -128,33 +128,74 @@
     function siteUrl(path){ return SITE_ROOT + (path? encodeURIComponent(path) + "/": ""); }
     function codeUrl(path){ return `https://github.com/${GH_OWNER}/${GH_REPO}/tree/${GH_BRANCH}/${path?encodeURIComponent(path):""}`; }
 
-    async function buildTreeRoot(){
-      treeEl.innerHTML='<li class="px-2 py-1 rounded-lg bg-black/20">Loading…</li>';
-      const root = await listPath("");
-      const dirs = root.filter(x=>x.type==="dir").map(x=>x.name).sort((a,b)=>a.localeCompare(b));
-      treeEl.innerHTML = [''].concat(dirs).map(name=>{
-        const p = name;
-        const id = 'node-' + (p||'root').replace(/[^a-z0-9]/gi,'_');
-        return `<li>
-          <button data-path="${p}" id="${id}" class="w-full flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[var(--hover)]">
-            <span class="one">${p?'/'+p:'/'}</span>
-            <span class="text-xs text-[var(--muted)]">›</span>
-          </button>
-        </li>`;
-      }).join("");
-      treeEl.querySelectorAll('button[data-path]').forEach(b=> b.addEventListener('click', ()=> loadPath(b.dataset.path)));
+    /* Breadcrumbs */
+    function renderBreadcrumb(path){
+      const parts = path ? path.split('/') : [];
+      const segs = [{label:'/', path:''}].concat(parts.map((p,i)=>({label:'/'+p, path: parts.slice(0,i+1).join('/')})));
+      headEl.innerHTML = segs.map(s=>`<button class="underline-offset-2 hover:underline" data-bc="${s.path}">${s.label}</button>`).join('');
+      headEl.querySelectorAll('button[data-bc]').forEach(b=> b.onclick = () => loadPath(b.dataset.bc));
     }
 
-    async function loadPath(path="", force=false){
+    /* Lazy Tree */
+    function makeTreeItem(name, path){
+      const id = 'node_' + (path||'root').replace(/[^a-z0-9]/gi,'_');
+      return `
+        <li>
+          <div class="flex items-center">
+            <button class="mr-2 text-xs px-1 rounded expand" data-path="${path}" aria-controls="${id}" aria-expanded="false">+</button>
+            <button class="flex-1 text-left px-2 py-1 rounded-lg hover:bg-[var(--hover)] goto" data-path="${path}">
+              ${path?'/'+path:'/'}
+            </button>
+          </div>
+          <ul id="${id}" class="ml-4 mt-1 space-y-1 hidden"></ul>
+        </li>`;
+    }
+
+    async function expandNode(path, ul){
+      ul.innerHTML = '<li class="px-2 py-1 text-xs text-[var(--muted)]">Loading…</li>';
+      try{
+        const items = await listPath(path);
+        const dirs = items.filter(x=>x.type==='dir').map(x=> x.name);
+        if(!dirs.length){ ul.innerHTML = '<li class="px-2 py-1 text-xs text-[var(--muted)]">No subfolders</li>'; return; }
+        ul.innerHTML = dirs.map(d=>{
+          const p = (path? path + '/' : '') + d;
+          return makeTreeItem(d, p);
+        }).join('');
+        bindTree(ul);
+      }catch(e){ ul.innerHTML = `<li class="px-2 py-1 text-xs text-red-400">Error: ${e?.message||e}</li>`; }
+    }
+
+    function bindTree(container){
+      container.querySelectorAll('.expand').forEach(btn=>{
+        btn.onclick = async () => {
+          const path = btn.dataset.path;
+          const id = 'node_' + (path||'root').replace(/[^a-z0-9]/gi,'_');
+          const sub = document.getElementById(id);
+          const open = btn.getAttribute('aria-expanded')==='true';
+          if(open){ sub.classList.add('hidden'); btn.setAttribute('aria-expanded','false'); btn.textContent='+'; }
+          else { await expandNode(path, sub); sub.classList.remove('hidden'); btn.setAttribute('aria-expanded','true'); btn.textContent='–'; }
+        };
+      });
+      container.querySelectorAll('.goto').forEach(b=> b.onclick = ()=> loadPath(b.dataset.path));
+    }
+
+    async function buildTreeRoot(){
+      treeEl.innerHTML = makeTreeItem('', '');
+      bindTree(treeEl);
+      // auto expand root
+      treeEl.querySelector('.expand').click();
+    }
+
+    async function loadPath(path=""){
       currentPath = path;
-      headEl.textContent = '/' + (path||'');
+      renderBreadcrumb(path);
       openBtn.href = siteUrl(path);
       codeBtn.href = codeUrl(path);
       metaEl.textContent = 'Loading…';
 
       const items = await listPath(path);
       const updated = await latestCommit(path);
-      metaEl.textContent = 'Items: ' + items.length + (updated? (' • Updated: ' + new Date(updated).toLocaleString()): '');
+      metaEl.textContent = `Items: ${items.length}` + (updated? ` • Updated: ${new Date(updated).toLocaleString()}` : '');
 
       const q = (searchEl.value||'').toLowerCase().trim();
       const filtered = items.filter(it => !q || (('/'+(path?path+'/':'')+it.name).toLowerCase().includes(q)));
@@ -176,7 +217,7 @@
         </article>`;
       }).join("");
 
-      listEl.querySelectorAll('.goto').forEach(b=> b.addEventListener('click', ()=> loadPath(b.dataset.goto)));
+      listEl.querySelectorAll('.goto').forEach(b=> b.onclick = ()=> loadPath(b.dataset.goto));
     }
 
     searchEl.addEventListener('input', ()=> loadPath(currentPath));
