@@ -1,5 +1,5 @@
-<!DOCTYPE html><html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Admin — Morrow Industries</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -11,11 +11,14 @@
 .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .navbar a{opacity:.9}
 .navbar a:hover{opacity:1}
+/* Project Navigator minor styles (scoped by #projnav-root) */
+#projnav-root .tag{border:1px solid var(--border)}
+#projnav-root .kbd{border:1px solid var(--border);border-bottom-width:2px}
+#projnav-root .one{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+#projnav-root .twoline{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 </style>
-
-</head><body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
-
-<header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+</head>
+<body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20"><header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
   <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
     <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
     <nav class="hidden md:flex gap-6 text-sm navbar">
@@ -42,14 +45,19 @@
       <a class="block py-1" href="/admin">Admin</a>
     </div>
   </div>
-</header>
-
-<main class="mx-auto max-w-7xl px-4 py-10">
+</header><main class="mx-auto max-w-7xl px-4 py-10">
   <h1 class="font-serif text-4xl">Admin</h1>
   <p class="mt-2 text-[var(--muted)]">Requires sign-in. For proper protection, configure Firestore security rules and admin claims.</p>
-  <div id="guard" class="mt-4 text-[var(--muted)]"></div>
-
-  <section id="adminArea" class="hidden mt-8 grid lg:grid-cols-2 gap-6">
+  <div id="guard" class="mt-4 text-[var(--muted)]"></div>  <section id="adminArea" class="hidden mt-8 grid lg:grid-cols-2 gap-6">
+    <!-- NEW: Recent Projects summary (no iframe) -->
+    <div class="glass rounded-xl p-5 lg:col-span-2">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-xl font-semibold">Recent Projects</h2>
+        <button id="btnOpenNavigator" class="btn btn-primary">Open Project Navigator</button>
+      </div>
+      <div id="recentList" class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      <p class="text-xs text-[var(--muted)] mt-3">Shows the most recently updated items from Firestore (<code>projects</code> collection). If a project document includes a <code>url</code> field, an “Open” button appears.</p>
+    </div>
     <div class="glass rounded-xl p-5">
       <h2 class="text-xl font-semibold">Orders</h2>
       <div id="orders" class="mt-3 space-y-3"></div>
@@ -66,11 +74,106 @@
         <div id="p_status" class="text-sm text-[var(--muted)]"></div>
       </form>
       <div id="projList" class="mt-5 space-y-3"></div>
+    </div><!-- MERGED: Project Navigator (Auto-Detect) -->
+<div id="navigator" class="glass rounded-xl p-5 lg:col-span-2">
+<div class="glass rounded-xl p-5 lg:col-span-2">
+  <div class="flex items-center justify-between gap-3">
+    <h2 class="text-xl font-semibold">Project Navigator <span class="text-sm text-[var(--muted)]">(auto-detect GitHub Pages)</span></h2>
+    <div class="flex gap-2">
+      <button id="projnav-export" class="btn">Export JSON</button>
+      <button id="projnav-import" class="btn">Import JSON</button>
+      <button id="projnav-add" class="btn">Quick Add</button>
     </div>
-  </section>
-</main>
+  </div>
 
-<footer class="mt-10 border-t border-[var(--border)]">
+  <!-- Controls -->
+  <div class="mt-4 grid lg:grid-cols-4 gap-3 items-end">
+    <label class="block lg:col-span-2">
+      <span class="text-sm text-[var(--muted)]">Search</span>
+      <div class="mt-1 flex items-center gap-2 glass rounded-xl p-2">
+        <svg class="shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" stroke="currentColor"/></svg>
+        <input id="projnav-q" placeholder="name, tag, url, notes…" class="w-full bg-transparent outline-none" />
+        <span class="text-xs text-[var(--muted)] hidden sm:inline">Press <span class="kbd px-1.5 py-0.5 rounded-lg">/</span></span>
+      </div>
+    </label>
+    <label class="block">
+      <span class="text-sm text-[var(--muted)]">Tag filter</span>
+      <select id="projnav-tag" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent"></select>
+    </label>
+    <div class="flex gap-2">
+      <button id="projnav-view-cards" class="btn">Cards</button>
+      <button id="projnav-view-tree" class="btn">Tree</button>
+    </div>
+  </div>
+
+  <!-- GitHub Auto-Detect -->
+  <div class="mt-4 grid md:grid-cols-3 gap-3">
+    <label class="block">
+      <span class="text-sm text-[var(--muted)]">GitHub user/org</span>
+      <input id="projnav-gh-user" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="morrow-industries"/>
+    </label>
+    <label class="block">
+      <span class="text-sm text-[var(--muted)]">Personal Access Token (optional)</span>
+      <input id="projnav-gh-token" type="password" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="ghp_••••••••"/>
+    </label>
+    <div class="flex items-end gap-2">
+      <button id="projnav-scan" class="btn">Scan GitHub</button>
+      <button id="projnav-clear-gh" class="btn">Clear Token</button>
+    </div>
+  </div>
+  <p class="mt-2 text-xs text-[var(--muted)]">Finds repos with <em>GitHub Pages</em> enabled and adds links like <code>https://&lt;user&gt;.github.io/&lt;repo&gt;/</code>. Token (if provided) is stored locally.</p>
+
+  <!-- Content -->
+  <section id="projnav-content" class="mt-6 grid lg:grid-cols-3 gap-6"></section>
+
+  <input type="file" id="projnav-file" accept="application/json" class="hidden" />
+
+  <!-- Quick Add Modal -->
+  <dialog id="projnav-dialog" class="glass rounded-2xl p-0 w-[min(680px,95vw)]">
+    <div class="p-5">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 class="text-lg font-semibold">Add Project</h3>
+          <p class="text-sm text-[var(--muted)]">Saved locally until you export.</p>
+        </div>
+        <button id="projnav-close" class="btn px-2 py-1">Close</button>
+      </div>
+      <form id="projnav-form" class="grid sm:grid-cols-2 gap-4 mt-4">
+        <label class="block col-span-2 sm:col-span-1">
+          <span class="text-sm text-[var(--muted)]">Name</span>
+          <input name="name" required class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="VaultView"/>
+        </label>
+        <label class="block col-span-2 sm:col-span-1">
+          <span class="text-sm text-[var(--muted)]">URL</span>
+          <input name="url" required type="url" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="https://morrow-industries.github.io/vaultview/"/>
+        </label>
+        <label class="block col-span-2">
+          <span class="text-sm text-[var(--muted)]">Description</span>
+          <input name="desc" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="Finance dashboard demo"/>
+        </label>
+        <label class="block col-span-2">
+          <span class="text-sm text-[var(--muted)]">Tags (comma‑separated)</span>
+          <input name="tags" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="web, firebase, demo"/>
+        </label>
+        <label class="block col-span-2 sm:col-span-1">
+          <span class="text-sm text-[var(--muted)]">Section</span>
+          <input name="section" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="Apps"/>
+        </label>
+        <label class="block col-span-2 sm:col-span-1">
+          <span class="text-sm text-[var(--muted)]">Icon (emoji or URL)</span>
+          <input name="icon" class="mt-1 w-full glass rounded-xl p-2.5 bg-transparent" placeholder="📁"/>
+        </label>
+        <div class="col-span-2 flex justify-end gap-2 mt-2">
+          <button type="button" id="projnav-reset" class="btn px-3 py-2 text-sm">Reset</button>
+          <button class="btn px-3 py-2 text-sm">Add</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+</div>
+
+  </section>
+</main><footer class="mt-10 border-t border-[var(--border)]">
   <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
     <div>© <span id="year"></span> Morrow Industries</div>
     <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
@@ -79,10 +182,7 @@
 <script>
 document.getElementById('mobileBtn').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('hidden'));
 document.getElementById('year').textContent=new Date().getFullYear();
-</script>
-
-
-<script type="module">
+</script><!-- Admin data modules --><script type="module">
 import { db, auth } from "/assets/js/firebase-init.js";
 import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, updateDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -103,8 +203,8 @@ auth.onAuthStateChanged(async (user) => {
 
 function initOrders() {
   const list = document.getElementById('orders');
-  const q = query(collection(db,'orders'), orderBy('createdAt','desc'));
-  onSnapshot(q, snap => {
+  const qy = query(collection(db,'orders'), orderBy('createdAt','desc'));
+  onSnapshot(qy, snap => {
     list.innerHTML = '';
     snap.forEach(d => {
       const o = d.data();
@@ -134,6 +234,7 @@ function initProjects() {
   const form = document.getElementById('projForm');
   const note = document.getElementById('p_status');
   const list = document.getElementById('projList');
+  const recent = document.getElementById('recentList');
 
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
@@ -144,6 +245,7 @@ function initProjects() {
         tags: document.getElementById('p_tags').value.split(',').map(s=>s.trim()).filter(Boolean),
         summary: document.getElementById('p_summary').value.trim(),
         progress: Number(document.getElementById('p_progress').value||0),
+        // Optional URL support: if "Title" looks like a URL pasted into type or tags, we'll ignore. Instead, allow manual edits later.
         updatedAt: serverTimestamp()
       };
       await addDoc(collection(db,'projects'), docData);
@@ -152,8 +254,55 @@ function initProjects() {
     } catch(e) { note.textContent = "Error: " + (e?.message || e); }
   });
 
-  const q = query(collection(db,'projects'), orderBy('updatedAt','desc'));
-  onSnapshot(q, snap => {
+  const qy = query(collection(db,'projects'), orderBy('updatedAt','desc'));
+  onSnapshot(qy, snap => {
+    list.innerHTML = '';
+    const items = [];
+    snap.forEach(d => { items.push({ id:d.id, ...d.data() }); });
+
+    // All projects list (left card)
+    items.forEach(p => {
+      const item = document.createElement('div');
+      item.className = "rounded border border-[var(--border)] p-3";
+      item.innerHTML = `<div class="text-sm text-[var(--muted)]">${p.type||'Project'}</div>
+        <div class="font-semibold">${p.title||'Untitled'}</div>
+        <div class="mt-2 text-sm text-[var(--muted)]">${p.summary||''}</div>`;
+      list.appendChild(item);
+    });
+
+    // Recent Projects summary (right below header)
+    recent.innerHTML = '';
+    items.slice(0,6).forEach(p => {
+      const pct = Number(p.progress||0);
+      const card = document.createElement('div');
+      card.className = 'rounded border border-[var(--border)] p-4';
+      card.innerHTML = `
+        <div class="text-xs text-[var(--muted)]">${p.type||'Project'}</div>
+        <div class="font-semibold one">${p.title||'Untitled'}</div>
+        ${p.tags?.length? `<div class="mt-1 flex flex-wrap gap-1">${p.tags.slice(0,4).map(t=>`<span class=\"tag px-2 py-0.5 rounded-lg text-xs\">#${t}</span>`).join('')}</div>`:''}
+        ${p.summary? `<div class="mt-2 text-sm text-[var(--muted)] twoline">${p.summary}</div>`:''}
+        <div class="mt-3 h-2 rounded bg-white/5 overflow-hidden"><div class="h-full" style="background:#d4af37;width:${pct}%"></div></div>
+        <div class="mt-3 flex gap-2">
+          ${p.url? `<a href="${p.url}" target="_blank" rel="noopener" class="btn btn-primary">Open</a>`:''}
+          <a href="#navigator" class="btn">Open Navigator</a>
+        </div>
+      `;
+      recent.appendChild(card);
+    });
+  });
+}
+
+// Scroll from "Open Project Navigator" button
+const btnOpenNavigator = document.getElementById('btnOpenNavigator');
+btnOpenNavigator?.addEventListener('click', ()=> document.getElementById('navigator')?.scrollIntoView({behavior:'smooth', block:'start'}));;
+      await addDoc(collection(db,'projects'), docData);
+      note.textContent = "Added!";
+      form.reset();
+    } catch(e) { note.textContent = "Error: " + (e?.message || e); }
+  });
+
+  const qy = query(collection(db,'projects'), orderBy('updatedAt','desc'));
+  onSnapshot(qy, snap => {
     list.innerHTML = '';
     snap.forEach(d => {
       const p = d.data();
@@ -166,10 +315,7 @@ function initProjects() {
     });
   });
 }
-</script>
-
-
-<script type="module">
+</script><!-- Auth UI (header) --><script type="module">
 import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
 
 const authBtn = document.getElementById('authBtn');
@@ -192,6 +338,228 @@ authBtn?.addEventListener('click', async () => {
     else await signInWithPopup(auth, provider);
   } catch (e) { alert('Auth error: ' + (e?.message || e)); }
 });
-</script>
+</script><!-- Project Navigator logic (scoped) --><script>
+(function(){
+  const LS_KEY = 'mi.projnav.items.v1';
+  const CFG_KEY = 'mi.projnav.cfg.v1';
+  const root = document.getElementById('adminArea'); // in admin card
 
-</body></html>
+  // Elements
+  const q = document.getElementById('projnav-q');
+  const tag = document.getElementById('projnav-tag');
+  const viewCardsBtn = document.getElementById('projnav-view-cards');
+  const viewTreeBtn = document.getElementById('projnav-view-tree');
+  const content = document.getElementById('projnav-content');
+  const fileInput = document.getElementById('projnav-file');
+  const exportBtn = document.getElementById('projnav-export');
+  const importBtn = document.getElementById('projnav-import');
+  const addBtn = document.getElementById('projnav-add');
+  const dlg = document.getElementById('projnav-dialog');
+  const dlgClose = document.getElementById('projnav-close');
+  const dlgReset = document.getElementById('projnav-reset');
+  const dlgForm = document.getElementById('projnav-form');
+  const ghUser = document.getElementById('projnav-gh-user');
+  const ghToken = document.getElementById('projnav-gh-token');
+  const scanBtn = document.getElementById('projnav-scan');
+  const clearGh = document.getElementById('projnav-clear-gh');
+
+  const state = {
+    items: [],
+    view: localStorage.getItem('mi.projnav.view') || 'cards',
+    q: '',
+    tag: '',
+  };
+
+  async function load(){
+    try{ const cfg = JSON.parse(localStorage.getItem(CFG_KEY)||'{}'); if(cfg.user) ghUser.value = cfg.user; if(cfg.token) ghToken.value = '••••••••'; }catch{ }
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){ try{ state.items = JSON.parse(raw) }catch{ state.items=[] } }
+  }
+  function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state.items)); }
+
+  function getTags(){ const s=new Set(); state.items.forEach(i=> (i.tags||[]).forEach(t=>s.add(t))); return [''].concat([...s].sort()); }
+  function filtered(){
+    const term = (state.q||'').toLowerCase().trim();
+    return state.items.filter(i=>{
+      const matchesQ = !term || [i.name,i.desc,i.url,(i.tags||[]).join(' ')].join(' ').toLowerCase().includes(term);
+      const matchesTag = !state.tag || (i.tags||[]).includes(state.tag);
+      return matchesQ && matchesTag;
+    });
+  }
+
+  function renderControls(){
+    const tags = getTags();
+    tag.innerHTML = tags.map(t=>`<option value="${t}">${t||'All tags'}</option>`).join('');
+    tag.value = state.tag;
+    [viewCardsBtn, viewTreeBtn].forEach(b=> b.classList.remove('ring-2','ring-[var(--gold)]'));
+    (state.view==='tree'?viewTreeBtn:viewCardsBtn).classList.add('ring-2','ring-[var(--gold)]');
+  }
+
+  function card(item){
+    const u = new URL(item.url);
+    return `
+      <article class="glass rounded-2xl p-4 flex flex-col gap-3">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl grid place-items-center bg-black/30 border border-[var(--border)]">${(item.icon||'📁').slice(0,2)}</div>
+            <div>
+              <h3 class="font-semibold one">${item.name}</h3>
+              <p class="text-xs text-[var(--muted)] one">${u.host}${u.pathname}</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <a href="${item.url}" target="_blank" rel="noopener" class="btn px-3 py-1.5 text-sm">Open</a>
+            <button data-name="${encodeURIComponent(item.name)}" class="btn px-3 py-1.5 text-sm projnav-del">Delete</button>
+          </div>
+        </div>
+        ${item.desc?`<p class="text-sm twoline">${item.desc}</p>`:''}
+        ${(item.tags&&item.tags.length)?`<div class="flex flex-wrap gap-2">${item.tags.map(t=>`<span class=tag class=\"px-2 py-1 rounded-lg text-xs\">#${t}</span>`).join('')}</div>`:''}
+      </article>`;
+  }
+
+  function groupBySection(items){
+    const m=new Map(); items.forEach(i=>{ const s=i.section||'General'; if(!m.has(s)) m.set(s,[]); m.get(s).push(i); });
+    return [...m.entries()].sort((a,b)=> a[0].localeCompare(b[0]));
+  }
+
+  function renderCards(){
+    const items = filtered();
+    if(!items.length){ content.innerHTML = empty(); return; }
+    const groups = groupBySection(items);
+    content.innerHTML = groups.map(([section, arr])=>`
+      <div class="lg:col-span-3">
+        <h3 class="text-sm uppercase tracking-wider text-[var(--muted)] mb-3">${section}</h3>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">${arr.map(card).join('')}</div>
+      </div>`).join('');
+    bindDeletes();
+  }
+
+  function renderTree(){
+    const items = filtered().sort((a,b)=> (a.section||'').localeCompare(b.section||'') || a.name.localeCompare(b.name));
+    if(!items.length){ content.innerHTML = empty(); return; }
+    content.innerHTML = `<div class="lg:col-span-3 glass rounded-2xl p-4">
+      <div class="text-sm text-[var(--muted)] mb-3">${items.length} item(s)</div>
+      <ul class="space-y-1">${items.map(i=>{
+        const u = new URL(i.url);
+        return `<li class="flex items-center justify-between gap-3 px-2 py-2 rounded-xl hover:bg-white/5">
+          <div class="flex items-center gap-3">
+            <span class="w-6 text-center">${(i.icon||'📁').slice(0,2)}</span>
+            <span class="one"><strong>${i.name}</strong> <span class="text-[var(--muted)]">— ${i.desc||u.host+u.pathname}</span></span>
+          </div>
+          <div class="flex items-center gap-2">
+            ${(i.tags||[]).slice(0,3).map(t=>`<span class="tag px-2 py-0.5 rounded-lg text-xs">#${t}</span>`).join('')}
+            <a href="${i.url}" target="_blank" rel="noopener" class="btn px-2.5 py-1 text-sm">Open</a>
+            <button data-name="${encodeURIComponent(i.name)}" class="btn px-2.5 py-1 text-sm projnav-del">Delete</button>
+          </div>
+        </li>`;
+      }).join('')}</ul>
+    </div>`;
+    bindDeletes();
+  }
+
+  function empty(){
+    return `<div class="lg:col-span-3 grid place-items-center">
+      <div class="text-center max-w-md">
+        <div class="w-16 h-16 mx-auto rounded-2xl glass grid place-items-center mb-4">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M3 6h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z" stroke="currentColor"/></svg>
+        </div>
+        <h3 class="text-lg font-semibold">No projects yet</h3>
+        <p class="text-sm text-[var(--muted)]">Use <strong>Scan GitHub</strong> or <strong>Quick Add</strong>. You can also import a <code>projects.json</code>.</p>
+      </div>
+    </div>`;
+  }
+
+  function bindDeletes(){
+    content.querySelectorAll('.projnav-del').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const name = decodeURIComponent(btn.dataset.name);
+        const idx = state.items.findIndex(i=>i.name===name);
+        if(idx>-1){ state.items.splice(idx,1); save(); draw(); }
+      });
+    });
+  }
+
+  function draw(){
+    renderControls();
+    if(state.view==='tree') renderTree(); else renderCards();
+  }
+
+  // Import/Export
+  importBtn.addEventListener('click', ()=> fileInput.click());
+  fileInput.addEventListener('change', async (e)=>{
+    const f=e.target.files?.[0]; if(!f) return; const txt=await f.text();
+    try{ const arr=JSON.parse(txt); if(Array.isArray(arr)){ state.items = arr; save(); draw(); } }
+    catch{ alert('Invalid JSON file'); }
+    fileInput.value='';
+  });
+  exportBtn.addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(state.items,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='projects.json'; a.click(); URL.revokeObjectURL(a.href);
+  });
+
+  // Quick Add
+  addBtn.addEventListener('click', ()=> dlg.showModal());
+  dlgClose.addEventListener('click', ()=> dlg.close());
+  dlgReset.addEventListener('click', ()=> dlgForm.reset());
+  dlgForm.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const fd = new FormData(dlgForm);
+    const item = {
+      name: (fd.get('name')||'').toString().trim(),
+      url: (fd.get('url')||'').toString().trim(),
+      desc: (fd.get('desc')||'').toString().trim(),
+      tags: (fd.get('tags')||'').toString().split(',').map(s=>s.trim()).filter(Boolean),
+      section: (fd.get('section')||'').toString().trim()||'General',
+      icon: (fd.get('icon')||'').toString().trim()||'📁',
+    };
+    if(!item.name || !item.url) return;
+    state.items.push(item); save(); draw(); dlg.close(); dlgForm.reset();
+  });
+
+  // View + filters
+  document.addEventListener('keydown', (e)=>{ if(e.key==='/'){ if(document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){ e.preventDefault(); q.focus(); } } });
+  q.addEventListener('input', ()=>{ state.q = q.value; draw(); });
+  tag.addEventListener('change', ()=>{ state.tag = tag.value; draw(); });
+  viewCardsBtn.addEventListener('click', ()=>{ state.view='cards'; localStorage.setItem('mi.projnav.view','cards'); draw(); });
+  viewTreeBtn.addEventListener('click', ()=>{ state.view='tree'; localStorage.setItem('mi.projnav.view','tree'); draw(); });
+
+  // GitHub scan
+  async function fetchRepos(user, token){
+    const headers = token? { Authorization: `Bearer ${token}` } : {};
+    const urls = [
+      `https://api.github.com/users/${encodeURIComponent(user)}/repos?per_page=100&type=owner&sort=updated`,
+      `https://api.github.com/orgs/${encodeURIComponent(user)}/repos?per_page=100&type=all&sort=updated`
+    ];
+    for(const u of urls){ const r = await fetch(u,{headers}); if(r.ok){ return r.json(); } }
+    throw new Error('GitHub user/org not found or not accessible');
+  }
+  async function scanGithub(){
+    const user = ghUser.value.trim();
+    let token = ghToken.value.trim();
+    const saved = JSON.parse(localStorage.getItem(CFG_KEY)||'{}');
+    if(!token && saved.token) token = saved.token;
+    if(!user){ alert('Enter GitHub user/org'); return; }
+    localStorage.setItem(CFG_KEY, JSON.stringify({user, token}));
+    let repos = await fetchRepos(user, token);
+    repos = repos.filter(r=>r.has_pages);
+    const root = `https://${user}.github.io/`;
+    const items = repos.map(r=>({
+      name: r.name,
+      url: r.name.endsWith('.github.io') ? root : `${root}${r.name}/`,
+      desc: r.description||'',
+      tags: ['github','auto'].concat(r.topics||[]),
+      section: 'Auto',
+      icon: '📦'
+    }));
+    const seen=new Set(state.items.map(i=>i.url)); let added=0;
+    items.forEach(it=>{ if(!seen.has(it.url)){ state.items.push(it); seen.add(it.url); added++; } });
+    save(); draw();
+    alert(`Imported ${added} repo page(s).`);
+  }
+  scanBtn.addEventListener('click', ()=>{ scanGithub().catch(err=> alert(err.message||String(err))); });
+  clearGh.addEventListener('click', ()=>{ localStorage.removeItem(CFG_KEY); ghToken.value=''; ghUser.value=''; alert('Cleared saved GitHub config.'); });
+
+  // Init
+  (async function(){ await load(); draw(); })();
+})();
+</script></body></html>
