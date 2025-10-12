@@ -1,6 +1,8 @@
-\
-<!DOCTYPE html><html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Admin — Morrow Industries</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -14,18 +16,19 @@
 .navbar a:hover{opacity:1}
 .badge{border:1px solid var(--border);padding:.15rem .5rem;border-radius:.5rem;font-size:.75rem;color:var(--muted)}
 </style>
-</head><body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
+</head>
+<body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
 
 <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
   <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
     <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
     <nav class="hidden md:flex gap-6 text-sm navbar">
-      <a href="/" >Home</a>
-      <a href="/projects" >Projects</a>
-      <a href="/printing/request" >3D Printing</a>
-      <a href="/about" >About</a>
-      <a href="/contact" >Contact</a>
-      <a href="/admin" class='opacity-100'>Admin</a>
+      <a href="/">Home</a>
+      <a href="/projects">Projects</a>
+      <a href="/printing/request">3D Printing</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a href="/admin" class="opacity-100">Admin</a>
     </nav>
     <div class="flex items-center gap-3">
       <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
@@ -55,6 +58,7 @@
       <h2 class="text-xl font-semibold">Orders</h2>
       <div id="orders" class="mt-3 space-y-3"></div>
     </div>
+
     <div class="glass rounded-xl p-5">
       <h2 class="text-xl font-semibold">Projects CMS</h2>
       <form id="projForm" class="grid gap-2">
@@ -69,7 +73,7 @@
       <div id="projList" class="mt-5 space-y-3"></div>
     </div>
 
-    <!-- NEW: Auto Recent Projects (single repo, no manual scan) -->
+    <!-- Recent Projects via authenticated GitHub (Cloudflare Worker proxy) -->
     <div class="glass rounded-xl p-5 lg:col-span-2">
       <div class="flex items-center justify-between gap-3">
         <h2 class="text-xl font-semibold">Recent Projects</h2>
@@ -92,6 +96,7 @@ document.getElementById('mobileBtn').addEventListener('click',()=>document.getEl
 document.getElementById('year').textContent=new Date().getFullYear();
 </script>
 
+<!-- Admin gate + Orders/Projects -->
 <script type="module">
 import { db, auth } from "/assets/js/firebase-init.js";
 import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, updateDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -108,7 +113,7 @@ auth.onAuthStateChanged(async (user) => {
   area.classList.remove('hidden');
   initOrders();
   initProjects();
-  initRecentProjects(); // auto
+  initRecentProjects(); // uses proxy, no token in browser
 });
 
 function initOrders() {
@@ -177,18 +182,36 @@ function initProjects() {
   });
 }
 
-/* ------------------ Auto Recent Projects (single repo) ------------------ */
+/* -------- Recent Projects via Cloudflare Worker proxy (authenticated GitHub) -------- */
 const GH_OWNER = "rmorrow23";
 const GH_REPO  = "rmorrow23.github.io";
 const GH_BRANCH = "main";
 const SITE_ROOT = "https://www.morrow-industries.com/";
 
+/* Replace with your Worker URL, e.g. https://github-proxy.yourname.workers.dev
+   The Worker should:
+   - Read ?url=<github-api-url>
+   - Forward the request to GitHub with Authorization: Bearer <token-from-env>
+   - Set CORS headers to allow your site
+*/
+const PROXY = "https://github-proxy.randalmorrow24.workers.dev/";
+
 async function initRecentProjects(){
   const msg  = document.getElementById('recentMsg');
   const grid = document.getElementById('recentGrid');
+
+  if (!PROXY.includes("workers.dev") && !PROXY.startsWith("https://")) {
+    msg.textContent = "Proxy URL is not configured. Set PROXY to your Cloudflare Worker endpoint.";
+    return;
+  }
+
   msg.textContent = "Scanning repository for deployable folders…";
 
-  async function gh(u){ const r = await fetch(u); if(!r.ok) throw new Error(r.status+' '+r.statusText); return r.json(); }
+  async function gh(u){
+    const res = await fetch(`${PROXY}?url=${encodeURIComponent(u)}`);
+    if(!res.ok) throw new Error(res.status + " " + res.statusText);
+    return res.json();
+  }
   async function listRoot(){ return gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/?ref=${GH_BRANCH}`); }
   async function hasIndex(path){
     try{
@@ -206,31 +229,40 @@ async function initRecentProjects(){
   try{
     const root = await listRoot();
     const dirs = root.filter(x=>x.type==="dir").map(x=>x.name);
-    const found = [];
-    for(const d of dirs){
-      if(await hasIndex(d)){
-        found.push({name:d, updated: await updatedAt(d)});
+    const out = [];
+    // sequential to be gentle on rate limits; can be batched if needed
+    for (const d of dirs){
+      if (await hasIndex(d)){
+        out.push({ name: d, updated: await updatedAt(d) });
       }
     }
-    found.sort((a,b)=> (b.updated?Date.parse(b.updated):0)-(a.updated?Date.parse(a.updated):0));
-    msg.textContent = found.length ? `Showing ${Math.min(found.length,12)} most recent projects.` : "No deployable folders found (need index.html).";
-    const top = found.slice(0,12);
-    grid.innerHTML = top.map(it=>{
+    out.sort((a,b)=> (b.updated?Date.parse(b.updated):0) - (a.updated?Date.parse(a.updated):0));
+    const show = out.slice(0,12);
+
+    msg.textContent = show.length
+      ? `Showing ${show.length} most recent projects.`
+      : "No deployable folders found (needs an index.html in each folder).";
+
+    grid.innerHTML = show.map(it=>{
       const site = SITE_ROOT + encodeURIComponent(it.name) + "/";
       const code = `https://github.com/${GH_OWNER}/${GH_REPO}/tree/${GH_BRANCH}/${encodeURIComponent(it.name)}`;
-      return `<article class="rounded border border-[var(--border)] p-4">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <div class="text-sm text-[var(--muted)]">/ ${it.name}</div>
-            <div class="font-semibold">${it.name}</div>
-            <div class="mt-1 text-xs text-[var(--muted)]">Updated: ${it.updated?new Date(it.updated).toLocaleString():'—'}</div>
+      const when = it.updated ? new Date(it.updated).toLocaleString() : "—";
+      return `
+        <article class="rounded border border-[var(--border)] p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="text-sm text-[var(--muted)]">/ ${it.name}</div>
+              <div class="font-semibold">${it.name}</div>
+              <div class="mt-1 text-xs text-[var(--muted)]">Updated: ${when}</div>
+            </div>
+            <div class="flex gap-2">
+              <!-- Same-tab navigation to the site -->
+              <a class="btn px-3 py-1.5 rounded-lg text-sm" href="${site}">Open</a>
+              <a class="btn px-3 py-1.5 rounded-lg text-sm" target="_blank" rel="noopener" href="${code}">Code</a>
+            </div>
           </div>
-          <div class="flex gap-2">
-            <a class="btn px-3 py-1.5 rounded-lg text-sm" target="_blank" rel="noopener" href="${site}">Open</a>
-            <a class="btn px-3 py-1.5 rounded-lg text-sm" target="_blank" rel="noopener" href="${code}">Code</a>
-          </div>
-        </div>
-      </article>`;
+        </article>
+      `;
     }).join("");
   }catch(e){
     msg.textContent = "GitHub scan failed: " + (e?.message || e);
@@ -239,14 +271,17 @@ async function initRecentProjects(){
 }
 </script>
 
+<!-- Top-right auth button UI -->
 <script type="module">
 import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
 const authBtn = document.getElementById('authBtn');
 const userLabel = document.getElementById('userLabel');
+
 onAuthStateChanged(auth, (user) => {
   if (user) { userLabel.textContent = user.displayName || user.email; authBtn.textContent = 'Sign out'; }
   else { userLabel.textContent = ''; authBtn.textContent = 'Sign in'; }
 });
+
 authBtn?.addEventListener('click', async () => {
   const user = auth.currentUser;
   try { if (user) await signOut(auth); else await signInWithPopup(auth, provider); }
@@ -255,4 +290,5 @@ authBtn?.addEventListener('click', async () => {
 </script>
 
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"3edea265372742db9f0b75f0c30e0c5f","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-</body></html>
+</body>
+</html>
