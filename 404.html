@@ -1,1 +1,169 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Not found — Morrow Industries</title></head><body style="background:#0a0b0f;color:#e9eef8;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:40px"><h1>Page not found</h1><p>Try the <a href="/" style="color:#d4af37">home page</a>.</p></body></html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>404 — Morrow Industries</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg: #000;
+            --surface: #12141b;
+            --muted: #a9b0be;
+            --text: #e9eef8;
+            --gold: #d4af37;
+            --border: rgba(255, 255, 255, 0.08)
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            height: 100vh;
+            width: 100vw;
+            z-index: 0;
+            background: rgba(0, 0, 20, 0);
+            backdrop-filter: blur(3px);
+        }
+
+        .glass {
+            background: rgba(18, 20, 27, .6);
+            backdrop-filter: saturate(140%) blur(10px);
+            border: 1px solid var(--border)
+        }
+
+        .gold {
+            color: var(--gold)
+        }
+
+        .btn {
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: .6rem .9rem;
+            border-radius: .6rem;
+            transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+            position: relative;
+            z-index: 2
+        }
+
+        .btn-primary {
+            border-color: #d4af37
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
+        }
+
+        footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: .9rem;
+            color: var(--muted);
+            position: relative;
+            z-index: 2
+        }
+
+        /* Fade-in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(6px);
+            animation: fadeIn .6s ease forwards
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        /* Gold dust particles (lightweight CSS-only) */
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden
+        }
+
+        .particles span {
+            position: absolute;
+            display: block;
+            width: 5px;
+            height: 5px;
+            border-radius: 9999px;
+            background: var(--gold);
+            opacity: .15;
+            filter: blur(.5px);
+            animation: float var(--dur) linear infinite;
+            left: var(--x);
+            top: var(--y)
+        }
+
+        @keyframes float {
+            to {
+                transform: translateY(-300vh) translateX(var(--drift, 0px));
+                opacity: 0
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="min-h-screen flex flex-col items-center justify-center text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20 px-6 text-center">
+
+    <div class="overlay"></div>
+
+    <!-- subtle particles -->
+    <div class="particles" id="particles"></div>
+
+    <div class="glass rounded-2xl p-10 max-w-md w-full text-center relative fade-in" style="z-index:2">
+        <h1 class="text-6xl font-serif gold">404</h1>
+        <h2 class="text-2xl mt-2 font-serif">Page Not Found</h2>
+        <p class="mt-4 text-[var(--muted)]">
+            The page you're looking for doesn't exist or may have been moved.<br />Let's get you back on track.
+        </p>
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+            <a href="/" class="btn btn-primary">Go Home</a>
+            <a href="/contact" class="btn">Contact Support</a>
+        </div>
+        <footer>© <span id="year"></span> Morrow Industries</footer>
+    </div>
+
+
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Create a handful of light particles (performance-safe)
+        (function makeParticles() {
+            const wrap = document.getElementById('particles');
+            const count = 28; // small + elegant
+            for (let i = 0; i < count; i++) {
+                const s = document.createElement('span');
+                s.style.setProperty('--x', Math.random() * 100 + 'vw');
+                s.style.setProperty('--y', (100 + Math.random() * 40) + 'vh'); // start below view so they float up
+                s.style.setProperty('--drift', (Math.random() * 20 - 10) + 'px');
+                s.style.setProperty('--dur', (1 + Math.random() * 14) + 's');
+                s.style.opacity = (0.08 + Math.random() * 0.15).toFixed(2);
+                wrap.appendChild(s);
+            }
+        })();
+        (function makeParticles2() {
+            const wrap = document.getElementById('particles');
+            const count = 28; // small + elegant
+            for (let i = 0; i < count; i++) {
+                const s = document.createElement('span');
+                s.style.setProperty('--x', Math.random() * 100 + 'vw');
+                s.style.setProperty('--y', (100 + Math.random() * 40) + 'vh'); // start below view so they float up
+                s.style.setProperty('--drift', (Math.random() * 20 - 10) + 'px');
+                s.style.setProperty('--dur', (5 + Math.random() * 14) + 's');
+                s.style.opacity = (0.08 + Math.random() * 0.15).toFixed(2);
+                wrap.appendChild(s);
+            }
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,198 +1,363 @@
-<!DOCTYPE html><html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Morrow Industries — Home</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-:root{--bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
-.glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border)}
-.gold{color:var(--gold)}
-.btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease}
-.btn-primary{border-color:#d4af37}
-.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
-.navbar a{opacity:.9}
-.navbar a:hover{opacity:1}
-</style>
+<!DOCTYPE html>
+<html lang="en">
 
-</head>
-<body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
-
-<header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
-  <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-    <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
-    <nav class="hidden md:flex gap-6 text-sm navbar">
-      <a href="/" class='opacity-100'>Home</a>
-      <a href="/projects" >Projects</a>
-      <a href="/printing/request" >3D Printing</a>
-      <a href="/about" >About</a>
-      <a href="/contact" >Contact</a>
-      <a href="/admin" >Admin</a>
-    </nav>
-    <div class="flex items-center gap-3">
-      <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
-      <button id="authBtn" class="md:inline btn">Sign in</button>
-      <button id="mobileBtn" class="md:hidden btn">Menu</button>
-    </div>
-  </div>
-  <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)]">
-    <div class="px-4 py-3 space-y-2">
-      <a class="block py-1" href="/">Home</a>
-      <a class="block py-1" href="/projects">Projects</a>
-      <a class="block py-1" href="/printing/request">3D Printing</a>
-      <a class="block py-1" href="/about">About</a>
-      <a class="block py-1" href="/contact">Contact</a>
-      <a class="block py-1" href="/admin">Admin</a>
-    </div>
-  </div>
-</header>
-
-<main class="mx-auto max-w-7xl px-4">
-  <section class="py-12 sm:py-16">
-    <div class="grid md:grid-cols-2 gap-8 items-center">
-      <div>
-        <h1 class="font-serif text-4xl sm:text-5xl leading-tight">
-          Building <span class="gold">innovation</span> across software & 3D printing
-        </h1>
-        <p class="mt-4 text-[var(--muted)] max-w-prose">
-          Explore a unified portfolio of school and personal projects, plus a streamlined 3D print service.
-          Track progress, request custom prints, and discover what’s <em>now printing</em>.
-        </p>
-        <div class="mt-6 flex flex-wrap gap-3">
-          <a href="#projects" class="btn btn-primary">View Projects</a>
-          <a href="/printing/request" class="btn">Start a Print Request</a>
-        </div>
-        <div class="mt-6 glass rounded-xl p-4">
-          <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Now Printing</div>
-          <div id="nowPrinting" class="mt-1">Loading…</div>
-        </div>
-      </div>
-      <div class="rounded-2xl p-0.5" style="position:relative">
-        <div class="glass rounded-2xl p-6">
-          <div class="grid grid-cols-2 gap-4" id="heroPreviews">
-            <div class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">Preview 1</div>
-            <div class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">Preview 2</div>
-            <div class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">Preview 3</div>
-            <div class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">Preview 4</div>
-          </div>
-          <p class="mt-4 text-xs text-[var(--muted)]">Project thumbnails load from Firestore when available.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="projects" class="py-10 border-t border-[var(--border)]">
-    <div class="flex items-end justify-between">
-      <h2 class="font-serif text-3xl">Most Recent Projects</h2>
-      <div class="text-sm text-[var(--muted)]">Auto‑pulled from Firestore</div>
-    </div>
-    <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-5" id="recentProjects"></div>
-    <div class="mt-6 text-right"><a class="btn" href="/projects">Browse all projects</a></div>
-  </section>
-
-  <section id="printing" class="py-12 border-t border-[var(--border)]">
-    <div class="rounded-2xl p-0.5">
-      <div class="glass rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center">
-        <div class="md:w-2/3">
-          <h2 class="font-serif text-3xl">3D Printing Service</h2>
-          <p class="mt-2 text-[var(--muted)]">Upload STL, choose material & color, get a quote, and track status from “Quoted” to “Complete.”</p>
-        </div>
-        <div class="md:w-1/3 flex gap-3">
-          <a href="/printing/request" class="btn btn-primary grow text-center">Request a Print</a>
-          <a href="/printing/dashboard" class="btn grow text-center">Dashboard</a>
-        </div>
-      </div>
-    </div>
-  </section>
-</main>
-
-<footer class="mt-10 border-t border-[var(--border)]">
-  <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-    <div>© <span id="year"></span> Morrow Industries</div>
-    <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
-  </div>
-</footer>
-<script>
-document.getElementById('mobileBtn').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('hidden'));
-document.getElementById('year').textContent=new Date().getFullYear();
-</script>
-
-
-<script type="module">
-import { db } from "/assets/js/firebase-init.js";
-import { doc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-(async () => {
-  try {
-    const snap = await getDoc(doc(db, "site", "nowPrinting"));
-    const np = document.getElementById("nowPrinting");
-    if (snap.exists()) {
-      const d = snap.data();
-      np.innerHTML = (d.message ?? "—") + (d.percent ? ` — <span class='gold'>${d.percent}%</span>` : "");
-    } else np.textContent = "No current job";
-  } catch (e) {
-    console.error(e);
-    document.getElementById("nowPrinting").textContent = "Failed to load";
-  }
-})();
-
-(async () => {
-  const container = document.getElementById("recentProjects");
-  try {
-    const q = query(collection(db, "projects"), orderBy("updatedAt","desc"), limit(3));
-    const snaps = await getDocs(q);
-    if (snaps.empty) {
-      container.innerHTML = `<div class='text-[var(--muted)]'>No projects yet.</div>`;
-      return;
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Morrow Industries — Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #000;
+      --surface: #12141b;
+      --muted: #a9b0be;
+      --text: #e9eef8;
+      --gold: #d4af37;
+      --border: rgba(255, 255, 255, 0.08)
     }
-    const html = [];
-    snaps.forEach(docSnap => {
-      const p = docSnap.data();
-      const type = p.type ?? "Project";
-      const title = p.title ?? "Untitled";
-      const summary = p.summary ?? "";
-      const progress = Number(p.progress ?? 0);
-      html.push(`
+
+    /* page background + overlay to match your 404 */
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .page-overlay {
+      position: fixed;
+      inset: 0;
+      height: 100vh;
+      width: 100vw;
+      z-index: 0;
+      background: rgba(0, 0, 20, 0);
+      backdrop-filter: blur(3px);
+    }
+
+    /* brand/glass/buttons from your home style */
+    .glass {
+      background: rgba(18, 20, 27, .6);
+      backdrop-filter: saturate(140%) blur(10px);
+      border: 1px solid var(--border)
+    }
+
+    .gold {
+      color: var(--gold)
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: .6rem .9rem;
+      border-radius: .6rem;
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+      position: relative;
+      z-index: 2
+    }
+
+    .btn-primary {
+      border-color: #d4af37
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
+    }
+
+    .navbar a {
+      opacity: .9
+    }
+
+    .navbar a:hover {
+      opacity: 1
+    }
+
+    /* Fade-in */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(6px);
+      animation: fadeIn .6s ease forwards
+    }
+
+    .delay-1 {
+      animation-delay: .08s
+    }
+
+    .delay-2 {
+      animation-delay: .16s
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    /* Gold dust particles (match 404) */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden
+    }
+
+    .particles span {
+      position: absolute;
+      display: block;
+      width: 5px;
+      height: 5px;
+      border-radius: 9999px;
+      background: var(--gold);
+      opacity: .15;
+      filter: blur(.5px);
+      animation: float var(--dur) linear infinite;
+      left: var(--x);
+      top: var(--y)
+    }
+
+    @keyframes float {
+      to {
+        transform: translateY(-300vh) translateX(var(--drift, 0px));
+        opacity: 0
+      }
+    }
+
+    /* preserve your header look on top of overlay/particles */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 3
+    }
+  </style>
+</head>
+
+<body class="min-h-screen text-[var(--text)] selection:bg-[var(--gold)]/20">
+  <!-- blur overlay + particles -->
+  <div class="page-overlay"></div>
+  <div class="particles" id="particles"></div>
+
+  <header class="border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+    <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+      <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
+      <nav class="hidden md:flex gap-6 text-sm navbar">
+        <a href="/" class='opacity-100'>Home</a>
+        <a href="/projects">Projects</a>
+        <a href="/printing/request">3D Printing</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <a href="/admin">Admin</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
+        <button id="authBtn" class="md:inline btn">Sign in</button>
+        <button id="mobileBtn" class="md:hidden btn">Menu</button>
+      </div>
+    </div>
+    <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur">
+      <div class="px-4 py-3 space-y-2">
+        <a class="block py-1" href="/">Home</a>
+        <a class="block py-1" href="/projects">Projects</a>
+        <a class="block py-1" href="/printing/request">3D Printing</a>
+        <a class="block py-1" href="/about">About</a>
+        <a class="block py-1" href="/contact">Contact</a>
+        <a class="block py-1" href="/admin">Admin</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-4 relative" style="z-index:2">
+    <section class="py-12 sm:py-16 fade-in">
+      <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div>
+          <h1 class="font-serif text-4xl sm:text-5xl leading-tight">
+            Building <span class="gold">innovation</span> across software & 3D printing
+          </h1>
+          <p class="mt-4 text-[var(--muted)] max-w-prose">
+            Explore a unified portfolio of school and personal projects, plus a streamlined 3D print service.
+            Track progress, request custom prints, and discover what’s <em>now printing</em>.
+          </p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <a href="#projects" class="btn btn-primary">View Projects</a>
+            <a href="/printing/request" class="btn">Start a Print Request</a>
+          </div>
+          <div class="mt-6 glass rounded-xl p-4">
+            <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Now Printing</div>
+            <div id="nowPrinting" class="mt-1">Loading…</div>
+          </div>
+        </div>
+        <div class="rounded-2xl p-0.5" style="position:relative">
+          <div class="glass rounded-2xl p-6 fade-in delay-1">
+            <div class="grid grid-cols-2 gap-4" id="heroPreviews">
+              <div
+                class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">
+                Preview 1</div>
+              <div
+                class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">
+                Preview 2</div>
+              <div
+                class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">
+                Preview 3</div>
+              <div
+                class="h-28 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] flex items-center justify-center">
+                Preview 4</div>
+            </div>
+            <p class="mt-4 text-xs text-[var(--muted)]">Project thumbnails load from Firestore when available.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="projects" class="py-10 border-t border-[var(--border)] fade-in delay-2">
+      <div class="flex items-end justify-between">
+        <h2 class="font-serif text-3xl">Most Recent Projects</h2>
+        <div class="text-sm text-[var(--muted)]">Auto-pulled from Firestore</div>
+      </div>
+      <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-5" id="recentProjects"></div>
+      <div class="mt-6 text-right"><a class="btn" href="/projects">Browse all projects</a></div>
+    </section>
+
+    <section id="printing" class="py-12 border-t border-[var(--border)] fade-in delay-2">
+      <div class="rounded-2xl p-0.5">
+        <div class="glass rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center">
+          <div class="md:w-2/3">
+            <h2 class="font-serif text-3xl">3D Printing Service</h2>
+            <p class="mt-2 text-[var(--muted)]">Upload STL, choose material & color, get a quote, and track status from
+              “Quoted” to “Complete.”</p>
+          </div>
+          <div class="md:w-1/3 flex gap-3">
+            <a href="/printing/request" class="btn btn-primary grow text-center">Request a Print</a>
+            <a href="/printing/dashboard" class="btn grow text-center">Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mt-10 border-t border-[var(--border)] relative" style="z-index:2">
+    <div
+      class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+      <div>© <span id="year"></span> Morrow Industries</div>
+      <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('mobileBtn').addEventListener('click', () => document.getElementById('mobileMenu').classList.toggle('hidden'));
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Gold dust particles (two passes, like your 404)
+    (function makeParticles() {
+      const wrap = document.getElementById('particles');
+      const count = 28;
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('span');
+        s.style.setProperty('--x', Math.random() * 100 + 'vw');
+        s.style.setProperty('--y', (100 + Math.random() * 40) + 'vh');
+        s.style.setProperty('--drift', (Math.random() * 20 - 10) + 'px');
+        s.style.setProperty('--dur', (1 + Math.random() * 14) + 's');
+        s.style.opacity = (0.08 + Math.random() * 0.15).toFixed(2);
+        wrap.appendChild(s);
+      }
+    })();
+    (function makeParticles2() {
+      const wrap = document.getElementById('particles');
+      const count = 28;
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('span');
+        s.style.setProperty('--x', Math.random() * 100 + 'vw');
+        s.style.setProperty('--y', (100 + Math.random() * 40) + 'vh');
+        s.style.setProperty('--drift', (Math.random() * 20 - 10) + 'px');
+        s.style.setProperty('--dur', (5 + Math.random() * 14) + 's');
+        s.style.opacity = (0.08 + Math.random() * 0.15).toFixed(2);
+        wrap.appendChild(s);
+      }
+    })();
+  </script>
+
+  <!-- Firestore + Auth kept exactly as before -->
+  <script type="module">
+    import { db } from "/assets/js/firebase-init.js";
+    import { doc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, "site", "nowPrinting"));
+        const np = document.getElementById("nowPrinting");
+        if (snap.exists()) {
+          const d = snap.data();
+          np.innerHTML = (d.message ?? "—") + (d.percent ? ` — <span class='gold'>${d.percent}%</span>` : "");
+        } else np.textContent = "No current job";
+      } catch (e) {
+        console.error(e);
+        document.getElementById("nowPrinting").textContent = "Failed to load";
+      }
+    })();
+
+    (async () => {
+      const container = document.getElementById("recentProjects");
+      try {
+        const q = query(collection(db, "projects"), orderBy("updatedAt", "desc"), limit(3));
+        const snaps = await getDocs(q);
+        if (snaps.empty) {
+          container.innerHTML = `<div class='text-[var(--muted)]'>No projects yet.</div>`;
+          return;
+        }
+        const html = [];
+        snaps.forEach(docSnap => {
+          const p = docSnap.data();
+          const type = p.type ?? "Project";
+          const title = p.title ?? "Untitled";
+          const summary = p.summary ?? "";
+          const progress = Number(p.progress ?? 0);
+          html.push(`
         <article class="glass rounded-xl p-5 border border-[var(--border)]">
           <div class="text-sm text-[var(--muted)]">${type}</div>
           <h3 class="mt-1 text-lg font-semibold">${title}</h3>
           <p class="mt-2 text-sm text-[var(--muted)]">${summary}</p>
           <div class="mt-3 h-2 rounded bg-white/5 overflow-hidden">
-            <div class="h-full" style="background:var(--gold);width:${Math.max(0,Math.min(100,progress))}%"></div>
+            <div class="h-full" style="background:var(--gold);width:${Math.max(0, Math.min(100, progress))}%"></div>
           </div>
         </article>
       `);
+        });
+        container.innerHTML = html.join("");
+      } catch (e) {
+        console.error(e);
+        container.innerHTML = `<div class='text-[var(--muted)]'>Failed to load projects.</div>`;
+      }
+    })();
+  </script>
+
+  <script type="module">
+    import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
+
+    const authBtn = document.getElementById('authBtn');
+    const userLabel = document.getElementById('userLabel');
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userLabel.textContent = user.displayName || user.email;
+        authBtn.textContent = 'Sign out';
+      } else {
+        userLabel.textContent = '';
+        authBtn.textContent = 'Sign in';
+      }
     });
-    container.innerHTML = html.join("");
-  } catch (e) {
-    console.error(e);
-    container.innerHTML = `<div class='text-[var(--muted)]'>Failed to load projects.</div>`;
-  }
-})();
-</script>
 
+    authBtn?.addEventListener('click', async () => {
+      const user = auth.currentUser;
+      try {
+        if (user) await signOut(auth);
+        else await signInWithPopup(auth, provider);
+      } catch (e) { alert('Auth error: ' + (e?.message || e)); }
+    });
+  </script>
 
-<script type="module">
-import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
+</body>
 
-const authBtn = document.getElementById('authBtn');
-const userLabel = document.getElementById('userLabel');
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    userLabel.textContent = user.displayName || user.email;
-    authBtn.textContent = 'Sign out';
-  } else {
-    userLabel.textContent = '';
-    authBtn.textContent = 'Sign in';
-  }
-});
-
-authBtn?.addEventListener('click', async () => {
-  const user = auth.currentUser;
-  try {
-    if (user) await signOut(auth);
-    else await signInWithPopup(auth, provider);
-  } catch (e) { alert('Auth error: ' + (e?.message || e)); }
-});
-</script>
-
-</body></html>
+</html>
