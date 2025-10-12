@@ -1,197 +1,190 @@
-<!DOCTYPE html><html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Admin — Morrow Industries</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-:root{--bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
-.glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border)}
-.gold{color:var(--gold)}
-.btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease}
-.btn-primary{border-color:#d4af37}
-.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
-.navbar a{opacity:.9}
-.navbar a:hover{opacity:1}
-</style>
-
-</head><body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
-
-<header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
-  <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-    <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
-    <nav class="hidden md:flex gap-6 text-sm navbar">
-      <a href="/" >Home</a>
-      <a href="/projects" >Projects</a>
-      <a href="/printing/request" >3D Printing</a>
-      <a href="/about" >About</a>
-      <a href="/contact" >Contact</a>
-      <a href="/admin" class='opacity-100'>Admin</a>
-    </nav>
-    <div class="flex items-center gap-3">
-      <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
-      <button id="authBtn" class="md:inline btn">Sign in</button>
-      <button id="mobileBtn" class="md:hidden btn">Menu</button>
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin — Morrow Industries</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{--bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
+    body{background:var(--bg);color:var(--text)}
+    .glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border)}
+    .gold{color:var(--gold)}
+    .btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease}
+    .btn-primary{border-color:#d4af37}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .navbar a{opacity:.9}
+    .navbar a:hover{opacity:1}
+  </style>
+</head>
+<body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
+  <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+    <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+      <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
+      <nav class="hidden md:flex gap-6 text-sm navbar">
+        <a href="/">Home</a>
+        <a href="/projects">Projects</a>
+        <a href="/printing/request">3D Printing</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <a href="/admin" class='opacity-100'>Admin</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
+        <button id="authBtn" class="md:inline btn">Sign in</button>
+        <button id="mobileBtn" class="md:hidden btn">Menu</button>
+      </div>
     </div>
+    <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)]">
+      <div class="px-4 py-3 space-y-2">
+        <a class="block py-1" href="/">Home</a>
+        <a class="block py-1" href="/projects">Projects</a>
+        <a class="block py-1" href="/printing/request">3D Printing</a>
+        <a class="block py-1" href="/about">About</a>
+        <a class="block py-1" href="/contact">Contact</a>
+        <a class="block py-1" href="/admin">Admin</a>
+      </div>
+    </div>
+  </header>  <main class="mx-auto max-w-7xl px-4 py-10">
+    <h1 class="font-serif text-4xl">Admin</h1>
+    <p class="mt-2 text-[var(--muted)]">Requires sign-in. For proper protection, configure Firestore security rules and admin claims.</p>
+    <div id="guard" class="mt-4 text-[var(--muted)]"></div><section id="adminArea" class="hidden mt-8 grid lg:grid-cols-2 gap-6">
+  <div class="glass rounded-xl p-5">
+    <h2 class="text-xl font-semibold">Orders</h2>
+    <div id="orders" class="mt-3 space-y-3"></div>
   </div>
-  <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)]">
-    <div class="px-4 py-3 space-y-2">
-      <a class="block py-1" href="/">Home</a>
-      <a class="block py-1" href="/projects">Projects</a>
-      <a class="block py-1" href="/printing/request">3D Printing</a>
-      <a class="block py-1" href="/about">About</a>
-      <a class="block py-1" href="/contact">Contact</a>
-      <a class="block py-1" href="/admin">Admin</a>
-    </div>
+
+  <div class="glass rounded-xl p-5">
+    <h2 class="text-xl font-semibold">Projects CMS</h2>
+    <form id="projForm" class="grid gap-2">
+      <input id="p_title" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2" placeholder="Title" required/>
+      <input id="p_type" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2" placeholder="Type (school/personal)" required/>
+      <input id="p_tags" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2" placeholder="Tags (comma separated)"/>
+      <textarea id="p_summary" rows="3" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2" placeholder="Summary"></textarea>
+      <input id="p_progress" type="number" min="0" max="100" value="0" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2" />
+      <button class="btn btn-primary mt-2" type="submit">Add Project</button>
+      <div id="p_status" class="text-sm text-[var(--muted)]"></div>
+    </form>
+    <div id="projList" class="mt-5 space-y-3"></div>
   </div>
-</header>
 
-<main class="mx-auto max-w-7xl px-4 py-10">
-  <h1 class="font-serif text-4xl">Admin</h1>
-  <p class="mt-2 text-[var(--muted)]">Requires sign-in. For proper protection, configure Firestore security rules and admin claims.</p>
-  <div id="guard" class="mt-4 text-[var(--muted)]"></div>
-
-  <section id="adminArea" class="hidden mt-8 grid lg:grid-cols-2 gap-6">
-    <div class="glass rounded-xl p-5">
-      <h2 class="text-xl font-semibold">Orders</h2>
-      <div id="orders" class="mt-3 space-y-3"></div>
-    </div>
-    <div class="glass rounded-xl p-5">
-      <h2 class="text-xl font-semibold">Projects CMS</h2>
-      <form id="projForm" class="grid gap-2">
-        <input id="p_title" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2" placeholder="Title" required/>
-        <input id="p_type" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2" placeholder="Type (school/personal)" required/>
-        <input id="p_tags" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2" placeholder="Tags (comma separated)"/>
-        <textarea id="p_summary" rows="3" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2" placeholder="Summary"></textarea>
-        <input id="p_progress" type="number" min="0" max="100" value="0" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2" />
-        <button class="btn btn-primary mt-2" type="submit">Add Project</button>
-        <div id="p_status" class="text-sm text-[var(--muted)]"></div>
-      </form>
-      <div id="projList" class="mt-5 space-y-3"></div>
-    </div>
-  </section>
-</main>
-
-<footer class="mt-10 border-t border-[var(--border)]">
-  <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-    <div>© <span id="year"></span> Morrow Industries</div>
-    <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+  <div class="glass rounded-xl p-5 lg:col-span-2">
+    <h2 class="text-xl font-semibold">Project Navigator</h2>
+    <iframe src="/admin/project-navigator.html" style="width:100%;height:80vh;border:0;border-radius:12px;margin-top:1rem"></iframe>
   </div>
-</footer>
-<script>
-document.getElementById('mobileBtn').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('hidden'));
-document.getElementById('year').textContent=new Date().getFullYear();
-</script>
+</section>
 
+  </main>  <footer class="mt-10 border-t border-[var(--border)]">
+    <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+      <div>© <span id="year"></span> Morrow Industries</div>
+      <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+    </div>
+  </footer>  <script>
+    document.getElementById('mobileBtn').addEventListener('click',()=>document.getElementById('mobileMenu').classList.toggle('hidden'));
+    document.getElementById('year').textContent=new Date().getFullYear();
+  </script>  <script type="module">
+    import { db, auth } from "/assets/js/firebase-init.js";
+    import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, updateDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-<script type="module">
-import { db, auth } from "/assets/js/firebase-init.js";
-import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, updateDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    const guard = document.getElementById('guard');
+    const area = document.getElementById('adminArea');
 
-const guard = document.getElementById('guard');
-const area = document.getElementById('adminArea');
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) { guard.textContent = "Please sign in (top right)."; area.classList.add('hidden'); return; }
+      const uDoc = await getDoc(doc(db,'users', user.uid)).catch(()=>null);
+      const isAdmin = !!(uDoc && uDoc.exists() && (uDoc.data().role==='admin'));
+      if (!isAdmin) { guard.textContent = "Signed in, but not an admin."; area.classList.add('hidden'); return; }
+      guard.textContent = "Admin access granted.";
+      area.classList.remove('hidden');
+      initOrders();
+      initProjects();
+    });
 
-auth.onAuthStateChanged(async (user) => {
-  if (!user) { guard.textContent = "Please sign in (top right)."; area.classList.add('hidden'); return; }
-  // Simple role check via users/{uid} doc. (Replace with custom claims in production)
-  const uDoc = await getDoc(doc(db,'users', user.uid)).catch(()=>null);
-  const isAdmin = !!(uDoc && uDoc.exists() && (uDoc.data().role==='admin'));
-  if (!isAdmin) { guard.textContent = "Signed in, but not an admin."; area.classList.add('hidden'); return; }
-  guard.textContent = "Admin access granted.";
-  area.classList.remove('hidden');
-  initOrders();
-  initProjects();
-});
-
-function initOrders() {
-  const list = document.getElementById('orders');
-  const q = query(collection(db,'orders'), orderBy('createdAt','desc'));
-  onSnapshot(q, snap => {
-    list.innerHTML = '';
-    snap.forEach(d => {
-      const o = d.data();
-      const id = d.id;
-      const pct = Number(o.progress||0);
-      const card = document.createElement('div');
-      card.className = "rounded border border-[var(--border)] p-4";
-      card.innerHTML = `
-        <div class="flex items-center justify-between">
-          <div class="font-semibold">${o.title || (o.filePath?.split('/').pop()||'Order')}</div>
-          <select data-id="${id}" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-1">
-            ${['Quoted','Approved','Printing','Complete'].map(s => `<option ${s===o.status?'selected':''}>${s}</option>`).join('')}
-          </select>
-        </div>
-        <div class="mt-2 text-sm text-[var(--muted)]">${o.material||''} ${o.color?('• '+o.color):''} ${o.qty?('• Qty '+o.qty):''}</div>
-        <div class="mt-3 h-2 rounded bg-white/5 overflow-hidden"><div class="h-full" style="background:#d4af37;width:${pct}%"></div></div>
-      `;
-      card.querySelector('select').addEventListener('change', async (ev)=>{
-        await updateDoc(doc(db,'orders', id), { status: ev.target.value });
+    function initOrders() {
+      const list = document.getElementById('orders');
+      const q = query(collection(db,'orders'), orderBy('createdAt','desc'));
+      onSnapshot(q, snap => {
+        list.innerHTML = '';
+        snap.forEach(d => {
+          const o = d.data();
+          const id = d.id;
+          const pct = Number(o.progress||0);
+          const card = document.createElement('div');
+          card.className = "rounded border border-[var(--border)] p-4";
+          card.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="font-semibold">${o.title || (o.filePath?.split('/').pop()||'Order')}</div>
+              <select data-id="${id}" class="rounded border border-[var(--border)] bg-[var(--surface)]/60 p-1">
+                ${['Quoted','Approved','Printing','Complete'].map(s => `<option ${s===o.status?'selected':''}>${s}</option>`).join('')}
+              </select>
+            </div>
+            <div class="mt-2 text-sm text-[var(--muted)]">${o.material||''} ${o.color?('• '+o.color):''} ${o.qty?('• Qty '+o.qty):''}</div>
+            <div class="mt-3 h-2 rounded bg-white/5 overflow-hidden"><div class="h-full" style="background:#d4af37;width:${pct}%"></div></div>
+          `;
+          card.querySelector('select').addEventListener('change', async (ev)=>{
+            await updateDoc(doc(db,'orders', id), { status: ev.target.value });
+          });
+          list.appendChild(card);
+        });
       });
-      list.appendChild(card);
+    }
+
+    function initProjects() {
+      const form = document.getElementById('projForm');
+      const note = document.getElementById('p_status');
+      const list = document.getElementById('projList');
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        try {
+          const docData = {
+            title: document.getElementById('p_title').value.trim(),
+            type: document.getElementById('p_type').value.trim(),
+            tags: document.getElementById('p_tags').value.split(',').map(s=>s.trim()).filter(Boolean),
+            summary: document.getElementById('p_summary').value.trim(),
+            progress: Number(document.getElementById('p_progress').value||0),
+            updatedAt: serverTimestamp()
+          };
+          await addDoc(collection(db,'projects'), docData);
+          note.textContent = "Added!";
+          form.reset();
+        } catch(e) { note.textContent = "Error: " + (e?.message || e); }
+      });
+
+      const q = query(collection(db,'projects'), orderBy('updatedAt','desc'));
+      onSnapshot(q, snap => {
+        list.innerHTML = '';
+        snap.forEach(d => {
+          const p = d.data();
+          const item = document.createElement('div');
+          item.className = "rounded border border-[var(--border)] p-3";
+          item.innerHTML = `<div class="text-sm text-[var(--muted)]">${p.type||'Project'}</div>
+            <div class="font-semibold">${p.title||'Untitled'}</div>
+            <div class="mt-2 text-sm text-[var(--muted)]">${p.summary||''}</div>`;
+          list.appendChild(item);
+        });
+      });
+    }
+  </script>  <script type="module">
+    import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
+    const authBtn = document.getElementById('authBtn');
+    const userLabel = document.getElementById('userLabel');
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userLabel.textContent = user.displayName || user.email;
+        authBtn.textContent = 'Sign out';
+      } else {
+        userLabel.textContent = '';
+        authBtn.textContent = 'Sign in';
+      }
     });
-  });
-}
 
-function initProjects() {
-  const form = document.getElementById('projForm');
-  const note = document.getElementById('p_status');
-  const list = document.getElementById('projList');
-
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    try {
-      const docData = {
-        title: document.getElementById('p_title').value.trim(),
-        type: document.getElementById('p_type').value.trim(),
-        tags: document.getElementById('p_tags').value.split(',').map(s=>s.trim()).filter(Boolean),
-        summary: document.getElementById('p_summary').value.trim(),
-        progress: Number(document.getElementById('p_progress').value||0),
-        updatedAt: serverTimestamp()
-      };
-      await addDoc(collection(db,'projects'), docData);
-      note.textContent = "Added!";
-      form.reset();
-    } catch(e) { note.textContent = "Error: " + (e?.message || e); }
-  });
-
-  const q = query(collection(db,'projects'), orderBy('updatedAt','desc'));
-  onSnapshot(q, snap => {
-    list.innerHTML = '';
-    snap.forEach(d => {
-      const p = d.data();
-      const item = document.createElement('div');
-      item.className = "rounded border border-[var(--border)] p-3";
-      item.innerHTML = `<div class="text-sm text-[var(--muted)]">${p.type||'Project'}</div>
-        <div class="font-semibold">${p.title||'Untitled'}</div>
-        <div class="mt-2 text-sm text-[var(--muted)]">${p.summary||''}</div>`;
-      list.appendChild(item);
+    authBtn?.addEventListener('click', async () => {
+      const user = auth.currentUser;
+      try {
+        if (user) await signOut(auth);
+        else await signInWithPopup(auth, provider);
+      } catch (e) { alert('Auth error: ' + (e?.message || e)); }
     });
-  });
-}
-</script>
-
-
-<script type="module">
-import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
-
-const authBtn = document.getElementById('authBtn');
-const userLabel = document.getElementById('userLabel');
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    userLabel.textContent = user.displayName || user.email;
-    authBtn.textContent = 'Sign out';
-  } else {
-    userLabel.textContent = '';
-    authBtn.textContent = 'Sign in';
-  }
-});
-
-authBtn?.addEventListener('click', async () => {
-  const user = auth.currentUser;
-  try {
-    if (user) await signOut(auth);
-    else await signInWithPopup(auth, provider);
-  } catch (e) { alert('Auth error: ' + (e?.message || e)); }
-});
-</script>
-
-</body></html>
+  </script></body>
+</html>
