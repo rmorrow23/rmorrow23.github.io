@@ -1,4 +1,3 @@
-\
 <!DOCTYPE html><html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -79,24 +78,37 @@
     </div>
   </div>
 
-  <!-- Auth -->
+  <!-- Auth (fixed: import db from your initializer; do NOT call getFirestore()) -->
   <script type="module">
-    import { auth, provider, signInWithPopup, onAuthStateChanged } from "/assets/js/firebase-init.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-    const db = getFirestore();
+    import { db, auth, provider, signInWithPopup, onAuthStateChanged } from "/assets/js/firebase-init.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
     const gate = document.getElementById('gate');
     const app  = document.getElementById('app');
     const msg  = document.getElementById('gateMsg');
-    document.getElementById('loginBtn').addEventListener('click', ()=> signInWithPopup(auth, provider).catch(e=> msg.textContent='Auth error: '+(e?.message||e)));
-    async function isAdmin(user){ try{ const u=await getDoc(doc(db,'users',user.uid)); return !!(u.exists()&&u.data().role==='admin'); }catch(e){ msg.textContent='Role check failed: '+(e?.message||e); return false; } }
-    onAuthStateChanged(auth, async (user)=>{
-      if(!user){ gate.style.display='grid'; app.style.display='none'; msg.textContent='Please sign in.'; return; }
-      if(await isAdmin(user)){ gate.style.display='none'; app.style.display=''; window.__bootExplorer?.(); }
+
+    document.getElementById('loginBtn').addEventListener('click', () =>
+      signInWithPopup(auth, provider).catch(e => msg.textContent = 'Auth error: ' + (e?.message || e))
+    );
+
+    async function isAdmin(user){
+      try {
+        const u = await getDoc(doc(db, 'users', user.uid));
+        return !!(u.exists() && u.data().role === 'admin');
+      } catch (e) {
+        msg.textContent = 'Role check failed: ' + (e?.message || e);
+        return false;
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { gate.style.display='grid'; app.style.display='none'; msg.textContent='Please sign in.'; return; }
+      if (await isAdmin(user)) { gate.style.display='none'; app.style.display=''; window.__bootExplorer?.(); }
       else { gate.style.display='grid'; app.style.display='none'; msg.textContent='Signed in, but not an admin.'; }
     });
   </script>
 
-  <!-- Explorer -->
+  <!-- Explorer (unchanged) -->
   <script>
     const GH_OWNER="rmorrow23", GH_REPO="rmorrow23.github.io", GH_BRANCH="main", SITE_ROOT="https://www.morrow-industries.com/";
     const treeEl=document.getElementById('tree'), listEl=document.getElementById('list'), headEl=document.getElementById('detailHead').querySelector('h2');
@@ -113,7 +125,6 @@
       try{ const c=await gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${encodeURIComponent(path)}&per_page=1&sha=${GH_BRANCH}`);
         return (Array.isArray(c)&&c.length)?c[0].commit.author.date:null; }catch(_){ return null; }
     }
-    function hasIndex(items){ return items.some(x=>x.type==="file" && /^(index\.html?|INDEX\.HTML?)$/.test(x.name)); }
     function siteUrl(path){ return SITE_ROOT + (path? encodeURIComponent(path) + "/": ""); }
     function codeUrl(path){ return `https://github.com/${GH_OWNER}/${GH_REPO}/tree/${GH_BRANCH}/${path?encodeURIComponent(path):""}`; }
 
@@ -122,7 +133,7 @@
       const root = await listPath("");
       const dirs = root.filter(x=>x.type==="dir").map(x=>x.name).sort((a,b)=>a.localeCompare(b));
       treeEl.innerHTML = [''].concat(dirs).map(name=>{
-        const p = name; // root child path
+        const p = name;
         const id = 'node-' + (p||'root').replace(/[^a-z0-9]/gi,'_');
         return `<li>
           <button data-path="${p}" id="${id}" class="w-full flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[var(--hover)]">
@@ -145,11 +156,9 @@
       const updated = await latestCommit(path);
       metaEl.textContent = 'Items: ' + items.length + (updated? (' • Updated: ' + new Date(updated).toLocaleString()): '');
 
-      // Filter by search
       const q = (searchEl.value||'').toLowerCase().trim();
       const filtered = items.filter(it => !q || (('/'+(path?path+'/':'')+it.name).toLowerCase().includes(q)));
 
-      // Render entries
       listEl.innerHTML = filtered.map(x=>{
         const isDir = x.type==="dir";
         const pth = (path? path + '/' : '') + x.name;
