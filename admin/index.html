@@ -73,7 +73,6 @@
       <div id="projList" class="mt-5 space-y-3"></div>
     </div>
 
-    <!-- Recent Projects via authenticated GitHub (Cloudflare Worker proxy) -->
     <div class="glass rounded-xl p-5 lg:col-span-2">
       <div class="flex items-center justify-between gap-3">
         <h2 class="text-xl font-semibold">Recent Projects</h2>
@@ -81,6 +80,16 @@
       </div>
       <div id="recentMsg" class="mt-2 text-sm text-[var(--muted)]"></div>
       <div id="recentGrid" class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+
+    <!-- Code Editor Section -->
+    <div class="glass rounded-xl p-5 lg:col-span-2">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-xl font-semibold">Code Editor</h2>
+        <a href="/admin/editor/" class="btn btn-primary px-3 py-2 rounded-lg text-sm">Open Editor</a>
+      </div>
+      <div id="editorRecentMsg" class="mt-2 text-sm text-[var(--muted)]"></div>
+      <div id="editorRecentGrid" class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </div>
   </section>
 </main>
@@ -99,7 +108,7 @@ document.getElementById('year').textContent=new Date().getFullYear();
 <!-- Admin gate + Orders/Projects -->
 <script type="module">
 import { db, auth } from "/assets/js/firebase-init.js";
-import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, updateDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, updateDoc, doc, getDoc, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const guard = document.getElementById('guard');
 const area = document.getElementById('adminArea');
@@ -113,7 +122,8 @@ auth.onAuthStateChanged(async (user) => {
   area.classList.remove('hidden');
   initOrders();
   initProjects();
-  initRecentProjects(); // uses proxy, no token in browser
+  initRecentProjects();
+  initEditorProjects();
 });
 
 function initOrders() {
@@ -182,113 +192,46 @@ function initProjects() {
   });
 }
 
-/* -------- Recent Projects via Cloudflare Worker proxy (authenticated GitHub) -------- */
-const GH_OWNER = "rmorrow23";
-const GH_REPO  = "rmorrow23.github.io";
-const GH_BRANCH = "main";
-const SITE_ROOT = "https://www.morrow-industries.com/";
-
-/* Replace with your Worker URL, e.g. https://github-proxy.yourname.workers.dev
-   The Worker should:
-   - Read ?url=<github-api-url>
-   - Forward the request to GitHub with Authorization: Bearer <token-from-env>
-   - Set CORS headers to allow your site
-*/
-const PROXY = "https://github-proxy.randalmorrow24.workers.dev/";
-
-async function initRecentProjects(){
+function initRecentProjects() {
   const msg  = document.getElementById('recentMsg');
   const grid = document.getElementById('recentGrid');
+  msg.textContent = "Scanning repository…";
+}
 
-  if (!PROXY.includes("workers.dev") && !PROXY.startsWith("https://")) {
-    msg.textContent = "Proxy URL is not configured. Set PROXY to your Cloudflare Worker endpoint.";
-    return;
-  }
+function initEditorProjects(){
+  const msg  = document.getElementById('editorRecentMsg');
+  const grid = document.getElementById('editorRecentGrid');
+  const user = auth.currentUser;
+  if (!user){ msg.textContent = "Sign in to view your projects."; return; }
 
-  msg.textContent = "Scanning repository for deployable folders…";
-
-  async function gh(u){
-    const res = await fetch(`${PROXY}?url=${encodeURIComponent(u)}`);
-    if(!res.ok) throw new Error(res.status + " " + res.statusText);
-    return res.json();
-  }
-  async function listRoot(){ return gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/?ref=${GH_BRANCH}`); }
-  async function hasIndex(path){
-    try{
-      const items = await gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(path)}?ref=${GH_BRANCH}`);
-      return items.some(x=>x.type==="file" && /^(index\.html?|INDEX\.HTML?)$/.test(x.name));
-    }catch(_){ return false; }
-  }
-  async function updatedAt(path){
-    try{
-      const commits = await gh(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${encodeURIComponent(path)}&per_page=1&sha=${GH_BRANCH}`);
-      return (Array.isArray(commits)&&commits.length)?commits[0].commit.author.date:null;
-    }catch(_){ return null; }
-  }
-
-  try{
-    const root = await listRoot();
-    const dirs = root.filter(x=>x.type==="dir").map(x=>x.name);
-    const out = [];
-    // sequential to be gentle on rate limits; can be batched if needed
-    for (const d of dirs){
-      if (await hasIndex(d)){
-        out.push({ name: d, updated: await updatedAt(d) });
-      }
-    }
-    out.sort((a,b)=> (b.updated?Date.parse(b.updated):0) - (a.updated?Date.parse(a.updated):0));
-    const show = out.slice(0,12);
-
-    msg.textContent = show.length
-      ? `Showing ${show.length} most recent projects.`
-      : "No deployable folders found (needs an index.html in each folder).";
-
-    grid.innerHTML = show.map(it=>{
-      const site = SITE_ROOT + encodeURIComponent(it.name) + "/";
-      const code = `https://github.com/${GH_OWNER}/${GH_REPO}/tree/${GH_BRANCH}/${encodeURIComponent(it.name)}`;
-      const when = it.updated ? new Date(it.updated).toLocaleString() : "—";
-      return `
+  try {
+    const qy = query(collection(db,'editorProjects'), where('owner','==',user.uid), orderBy('updatedAt','desc'));
+    onSnapshot(qy, snap => {
+      if (snap.empty){ msg.textContent = "No projects yet."; grid.innerHTML = ""; return; }
+      msg.textContent = `Showing ${Math.min(snap.size, 12)} most recent projects.`;
+      let out = "";
+      let count = 0;
+      snap.forEach(d => {
+        if (count++ >= 12) return;
+        const p = d.data();
+        const when = p.updatedAt?.toDate ? new Date(p.updatedAt.toDate()).toLocaleString() : "—";
+        out += `
         <article class="rounded border border-[var(--border)] p-4">
           <div class="flex items-start justify-between gap-3">
             <div>
-              <div class="text-sm text-[var(--muted)]">/ ${it.name}</div>
-              <div class="font-semibold">${it.name}</div>
+              <div class="font-semibold">${p.title || "Untitled"}</div>
               <div class="mt-1 text-xs text-[var(--muted)]">Updated: ${when}</div>
             </div>
-            <div class="flex gap-2">
-              <!-- Same-tab navigation to the site -->
-              <a class="btn px-3 py-1.5 rounded-lg text-sm" href="${site}">Open</a>
-              <a class="btn px-3 py-1.5 rounded-lg text-sm" target="_blank" rel="noopener" href="${code}">Code</a>
-            </div>
+            <a class="btn px-3 py-1.5 rounded-lg text-sm" href="/admin/editor/">Open</a>
           </div>
-        </article>
-      `;
-    }).join("");
-  }catch(e){
-    msg.textContent = "GitHub scan failed: " + (e?.message || e);
-    grid.innerHTML = "";
+        </article>`;
+      });
+      grid.innerHTML = out;
+    });
+  } catch(e){
+    msg.textContent = "Error loading editor projects: " + (e?.message || e);
   }
 }
 </script>
-
-<!-- Top-right auth button UI -->
-<script type="module">
-import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
-const authBtn = document.getElementById('authBtn');
-const userLabel = document.getElementById('userLabel');
-
-onAuthStateChanged(auth, (user) => {
-  if (user) { userLabel.textContent = user.displayName || user.email; authBtn.textContent = 'Sign out'; }
-  else { userLabel.textContent = ''; authBtn.textContent = 'Sign in'; }
-});
-
-authBtn?.addEventListener('click', async () => {
-  const user = auth.currentUser;
-  try { if (user) await signOut(auth); else await signInWithPopup(auth, provider); }
-  catch (e) { alert('Auth error: ' + (e?.message || e)); }
-});
-</script>
-
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"3edea265372742db9f0b75f0c30e0c5f","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>

@@ -1,0 +1,30 @@
+/* --- Morrow Industries Editor Styles (dark gold-glass) --- */
+:root{--bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
+
+.editors-grid{display:block;min-height:300px}
+.editor{height:480px;width:100%}
+
+.cm-theme-dark .CodeMirror,
+.CodeMirror{height:100%;font-size:14px;background-color:rgba(0,0,0,0)!important;color:var(--text);border-radius:.5rem}
+.CodeMirror-scroll{background-color:transparent!important}
+.CodeMirror-gutters{background:rgba(0,0,0,.7)!important;border-right:1px solid var(--border);color:#858585}
+.CodeMirror-cursor{border-left:1px solid #dcdcdc}
+.CodeMirror-selected{background:#264f78}
+.cm-keyword{color:#c586c0}
+.cm-string{color:#ce9178}
+.cm-variable{color:#9cdcfe}
+.cm-comment{color:#6a9955}
+.cm-number{color:#b5cea8}
+.cm-attribute{color:#dcdcaa}
+.cm-tag{color:#569cd6}
+
+.tab-btn.active{outline:2px solid var(--gold);outline-offset:0;border-color:var(--gold)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#caa538}
+
+@media (max-width: 900px){
+  .editor{height:360px}
+}
