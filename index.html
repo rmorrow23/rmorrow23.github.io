@@ -133,6 +133,7 @@
       top: 0;
       z-index: 3
     }
+
     #admin {
       display: none;
     }
@@ -338,30 +339,52 @@
 
   <script type="module">
     import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
+    import { db } from "/assets/js/firebase-init.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    const authBtn = document.getElementById('authBtn');
-    const userLabel = document.getElementById('userLabel');
+    const authBtn = document.getElementById("authBtn");
+    const userLabel = document.getElementById("userLabel");
+    const adminLink = document.getElementById("admin");
 
-    auth.onAuthStateChanged(async (user) => {
-      if (!user) { guard.textContent = "Please sign in (top right)."; area.classList.add('hidden'); return; }
-      // Simple role check via users/{uid} doc. (Replace with custom claims in production)
-      const uDoc = await getDoc(doc(db, 'users', user.uid)).catch(() => null);
-      const isAdmin = !!(uDoc && uDoc.exists() && (uDoc.data().role === 'admin'));
-      if (!isAdmin) { guard.textContent = "Signed in, but not an admin."; area.classList.add('hidden'); return; }
-      guard.textContent = "Admin access granted.";
-      document.getElementById('admin').display = 'block';
-      initOrders();
-      initProjects();
+    // 🔄 Watch authentication state
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Show signed-in label
+        userLabel.textContent = user.displayName || user.email || "Signed in";
+        authBtn.textContent = "Sign out";
+
+        // Check Firestore for admin role
+        try {
+          const uDoc = await getDoc(doc(db, "users", user.uid));
+          const isAdmin = uDoc.exists() && uDoc.data().role === "admin";
+          adminLink.style.display = isAdmin ? "inline" : "none";
+        } catch (e) {
+          console.warn("Error fetching user role:", e);
+          adminLink.style.display = "none";
+        }
+      } else {
+        // Signed out
+        userLabel.textContent = "";
+        authBtn.textContent = "Sign in";
+        adminLink.style.display = "none";
+      }
     });
 
-    authBtn?.addEventListener('click', async () => {
+    // 🔘 Sign in/out toggle
+    authBtn.addEventListener("click", async () => {
       const user = auth.currentUser;
       try {
-        if (user) await signOut(auth);
-        else await signInWithPopup(auth, provider);
-      } catch (e) { alert('Auth error: ' + (e?.message || e)); }
+        if (user) {
+          await signOut(auth);
+        } else {
+          await signInWithPopup(auth, provider);
+        }
+      } catch (e) {
+        alert("Auth error: " + (e?.message || e));
+      }
     });
   </script>
+
 
 </body>
 
