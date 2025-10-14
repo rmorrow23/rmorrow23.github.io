@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Morrow Industries — Cart</title>
+  <link rel="icon" href="/assets/favicon.ico"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{--bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
+    body{background:var(--bg);color:var(--text)}
+    .glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border)}
+    .btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease}
+    .btn-primary{border-color:var(--gold)}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .toast{position:fixed;right:1.25rem;top:1.25rem;background:rgba(18,20,27,.85);color:#e9eef8;border:1px solid var(--gold);border-radius:.75rem;padding:.6rem .9rem;font-size:.9rem;backdrop-filter:blur(14px);box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:9999;animation:fadeIn .2s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+    .item{border:1px solid var(--border);border-radius:.75rem;padding:1rem;display:flex;gap:1rem;align-items:center}
+    .item img{width:80px;height:80px;object-fit:cover;border-radius:.5rem}
+  </style>
+</head>
+<body class="min-h-screen selection:bg-[var(--gold)]/20">
+  <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+    <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+      <a href="/" class="font-serif text-xl tracking-wide text-[var(--gold)]">Morrow Industries</a>
+      <div class="flex items-center gap-3">
+        <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
+        <button id="authBtn" class="btn">Sign in</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-4xl px-4 py-10">
+    <h1 class="font-serif text-3xl mb-6">Your Cart</h1>
+    <div id="cartList" class="space-y-4"></div>
+    <div id="cartSummary" class="mt-6 text-right hidden">
+      <div class="text-lg font-semibold mb-2">Total: $<span id="total"></span></div>
+      <button id="placeOrderBtn" class="btn btn-primary">Place Order</button>
+    </div>
+  </main>
+
+  <script>
+    function showToast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig={apiKey:"AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",authDomain:"morrow-industries.firebaseapp.com",databaseURL:"https://morrow-industries-default-rtdb.firebaseio.com",projectId:"morrow-industries",storageBucket:"morrow-industries.appspot.com",messagingSenderId:"75190213345",appId:"1:75190213345:web:a521b54a1c8e00b68d75a0"};
+    const app=initializeApp(firebaseConfig);const db=getFirestore(app);const auth=getAuth(app);const provider=new GoogleAuthProvider();
+    const cartList=document.getElementById('cartList');const totalEl=document.getElementById('total');const cartSummary=document.getElementById('cartSummary');const authBtn=document.getElementById('authBtn');const userLabel=document.getElementById('userLabel');
+
+    onAuthStateChanged(auth,u=>{if(u){userLabel.textContent=u.displayName||u.email;authBtn.textContent="Sign out";loadCart(u);}else{userLabel.textContent="";authBtn.textContent="Sign in";cartList.innerHTML="<p class='text-[var(--muted)]'>Please sign in to view your cart.</p>";cartSummary.classList.add('hidden');}});
+    authBtn.addEventListener('click',async()=>{const u=auth.currentUser;if(u)await signOut(auth);else await signInWithPopup(auth,provider).catch(e=>showToast(e.message));});
+
+    async function loadCart(user){
+      const cRef=collection(db,"users",user.uid,"cart");
+      onSnapshot(cRef,snap=>{
+        if(snap.empty){cartList.innerHTML="<p class='text-[var(--muted)]'>Your cart is empty.</p>";cartSummary.classList.add('hidden');return;}
+        let html="";let total=0;
+        snap.forEach(docSnap=>{
+          const d=docSnap.data();total+=Number(d.price||0)*(d.qty||1);
+          html+=`<div class="item"><img src="${d.image||''}" alt="img"/><div class="flex-1"><div class="font-semibold">${d.title}</div><div class="text-sm text-[var(--muted)]">${d.color||''}</div><div class="text-sm mt-1">$${(Number(d.price)).toFixed(2)} × <input type='number' min='1' value='${d.qty||1}' data-id='${docSnap.id}' class='qty w-16 text-center bg-transparent border border-[var(--border)] rounded p-1'/> = $${(d.qty*Number(d.price||0)).toFixed(2)}</div></div><button class="remove btn text-sm" data-id='${docSnap.id}'>Remove</button></div>`;
+        });
+        cartList.innerHTML=html;totalEl.textContent=total.toFixed(2);cartSummary.classList.remove('hidden');
+        document.querySelectorAll('.qty').forEach(i=>i.addEventListener('change',()=>updateQty(user.uid,i.dataset.id,i.value)));
+        document.querySelectorAll('.remove').forEach(b=>b.addEventListener('click',()=>removeItem(user.uid,b.dataset.id)));
+      });
+    }
+    async function updateQty(uid,id,val){await updateDoc(doc(db,"users",uid,"cart",id),{qty:Number(val)});showToast("Quantity updated");}
+    async function removeItem(uid,id){await deleteDoc(doc(db,"users",uid,"cart",id));showToast("Item removed");}
+
+    document.getElementById('placeOrderBtn').addEventListener('click',async()=>{
+      const user=auth.currentUser;if(!user)return showToast("Sign in first");
+      const cRef=collection(db,"users",user.uid,"cart");const cartSnap=await getDocs(cRef);
+      if(cartSnap.empty)return showToast("Cart is empty");
+      const items=[];cartSnap.forEach(d=>items.push(d.data()));
+      await addDoc(collection(db,"orders"),{userId:user.uid,source:"store",items,status:"Pending",lifecycle:["Pending","Ready to Ship","Shipped","Delivered"],createdAt:new Date()});
+      for(const d of cartSnap.docs){await deleteDoc(d.ref);}showToast("Order placed!");
+    });
+  </script>
+</body>
+</html>
