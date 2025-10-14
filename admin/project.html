@@ -1,0 +1,443 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style></style></head><body><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Morrow Industries — Admin Dashboard</title>
+  <link rel="icon" href="/assets/favicon.ico"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{
+      --bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;
+      --gold:#d4af37;--border:rgba(255,255,255,0.08)
+    }
+    body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif}
+    .glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border)}
+    .btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s,box-shadow .2s,background .2s}
+    .btn-primary{border-color:var(--gold)}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .tab{border:1px solid var(--border);border-radius:.6rem;padding:.45rem .8rem}
+    .tab.active{border-color:var(--gold);color:var(--gold)}
+    .card{border:1px solid var(--border);border-radius:1rem}
+    .navbar a{opacity:.9}.navbar a:hover{opacity:1}
+    /* Toasts */
+    .toast{position:fixed;right:1.25rem;top:1.25rem;background:rgba(18,20,27,.92);
+      color:#e9eef8;border:1px solid var(--gold);border-radius:.75rem;padding:.6rem .9rem;
+      font-size:.9rem;backdrop-filter:blur(14px);box-shadow:0 4px 16px rgba(0,0,0,.4);
+      z-index:9999;animation:fadeIn .2s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+    /* Loading Spinner */
+    #loadingOverlay{position:fixed;inset:0;z-index:200;background:rgba(10,11,15,0.85);
+      backdrop-filter:blur(10px);display:none}
+    .spinner{width:56px;height:56px;border-radius:50%;border:3px solid rgba(212,175,55,.25);
+      border-top-color:var(--gold);animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* Access Denied */
+    #accessDenied{position:fixed;inset:0;display:none;z-index:999;background:rgba(10,11,15,.96);
+      backdrop-filter:blur(14px)}
+    /* Transparent gold inputs */
+    input,textarea,select{
+      background:transparent!important;color:var(--gold)!important;border:1px solid var(--border);
+      border-radius:.5rem;padding:.75rem;width:100%}
+    input::placeholder,textarea::placeholder,select option{color:rgba(212,175,55,.5)!important}
+    label{color:var(--gold)}
+  </style>
+</head>
+<body class="min-h-screen selection:bg-[var(--gold)]/20">
+
+<header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+  <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-serif text-xl tracking-wide text-[var(--gold)]">Morrow Industries</a>
+    <nav class="hidden md:flex gap-6 text-sm navbar">
+      <a href="/">Home</a>
+      <a href="/projects">Projects</a>
+      <a href="/printing/request">3D Printing</a>
+      <a href="/printing/store">Store</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a href="/admin" class="text-[var(--gold)]">Admin</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
+      <button id="authBtn" class="md:inline btn">Sign in</button>
+      <button id="mobileBtn" class="md:hidden btn">Menu</button>
+    </div>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)]">
+    <div class="px-4 py-3 space-y-2">
+      <a class="block py-1" href="/">Home</a>
+      <a class="block py-1" href="/projects">Projects</a>
+      <a class="block py-1" href="/printing/request">3D Printing</a>
+      <a class="block py-1" href="/printing/store">Store</a>
+      <a class="block py-1" href="/about">About</a>
+      <a class="block py-1" href="/contact">Contact</a>
+      <a class="block py-1" href="/admin">Admin</a>
+    </div>
+  </div>
+</header>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="flex items-center justify-center">
+  <div class="glass p-6 rounded-2xl flex items-center gap-4">
+    <div class="spinner"></div>
+    <div class="text-sm text-[var(--muted)]">Checking admin access…</div>
+  </div>
+</div>
+
+<main class="mx-auto max-w-7xl px-4 py-10">
+  <h1 class="font-serif text-4xl">Admin Dashboard</h1>
+  <p class="mt-2 text-[var(--muted)]">Manage Morrow Industries projects, store products and tools.</p>
+
+  <!-- Tabs -->
+  <div class="mt-6 flex flex-wrap gap-2">
+    <button class="tab active" data-tab="products">Products</button>
+    <button class="tab" data-tab="orders">Orders</button>
+    <button class="tab" data-tab="users">Users</button>
+    <button class="tab" data-tab="projects">Projects</button>
+    <button class="tab" data-tab="editor">Code Editor</button>
+  </div>
+
+  <!-- Panel containers -->
+  <section id="panel-products" class="mt-6"></section>
+  <section id="panel-orders" class="mt-6 hidden"></section>
+  <section id="panel-users" class="mt-6 hidden"></section>
+  <section id="panel-projects" class="mt-6 hidden"></section>
+  <section id="panel-editor" class="mt-6 hidden"></section>
+</main>
+
+<!-- Access Denied Modal -->
+<div id="accessDenied" class="flex items-center justify-center">
+  <div class="glass p-8 rounded-2xl text-center max-w-sm">
+    <h2 class="text-2xl font-serif text-[var(--gold)] mb-3">Access Denied</h2>
+    <p class="text-[var(--muted)] mb-5">Admin privileges are required to view this page.</p>
+    <button id="denySignOut" class="btn btn-primary">Sign Out</button>
+  </div>
+</div>
+
+<!-- Toast helper -->
+<script>
+  function showToast(msg){
+    const t=document.createElement('div');
+    t.className='toast';t.textContent=msg;
+    document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+  }
+</script>
+
+<!-- Firebase init + Auth/Admin check -->
+<script type="module">
+  import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut}
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {getFirestore,doc,getDoc} 
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import {firebaseConfig} from "/firebaseConfig.js";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+  const db = getFirestore(app);
+
+  const authBtn=document.getElementById('authBtn');
+  const userLabel=document.getElementById('userLabel');
+  const mobileBtn=document.getElementById('mobileBtn');
+  const mobileMenu=document.getElementById('mobileMenu');
+  const loadingOverlay=document.getElementById('loadingOverlay');
+  const accessDenied=document.getElementById('accessDenied');
+  const denySignOut=document.getElementById('denySignOut');
+
+  let isAdmin=false;
+  mobileBtn?.addEventListener('click',()=>mobileMenu.classList.toggle('hidden'));
+  authBtn.onclick=()=>auth.currentUser?signOut(auth):signInWithPopup(auth,provider);
+  denySignOut.onclick=()=>signOut(auth);
+
+  function setLoading(v){loadingOverlay.style.display=v?'flex':'none';}
+  setLoading(true);
+
+  onAuthStateChanged(auth, async user=>{
+    try{
+      if(!user){
+        userLabel.textContent='';authBtn.textContent='Sign in';
+        isAdmin=false;accessDenied.style.display='flex';
+        return setLoading(false);
+      }
+      userLabel.textContent=user.displayName||user.email;
+      authBtn.textContent='Sign out';
+      const snap=await getDoc(doc(db,'users',user.uid));
+      isAdmin=snap.exists()&&snap.data().role==='admin';
+      if(!isAdmin){accessDenied.style.display='flex';}
+      else{accessDenied.style.display='none';}
+    }catch(e){console.error(e);showToast('Auth error');}
+    finally{setLoading(false);}
+  });
+</script>
+
+<!-- CONTINUE TO PART 2 --><!-- =================== PART 2: PRODUCTS / ORDERS / USERS =================== -->
+
+<!-- Add Product Floating Action Button -->
+<button id="addFab" class="fab" title="+ Add Product" style="display:none;">＋</button>
+
+<!-- Add/Edit Product Modal -->
+<div id="productModal" class="modal-overlay">
+  <div class="mx-auto modal glass card p-6 rounded-2xl mt-20">
+    <div class="flex items-center justify-between">
+      <h2 id="modalTitle" class="text-2xl font-serif text-[var(--gold)]">Add Product</h2>
+      <button id="closeModal" class="btn">Close</button>
+    </div>
+    <form id="productForm" class="grid md:grid-cols-2 gap-4 mt-5">
+      <label>Title<input id="p_title" placeholder="Title" required/></label>
+      <label>Category<input id="p_category" placeholder="Category (e.g., Accessories)"/></label>
+      <label class="md:col-span-2">Description<textarea id="p_description" rows="4" placeholder="Description"></textarea></label>
+      <label>Price<input id="p_price" type="number" step="0.01" min="0" placeholder="Price (USD)" required/></label>
+      <label>Colors<input id="p_colors" placeholder="Colors (comma separated)"/></label>
+      <label>Availability<select id="p_availability">
+        <option value="in_stock">In Stock</option>
+        <option value="made_to_order">Made to Order</option>
+      </select></label>
+      <label>Estimated Delivery<input id="p_estimated" placeholder="e.g., 3–5 business days"/></label>
+      <label class="md:col-span-2">Product Image<input id="p_image" type="file" accept="image/*"/></label>
+      <div class="md:col-span-2 flex gap-3 items-center">
+        <button id="saveProduct" class="btn btn-primary" type="submit">Save</button>
+        <span id="modalStatus" class="text-sm text-[var(--muted)]"></span>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import {getFirestore,collection,addDoc,doc,getDoc,updateDoc,deleteDoc,query,orderBy,onSnapshot}
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import {getStorage,ref,uploadBytes,getDownloadURL,deleteObject}
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+  import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {getApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+  const app=getApp(); const db=getFirestore(app); const storage=getStorage(app); const auth=getAuth(app);
+
+  // Panels
+  const panelProducts=document.getElementById('panel-products');
+  const panelOrders=document.getElementById('panel-orders');
+  const panelUsers=document.getElementById('panel-users');
+  const productsGrid=document.createElement('div');productsGrid.className='grid md:grid-cols-2 lg:grid-cols-3 gap-5';panelProducts.appendChild(productsGrid);
+
+  // Tabs logic (continued)
+  const tabs=document.querySelectorAll('.tab');
+  const panelProjects=document.getElementById('panel-projects');
+  const panelEditor=document.getElementById('panel-editor');
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const trg=t.dataset.tab;
+    panelProducts.classList.toggle('hidden',trg!=='products');
+    panelOrders.classList.toggle('hidden',trg!=='orders');
+    panelUsers.classList.toggle('hidden',trg!=='users');
+    panelProjects.classList.toggle('hidden',trg!=='projects');
+    panelEditor.classList.toggle('hidden',trg!=='editor');
+  }));
+
+  // FAB + Modal refs
+  const addFab=document.getElementById('addFab');
+  const productModal=document.getElementById('productModal');
+  const modalTitle=document.getElementById('modalTitle');
+  const closeModalBtn=document.getElementById('closeModal');
+  const productForm=document.getElementById('productForm');
+  const modalStatus=document.getElementById('modalStatus');
+  const p_title=document.getElementById('p_title');
+  const p_category=document.getElementById('p_category');
+  const p_description=document.getElementById('p_description');
+  const p_price=document.getElementById('p_price');
+  const p_colors=document.getElementById('p_colors');
+  const p_availability=document.getElementById('p_availability');
+  const p_estimated=document.getElementById('p_estimated');
+  const p_image=document.getElementById('p_image');
+
+  let unsubProducts=null,editId=null;
+
+  // Helpers
+  function clearProductsGrid(){productsGrid.innerHTML='';if(unsubProducts){unsubProducts();unsubProducts=null;}}
+  function openModal(){productModal.style.display='block';}
+  function closeModal(){productModal.style.display='none';}
+  closeModalBtn.addEventListener('click',closeModal);
+  productModal.addEventListener('click',e=>{if(e.target===productModal)closeModal();});
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&productModal.style.display==='block')closeModal();});
+  addFab.addEventListener('click',()=>openAdd());
+
+  function openAdd(){
+    editId=null;modalTitle.textContent='Add Product';productForm.reset();modalStatus.textContent='';openModal();
+  }
+  function openEdit(id){
+    editId=id;modalTitle.textContent='Edit Product';modalStatus.textContent='Loading…';openModal();
+    getDoc(doc(db,'products',id)).then(s=>{
+      modalStatus.textContent='';if(!s.exists()){showToast('Not found');return closeModal();}
+      const p=s.data();
+      p_title.value=p.title||'';p_category.value=p.category||'';
+      p_description.value=p.description||'';p_price.value=p.price||'';
+      p_colors.value=(p.colors||[]).join(', ');
+      p_availability.value=p.availability==='in_stock'?'in_stock':'made_to_order';
+      p_estimated.value=p.estimatedDelivery||'';
+    });
+  }
+
+  function productCard(id,p){
+    const availability=p.availability==='in_stock'?'In Stock':'Made to Order';
+    const colors=(p.colors||[]).join(' • ');
+    const img=p.image?`<img src="${p.image}" alt="${p.title}" class="w-full h-36 object-cover rounded-t-2xl border-b border-[var(--border)]">`:'';
+    return `
+      <article class="glass card overflow-hidden">
+        ${img}
+        <div class="p-4">
+          <div class="text-xs text-[var(--muted)]">${p.category||'General'} • ${availability}</div>
+          <h3 class="mt-1 text-lg font-semibold text-[var(--gold)]">${p.title||'Untitled'}</h3>
+          <div class="mt-1 text-sm text-[var(--muted)]">${p.description||''}</div>
+          <div class="mt-3 font-semibold text-[var(--gold)]">$${Number(p.price||0).toFixed(2)}</div>
+          <div class="mt-1 text-sm text-[var(--muted)]">${colors?('Colors: '+colors):''}</div>
+          <div class="mt-1 text-sm text-[var(--muted)]">ETA: ${p.estimatedDelivery||'—'}</div>
+          <div class="mt-4 flex gap-2">
+            <button class="btn btn-primary" data-edit="${id}">Edit</button>
+            <button class="btn" data-delete="${id}">Delete</button>
+          </div>
+        </div>
+      </article>`;
+  }
+
+  function bindProducts(){
+    const q=query(collection(db,'products'),orderBy('createdAt','desc'));
+    unsubProducts=onSnapshot(q,snap=>{
+      if(snap.empty){productsGrid.innerHTML=`<div class="glass card p-6 text-[var(--muted)]">No products yet.</div>`;return;}
+      const html=[];snap.forEach(d=>html.push(productCard(d.id,d.data())));
+      productsGrid.innerHTML=html.join('');
+      document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openEdit(b.dataset.edit)));
+      document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>deleteProduct(b.dataset.delete)));
+    });
+  }
+
+  // Save product
+  productForm.addEventListener('submit',async e=>{
+    e.preventDefault();modalStatus.textContent='Saving…';
+    const title=p_title.value.trim();const description=p_description.value.trim();
+    const category=p_category.value.trim();const price=Number(p_price.value||0);
+    const colors=p_colors.value.split(',').map(s=>s.trim()).filter(Boolean);
+    const availability=p_availability.value;const estimatedDelivery=p_estimated.value.trim();
+    const file=p_image.files[0];
+    let image=null,imagePath=null;
+    if(file){
+      const path=`products/images/${Date.now()}-${file.name}`;
+      const r=ref(storage,path);await uploadBytes(r,file);
+      image=await getDownloadURL(r);imagePath=path;
+    }
+    try{
+      if(editId){
+        const refDoc=doc(db,'products',editId);
+        const prev=await getDoc(refDoc);const data={title,description,category,price,availability,colors,estimatedDelivery,updatedAt:new Date()};
+        if(image){data.image=image;data.imagePath=imagePath;
+          if(prev.exists()&&prev.data().imagePath&&prev.data().imagePath!==imagePath){
+            try{await deleteObject(ref(storage,prev.data().imagePath));}catch{}}
+        }
+        await updateDoc(refDoc,data);showToast('Product updated');
+      }else{
+        await addDoc(collection(db,'products'),{title,description,category,price,availability,colors,estimatedDelivery,image,imagePath,createdAt:new Date(),updatedAt:new Date()});
+        showToast('Product added');
+      }
+      modalStatus.textContent='Saved.';closeModal();
+    }catch(err){console.error(err);modalStatus.textContent='Error';}
+  });
+
+  async function deleteProduct(id){
+    if(!confirm('Delete this product?'))return;
+    try{
+      const dref=doc(db,'products',id);const snap=await getDoc(dref);
+      if(snap.exists()&&snap.data().imagePath){try{await deleteObject(ref(storage,snap.data().imagePath));}catch{}}
+      await deleteDoc(dref);showToast('Deleted');
+    }catch(e){showToast('Delete failed');console.error(e);}
+  }
+
+  // Auth listener to toggle Products
+  onAuthStateChanged(auth,user=>{
+    if(user&&user.email){addFab.style.display='flex';bindProducts();}
+    else{addFab.style.display='none';clearProductsGrid();}
+  });
+
+  // Orders + Users placeholders
+  panelOrders.innerHTML=`<div class="glass card p-6"><h2 class="text-xl font-semibold">Orders</h2><p class="mt-2 text-[var(--muted)]">Coming soon.</p></div>`;
+  panelUsers.innerHTML=`<div class="glass card p-6"><h2 class="text-xl font-semibold">Users</h2><p class="mt-2 text-[var(--muted)]">Coming soon.</p></div>`;
+</script>
+
+<!-- CONTINUE TO PART 3 --><!-- =================== PART 3: PROJECTS / CODE EDITOR =================== -->
+<script type="module">
+  import {getFirestore,collection,query,orderBy,onSnapshot} 
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import {getApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const app = getApp();
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  const panelProjects = document.getElementById('panel-projects');
+  const panelEditor = document.getElementById('panel-editor');
+
+  function buildProjectCard(id, p) {
+    return `
+      <article class="glass card p-5">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-[var(--gold)]">${p.title || 'Untitled Project'}</h3>
+          <span class="text-xs text-[var(--muted)]">${p.progress || 'In Progress'}</span>
+        </div>
+        <p class="mt-2 text-[var(--muted)] text-sm">${p.summary || ''}</p>
+        <p class="mt-1 text-xs text-[var(--muted)] italic">${p.tags ? p.tags.join(', ') : ''}</p>
+        <div class="mt-3 flex gap-2">
+          <a href="/admin/project-navigator/?id=${id}" class="btn btn-primary text-sm">Open Navigator</a>
+        </div>
+      </article>`;
+  }
+
+  function buildEditorCard(id, e) {
+    return `
+      <article class="glass card p-5">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-[var(--gold)]">${e.title || 'Untitled File'}</h3>
+          <span class="text-xs text-[var(--muted)]">${new Date(e.updatedAt?.seconds*1000 || Date.now()).toLocaleString()}</span>
+        </div>
+        <p class="mt-2 text-[var(--muted)] text-sm">${e.description || 'Code project synced via Firestore.'}</p>
+        <div class="mt-3 flex gap-2">
+          <a href="/admin/editor/?id=${id}" class="btn btn-primary text-sm">Open Editor</a>
+        </div>
+      </article>`;
+  }
+
+  function renderList(container, title, items) {
+    if (!items.length) {
+      container.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">No ${title} found.</div>`;
+    } else {
+      container.innerHTML = `<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">${items.join('')}</div>`;
+    }
+  }
+
+  function bindProjects() {
+    const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
+    onSnapshot(q, snap => {
+      const list = [];
+      snap.forEach(d => list.push(buildProjectCard(d.id, d.data())));
+      renderList(panelProjects, 'projects', list);
+    });
+  }
+
+  function bindEditors() {
+    const q = query(collection(db, 'editorProjects'), orderBy('updatedAt', 'desc'));
+    onSnapshot(q, snap => {
+      const list = [];
+      snap.forEach(d => list.push(buildEditorCard(d.id, d.data())));
+      renderList(panelEditor, 'editor projects', list);
+    });
+  }
+
+  onAuthStateChanged(auth, user => {
+    if (user) { bindProjects(); bindEditors(); }
+    else {
+      panelProjects.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">Please sign in as admin to view projects.</div>`;
+      panelEditor.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">Please sign in as admin to view editor projects.</div>`;
+    }
+  });
+</script>
+
+</body>
+</html><script></script></body></html>
