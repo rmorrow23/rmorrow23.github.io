@@ -1,5 +1,5 @@
 // =============================
-// Morrow Industries Debug Listener
+// Morrow Industries Debug Listener (Global)
 // =============================
 
 import { db } from "/assets/js/firebase-init.js";
@@ -8,19 +8,15 @@ import { doc, onSnapshot }
 
 const debugRef = doc(db, "adminSettings", "debugMode");
 
-// === Start listening to Firestore ===
 onSnapshot(debugRef, snap => {
   if (snap.exists() && snap.data().enabled) {
     enableDebugToasts();
     console.log("🐞 Debug mode active");
-  } else {
-    console.log("🕶️ Debug mode off");
   }
 });
 
 // === Toast-based Debugging ===
 function enableDebugToasts() {
-  // Avoid re-initializing multiple times
   if (window.__debugToastsEnabled) return;
   window.__debugToastsEnabled = true;
 
@@ -48,7 +44,6 @@ function enableDebugToasts() {
   );
 }
 
-// === Fallback Toast Helper ===
 function showToast(msg) {
   const t = document.createElement("div");
   t.className =
