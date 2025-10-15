@@ -152,49 +152,8 @@
   }
 </script>
 
-<script type="module">
-  import { auth, provider, db } from "/assets/js/firebase-init.js";
-  import { onAuthStateChanged, signInWithPopup, signOut } 
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { doc, getDoc } 
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const authBtn=document.getElementById('authBtn');
-  const userLabel=document.getElementById('userLabel');
-  const mobileBtn=document.getElementById('mobileBtn');
-  const mobileMenu=document.getElementById('mobileMenu');
-  const loadingOverlay=document.getElementById('loadingOverlay');
-  const accessDenied=document.getElementById('accessDenied');
-  const denySignOut=document.getElementById('denySignOut');
 
-  function setLoading(v){loadingOverlay.style.display=v?'flex':'none';}
-  mobileBtn.addEventListener('click',()=>mobileMenu.classList.toggle('hidden'));
-  authBtn.onclick=()=>auth.currentUser?signOut(auth):signInWithPopup(auth,provider);
-  denySignOut.onclick=()=>signOut(auth);
-
-  const tabs=document.querySelectorAll('.tab');
-  const panels=['products','orders','users','projects','editor'].map(id=>document.getElementById('panel-'+id));
-  tabs.forEach(t=>t.addEventListener('click',()=>{
-    tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active');
-    panels.forEach(p=>p.classList.toggle('hidden',p.id!=='panel-'+t.dataset.tab));
-  }));
-
-  setLoading(true);
-  onAuthStateChanged(auth,async user=>{
-    try{
-      if(!user){userLabel.textContent='';authBtn.textContent='Sign in';
-        accessDenied.style.display='flex';return setLoading(false);}
-      userLabel.textContent=user.displayName||user.email;authBtn.textContent='Sign out';
-      const snap=await getDoc(doc(db,'users',user.uid));
-      const isAdmin=snap.exists()&&snap.data().role==='admin';
-      accessDenied.style.display=isAdmin?'none':'none';
-    }catch(e){console.error(e);showToast('Auth error');}
-    finally{setLoading(false);}
-  });
-</script>
-
-<!-- CONTINUE TO PART 2 -->
-<!-- =================== PART 2: PRODUCTS / ORDERS / USERS =================== -->
 
 <!-- Floating Add-Product button -->
 <button id="addFab" class="fab" title="+ Add Product" style="display:none;">＋</button>
@@ -229,23 +188,55 @@
     </form>
   </div>
 </div>
-
+<!-- 1️⃣ All Admin Logic in One Module -->
 <script type="module">
-  import { auth, db, storage } from "/assets/js/firebase-init.js";
-  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { collection, addDoc, doc, getDoc, updateDoc, deleteDoc, query, orderBy, onSnapshot }
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import { ref, uploadBytes, getDownloadURL, deleteObject }
+  import { auth, provider, db, storage } from "/assets/js/firebase-init.js";
+  import { signInWithPopup, signOut, onAuthStateChanged } 
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { 
+    doc, getDoc, collection, addDoc, updateDoc, deleteDoc, query, orderBy, onSnapshot 
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { ref, uploadBytes, getDownloadURL, deleteObject } 
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-  const panelProducts=document.getElementById("panel-products");
-  const panelOrders=document.getElementById("panel-orders");
-  const panelUsers=document.getElementById("panel-users");
-  const productsGrid=document.createElement("div");
-  productsGrid.className="grid md:grid-cols-2 lg:grid-cols-3 gap-5";
-  panelProducts.appendChild(productsGrid);
+  // === Global UI Elements ===
+  const authBtn = document.getElementById('authBtn');
+  const userLabel = document.getElementById('userLabel');
+  const mobileBtn = document.getElementById('mobileBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const accessDenied = document.getElementById('accessDenied');
+  const denySignOut = document.getElementById('denySignOut');
+  const addFab = document.getElementById("addFab");
 
-  const addFab=document.getElementById("addFab");
+  const panelProducts = document.getElementById("panel-products");
+  const panelOrders = document.getElementById("panel-orders");
+  const panelUsers = document.getElementById("panel-users");
+  const panelProjects = document.getElementById("panel-projects");
+  const panelEditor = document.getElementById("panel-editor");
+
+  // === Utility ===
+  function showToast(msg){
+    const t=document.createElement('div');
+    t.className='toast';t.textContent=msg;
+    document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+  }
+  function setLoading(v){loadingOverlay.style.display=v?'flex':'none';}
+
+  // === Auth ===
+  mobileBtn.addEventListener('click',()=>mobileMenu.classList.toggle('hidden'));
+  authBtn.onclick=()=>auth.currentUser?signOut(auth):signInWithPopup(auth,provider);
+  denySignOut.onclick=()=>signOut(auth);
+
+  // === Tabs ===
+  const tabs=document.querySelectorAll('.tab');
+  const panels=['products','orders','users','projects','editor'].map(id=>document.getElementById('panel-'+id));
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active');
+    panels.forEach(p=>p.classList.toggle('hidden',p.id!=='panel-'+t.dataset.tab));
+  }));
+
+  // === Product Management ===
   const productModal=document.getElementById("productModal");
   const modalTitle=document.getElementById("modalTitle");
   const closeModalBtn=document.getElementById("closeModal");
@@ -260,20 +251,16 @@
   const p_estimated=document.getElementById("p_estimated");
   const p_image=document.getElementById("p_image");
 
-  let unsubProducts=null,editId=null;
+  let editId=null, unsubProducts=null;
 
-  function clearProductsGrid(){productsGrid.innerHTML="";if(unsubProducts){unsubProducts();unsubProducts=null;}}
+  function clearProductsGrid(){panelProducts.innerHTML="";if(unsubProducts){unsubProducts();unsubProducts=null;}}
   function openModal(){productModal.style.display="block";}
   function closeModal(){productModal.style.display="none";}
   closeModalBtn.addEventListener("click",closeModal);
   productModal.addEventListener("click",e=>{if(e.target===productModal)closeModal();});
   window.addEventListener("keydown",e=>{if(e.key==="Escape"&&productModal.style.display==="block")closeModal();});
-  addFab.addEventListener("click",()=>openAdd());
+  addFab.addEventListener("click",()=>{editId=null;modalTitle.textContent="Add Product";productForm.reset();modalStatus.textContent="";openModal();});
 
-  function openAdd(){
-    editId=null;modalTitle.textContent="Add Product";
-    productForm.reset();modalStatus.textContent="";openModal();
-  }
   async function openEdit(id){
     editId=id;modalTitle.textContent="Edit Product";modalStatus.textContent="Loading…";openModal();
     const s=await getDoc(doc(db,"products",id));
@@ -312,9 +299,9 @@
   function bindProducts(){
     const q=query(collection(db,"products"),orderBy("createdAt","desc"));
     unsubProducts=onSnapshot(q,snap=>{
-      if(snap.empty){productsGrid.innerHTML=`<div class="glass card p-6 text-[var(--muted)]">No products yet.</div>`;return;}
+      if(snap.empty){panelProducts.innerHTML=`<div class="glass card p-6 text-[var(--muted)]">No products yet.</div>`;return;}
       const html=[];snap.forEach(d=>html.push(productCard(d.id,d.data())));
-      productsGrid.innerHTML=html.join("");
+      panelProducts.innerHTML=html.join("");
       document.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>openEdit(b.dataset.edit)));
       document.querySelectorAll("[data-delete]").forEach(b=>b.addEventListener("click",()=>deleteProduct(b.dataset.delete)));
     });
@@ -359,235 +346,105 @@
     }catch(e){showToast("Delete failed");console.error(e);}
   }
 
-  onAuthStateChanged(auth,user=>{
-    if(user){addFab.style.display="flex";bindProducts();}
-    else{addFab.style.display="none";clearProductsGrid();}
-  });
-
-  /* ===== Bind Orders ===== */
-function bindOrders() {
-  const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-  onSnapshot(q, snap => {
-    if (snap.empty) {
-      panelOrders.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">No orders yet.</div>`;
-      return;
-    }
-
-    const html = [];
-    snap.forEach(docSnap => {
-      const d = docSnap.data();
-      const date = d.createdAt?.seconds
-        ? new Date(d.createdAt.seconds * 1000).toLocaleString()
-        : "—";
-      const items = Array.isArray(d.items)
-        ? d.items.map(it => `
-            <li class="border-b border-[var(--border)] py-1 flex justify-between">
-              <span>${it.title || "Item"}</span>
-              <span class="text-[var(--muted)]">$${Number(it.price || 0).toFixed(2)} × ${it.qty || 1}</span>
-            </li>
-          `).join("")
-        : "<li class='text-[var(--muted)] italic'>No items</li>";
-
-      const status = d.status || "Pending";
-      const lifecycle = Array.isArray(d.lifecycle) ? d.lifecycle : [];
-
-      html.push(`
-        <article class="glass card p-5">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-[var(--gold)]">Order #${docSnap.id.slice(-6)}</h3>
-            <span class="text-sm text-[var(--muted)]">${date}</span>
-          </div>
-          <p class="mt-1 text-sm text-[var(--muted)]">User ID: <span class="text-[var(--gold)]">${d.userId || "Unknown"}</span></p>
-          <ul class="mt-3 text-sm">${items}</ul>
-          <div class="mt-4 flex items-center justify-between">
-            <span class="font-semibold text-[var(--gold)]">${status}</span>
-            <select data-id="${docSnap.id}" class="bg-transparent border border-[var(--border)] text-[var(--gold)] rounded px-2 py-1 text-sm">
-              ${lifecycle.map(s => `<option value="${s}" ${s===status?"selected":""}>${s}</option>`).join("")}
-            </select>
-          </div>
-        </article>
-      `);
-    });
-
-    panelOrders.innerHTML = `<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">${html.join("")}</div>`;
-
-    // Handle status changes
-    document.querySelectorAll("#panel-orders select").forEach(sel => {
-      sel.addEventListener("change", async e => {
-        const id = e.target.dataset.id;
-        const newStatus = e.target.value;
-        try {
-          await updateDoc(doc(db, "orders", id), { status: newStatus });
-          showToast("Status updated");
-        } catch (err) {
-          console.error(err);
-          showToast("Error updating order");
-        }
-      });
-    });
-  });
-}
-
-/* ===== Auth-Driven Binding ===== */
-onAuthStateChanged(auth, user => {
-  if (user) {
-    addFab.style.display = "flex";
-    bindProducts();
-    bindOrders(); // ✅ now binds orders too
-  } else {
-    addFab.style.display = "none";
-    clearProductsGrid();
-    panelOrders.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">Please sign in as admin to view orders.</div>`;
-  }
-});
-  /* ===== Bind Users ===== */
-function bindUsers() {
-  const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
-  onSnapshot(q, snap => {
-    if (snap.empty) {
-      panelUsers.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">No users found.</div>`;
-      return;
-    }
-
-    const html = [];
-    snap.forEach(docSnap => {
-      const d = docSnap.data();
-      const date = d.createdAt?.seconds
-        ? new Date(d.createdAt.seconds * 1000).toLocaleString()
-        : "—";
-
-      const role = d.role || "client";
-      const name = d.displayName || "Unnamed";
-      const email = d.email || "—";
-
-      html.push(`
-        <article class="glass card p-5">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-[var(--gold)]">${name}</h3>
-            <span class="text-xs text-[var(--muted)]">${date}</span>
-          </div>
-          <p class="mt-1 text-sm text-[var(--muted)]">${email}</p>
-          <div class="mt-3 flex items-center justify-between">
-            <span class="font-semibold text-[var(--gold)] capitalize">${role}</span>
-            <div class="flex gap-2">
-              <button class="btn text-sm" data-role="client" data-id="${docSnap.id}">Client</button>
-              <button class="btn btn-primary text-sm" data-role="admin" data-id="${docSnap.id}">Admin</button>
+  // === Orders ===
+  function bindOrders(){
+    const q=query(collection(db,"orders"),orderBy("createdAt","desc"));
+    onSnapshot(q,snap=>{
+      if(snap.empty){panelOrders.innerHTML=`<div class="glass card p-6 text-[var(--muted)]">No orders yet.</div>`;return;}
+      const html=[];
+      snap.forEach(docSnap=>{
+        const d=docSnap.data();
+        const date=d.createdAt?.seconds?new Date(d.createdAt.seconds*1000).toLocaleString():"—";
+        const items=Array.isArray(d.items)
+          ? d.items.map(it=>`<li class='border-b border-[var(--border)] py-1 flex justify-between'><span>${it.title||"Item"}</span><span class='text-[var(--muted)]'>$${Number(it.price||0).toFixed(2)} × ${it.qty||1}</span></li>`).join("")
+          : "<li class='text-[var(--muted)] italic'>No items</li>";
+        const status=d.status||"Pending";
+        const lifecycle=Array.isArray(d.lifecycle)?d.lifecycle:[];
+        html.push(`
+          <article class='glass card p-5'>
+            <div class='flex items-center justify-between'>
+              <h3 class='text-lg font-semibold text-[var(--gold)]'>Order #${docSnap.id.slice(-6)}</h3>
+              <span class='text-sm text-[var(--muted)]'>${date}</span>
             </div>
-          </div>
-        </article>
-      `);
-    });
-
-    panelUsers.innerHTML = `<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">${html.join("")}</div>`;
-
-    // Handle role change
-    document.querySelectorAll("#panel-users [data-role]").forEach(btn => {
-      btn.addEventListener("click", async e => {
-        const id = e.target.dataset.id;
-        const newRole = e.target.dataset.role;
-        try {
-          await updateDoc(doc(db, "users", id), { role: newRole });
-          showToast(`Role updated to ${newRole}`);
-        } catch (err) {
-          console.error(err);
-          showToast("Error updating role");
-        }
+            <p class='mt-1 text-sm text-[var(--muted)]'>User ID: <span class='text-[var(--gold)]'>${d.userId||"Unknown"}</span></p>
+            <ul class='mt-3 text-sm'>${items}</ul>
+            <div class='mt-4 flex items-center justify-between'>
+              <span class='font-semibold text-[var(--gold)]'>${status}</span>
+              <select data-id='${docSnap.id}' class='bg-transparent border border-[var(--border)] text-[var(--gold)] rounded px-2 py-1 text-sm'>
+                ${lifecycle.map(s=>`<option value='${s}' ${s===status?"selected":""}>${s}</option>`).join("")}
+              </select>
+            </div>
+          </article>`);
+      });
+      panelOrders.innerHTML=`<div class='grid md:grid-cols-2 lg:grid-cols-3 gap-5'>${html.join("")}</div>`;
+      document.querySelectorAll("#panel-orders select").forEach(sel=>{
+        sel.addEventListener("change",async e=>{
+          const id=e.target.dataset.id;
+          const newStatus=e.target.value;
+          try{await updateDoc(doc(db,"orders",id),{status:newStatus});showToast("Status updated");}
+          catch(err){console.error(err);showToast("Error updating order");}
+        });
       });
     });
+  }
+
+  // === Users ===
+  function bindUsers(){
+    const q=query(collection(db,"users"),orderBy("createdAt","desc"));
+    onSnapshot(q,snap=>{
+      if(snap.empty){panelUsers.innerHTML=`<div class="glass card p-6 text-[var(--muted)]">No users found.</div>`;return;}
+      const html=[];
+      snap.forEach(docSnap=>{
+        const d=docSnap.data();
+        const date=d.createdAt?.seconds?new Date(d.createdAt.seconds*1000).toLocaleString():"—";
+        html.push(`
+          <article class='glass card p-5'>
+            <div class='flex items-center justify-between'>
+              <h3 class='text-lg font-semibold text-[var(--gold)]'>${d.displayName||"Unnamed"}</h3>
+              <span class='text-xs text-[var(--muted)]'>${date}</span>
+            </div>
+            <p class='mt-1 text-sm text-[var(--muted)]'>${d.email||"—"}</p>
+            <div class='mt-3 flex items-center justify-between'>
+              <span class='font-semibold text-[var(--gold)] capitalize'>${d.role||"client"}</span>
+              <div class='flex gap-2'>
+                <button class='btn text-sm' data-role='client' data-id='${docSnap.id}'>Client</button>
+                <button class='btn btn-primary text-sm' data-role='admin' data-id='${docSnap.id}'>Admin</button>
+              </div>
+            </div>
+          </article>`);
+      });
+      panelUsers.innerHTML=`<div class='grid md:grid-cols-2 lg:grid-cols-3 gap-5'>${html.join("")}</div>`;
+      document.querySelectorAll("#panel-users [data-role]").forEach(btn=>{
+        btn.addEventListener("click",async e=>{
+          const id=e.target.dataset.id;
+          const newRole=e.target.dataset.role;
+          try{await updateDoc(doc(db,"users",id),{role:newRole});showToast("Role updated to "+newRole);}
+          catch(err){console.error(err);showToast("Error updating role");}
+        });
+      });
+    });
+  }
+
+  // === Auth Logic + Data Binding ===
+  setLoading(true);
+  onAuthStateChanged(auth,async user=>{
+    try{
+      if(!user){accessDenied.style.display='flex';return setLoading(false);}
+      const snap=await getDoc(doc(db,"users",user.uid));
+      const isAdmin=snap.exists()&&snap.data().role==='admin';
+      accessDenied.style.display=isAdmin?'none':'flex';
+      if(isAdmin){
+        addFab.style.display="flex";
+        bindProducts();
+        bindOrders();
+        bindUsers();
+      }
+    }catch(e){console.error(e);showToast('Auth error');}
+    finally{setLoading(false);}
   });
-}
-
-<!-- CONTINUE TO PART 3 -->
-<!-- =================== PART 3: PROJECTS / CODE EDITOR =================== -->
-<script type="module">
-  import { auth, db } from "/assets/js/firebase-init.js";
-  import { onAuthStateChanged } 
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { collection, query, orderBy, onSnapshot } 
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-  const panelProjects = document.getElementById("panel-projects");
-  const panelEditor = document.getElementById("panel-editor");
-
-  /* ===== Project Cards ===== */
-  function buildProjectCard(id, p) {
-    return `
-      <article class="glass card p-5">
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-[var(--gold)]">${p.title || "Untitled Project"}</h3>
-          <span class="text-xs text-[var(--muted)]">${p.progress || "In Progress"}</span>
-        </div>
-        <p class="mt-2 text-[var(--muted)] text-sm">${p.summary || ""}</p>
-        <p class="mt-1 text-xs text-[var(--muted)] italic">
-          ${Array.isArray(p.tags) ? p.tags.join(", ") : ""}
-        </p>
-        <div class="mt-3 flex gap-2">
-          <a href="/admin/project-navigator/?id=${id}" 
-             class="btn btn-primary text-sm">Open Navigator</a>
-        </div>
-      </article>`;
-  }
-
-  /* ===== Editor Cards ===== */
-  function buildEditorCard(id, e) {
-    const ts = e.updatedAt?.seconds ? new Date(e.updatedAt.seconds * 1000) : new Date();
-    return `
-      <article class="glass card p-5">
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-[var(--gold)]">${e.title || "Untitled File"}</h3>
-          <span class="text-xs text-[var(--muted)]">${ts.toLocaleString()}</span>
-        </div>
-        <p class="mt-2 text-[var(--muted)] text-sm">
-          ${e.description || "Code project synced via Firestore."}
-        </p>
-        <div class="mt-3 flex gap-2">
-          <a href="/admin/editor/?id=${id}" 
-             class="btn btn-primary text-sm">Open Editor</a>
-        </div>
-      </article>`;
-  }
-
-  function renderList(container, title, items) {
-    container.innerHTML = !items.length
-      ? `<div class="glass card p-6 text-[var(--muted)]">No ${title} found.</div>`
-      : `<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">${items.join("")}</div>`;
-  }
-
-  /* ===== Bind Projects ===== */
-  function bindProjects() {
-    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
-    onSnapshot(q, snap => {
-      const list = [];
-      snap.forEach(d => list.push(buildProjectCard(d.id, d.data())));
-      renderList(panelProjects, "projects", list);
-    });
-  }
-
-  /* ===== Bind Editor Projects ===== */
-  function bindEditors() {
-    const q = query(collection(db, "editorProjects"), orderBy("updatedAt", "desc"));
-    onSnapshot(q, snap => {
-      const list = [];
-      snap.forEach(d => list.push(buildEditorCard(d.id, d.data())));
-      renderList(panelEditor, "editor projects", list);
-    });
-  }
-
-  /* ===== Auth-Driven Binding ===== */
-  onAuthStateChanged(auth, user => {
-  if (user) {
-    addFab.style.display = "flex";
-    bindProducts();
-    bindOrders();
-    bindUsers(); // ✅ now users are live too
-  } else {
-    addFab.style.display = "none";
-    clearProductsGrid();
-    panelOrders.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">Please sign in as admin to view orders.</div>`;
-    panelUsers.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">Please sign in as admin to view users.</div>`;
-  }
-});
 </script>
+
+<!-- 2️⃣ Debug Toggle Script at the very bottom -->
 <script type="module">
   import { initDebugToggle } from "/assets/js/debug-toggle.js";
   initDebugToggle();
