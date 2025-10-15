@@ -1,5 +1,5 @@
 // =======================
-// Morrow Industries Debug Toggle
+// Morrow Industries Debug Toggle (Admin Only)
 // =======================
 
 import { db } from "/assets/js/firebase-init.js";
@@ -33,6 +33,9 @@ export function initDebugToggle() {
 
 // === Toast-based Debugging Handler ===
 function enableDebugToasts() {
+  if (window.__debugToastsEnabled) return;
+  window.__debugToastsEnabled = true;
+
   const origLog = console.log;
   const origWarn = console.warn;
   const origError = console.error;
@@ -55,4 +58,13 @@ function enableDebugToasts() {
   window.addEventListener("unhandledrejection", e =>
     showToast("⚠️ " + (e.reason?.message || e.reason))
   );
+}
+
+function showToast(msg) {
+  const t = document.createElement("div");
+  t.className =
+    "toast fixed right-5 top-5 bg-[rgba(18,20,27,.9)] text-[#e9eef8] border border-[var(--gold)] rounded-xl px-3 py-2 text-sm backdrop-blur-md shadow-lg z-[9999]";
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
 }
