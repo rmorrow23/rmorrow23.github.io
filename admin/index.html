@@ -175,7 +175,7 @@
       userLabel.textContent=user.displayName||user.email;authBtn.textContent='Sign out';
       const snap=await getDoc(doc(db,'users',user.uid));
       const isAdmin=snap.exists()&&snap.data().role==='admin';
-      accessDenied.style.display=isAdmin?'none':'flex';
+      accessDenied.style.display=isAdmin?'none':'none';
     }catch(e){console.error(e);showToast('Auth error');}
     finally{setLoading(false);}
   });
