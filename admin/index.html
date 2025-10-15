@@ -428,8 +428,62 @@ onAuthStateChanged(auth, user => {
     panelOrders.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">Please sign in as admin to view orders.</div>`;
   }
 });
-  panelUsers.innerHTML=`<div class="glass card p-6"><h2 class="text-xl font-semibold">Users</h2><p class="mt-2 text-[var(--muted)]">Coming soon.</p></div>`;
-</script>
+  /* ===== Bind Users ===== */
+function bindUsers() {
+  const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+  onSnapshot(q, snap => {
+    if (snap.empty) {
+      panelUsers.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">No users found.</div>`;
+      return;
+    }
+
+    const html = [];
+    snap.forEach(docSnap => {
+      const d = docSnap.data();
+      const date = d.createdAt?.seconds
+        ? new Date(d.createdAt.seconds * 1000).toLocaleString()
+        : "—";
+
+      const role = d.role || "client";
+      const name = d.displayName || "Unnamed";
+      const email = d.email || "—";
+
+      html.push(`
+        <article class="glass card p-5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-[var(--gold)]">${name}</h3>
+            <span class="text-xs text-[var(--muted)]">${date}</span>
+          </div>
+          <p class="mt-1 text-sm text-[var(--muted)]">${email}</p>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="font-semibold text-[var(--gold)] capitalize">${role}</span>
+            <div class="flex gap-2">
+              <button class="btn text-sm" data-role="client" data-id="${docSnap.id}">Client</button>
+              <button class="btn btn-primary text-sm" data-role="admin" data-id="${docSnap.id}">Admin</button>
+            </div>
+          </div>
+        </article>
+      `);
+    });
+
+    panelUsers.innerHTML = `<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">${html.join("")}</div>`;
+
+    // Handle role change
+    document.querySelectorAll("#panel-users [data-role]").forEach(btn => {
+      btn.addEventListener("click", async e => {
+        const id = e.target.dataset.id;
+        const newRole = e.target.dataset.role;
+        try {
+          await updateDoc(doc(db, "users", id), { role: newRole });
+          showToast(`Role updated to ${newRole}`);
+        } catch (err) {
+          console.error(err);
+          showToast("Error updating role");
+        }
+      });
+    });
+  });
+}
 
 <!-- CONTINUE TO PART 3 -->
 <!-- =================== PART 3: PROJECTS / CODE EDITOR =================== -->
@@ -509,16 +563,18 @@ onAuthStateChanged(auth, user => {
 
   /* ===== Auth-Driven Binding ===== */
   onAuthStateChanged(auth, user => {
-    if (user) {
-      bindProjects();
-      bindEditors();
-    } else {
-      panelProjects.innerHTML =
-        `<div class="glass card p-6 text-[var(--muted)]">Please sign in as admin to view projects.</div>`;
-      panelEditor.innerHTML =
-        `<div class="glass card p-6 text-[var(--muted)]">Please sign in as admin to view editor projects.</div>`;
-    }
-  });
+  if (user) {
+    addFab.style.display = "flex";
+    bindProducts();
+    bindOrders();
+    bindUsers(); // ✅ now users are live too
+  } else {
+    addFab.style.display = "none";
+    clearProductsGrid();
+    panelOrders.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">Please sign in as admin to view orders.</div>`;
+    panelUsers.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">Please sign in as admin to view users.</div>`;
+  }
+});
 </script>
 
 </body>
