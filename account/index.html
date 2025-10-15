@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Account — Morrow Industries</title>
+  <link rel="icon" href="/assets/favicon.ico"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;
+      --gold:#d4af37;--border:rgba(255,255,255,0.08);
+    }
+    body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif}
+    .glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);
+      border:1px solid var(--border)}
+    .btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:all .2s}
+    .btn-primary{border-color:var(--gold);color:var(--gold)}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.35)}
+    .toast{position:fixed;right:1rem;top:1rem;background:rgba(18,20,27,.92);
+      color:#e9eef8;border:1px solid var(--gold);border-radius:.75rem;
+      padding:.6rem .9rem;font-size:.9rem;backdrop-filter:blur(14px);z-index:9999;}
+  </style>
+</head>
+<body class="min-h-screen">
+
+<header class="sticky top-0 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+    <a href="/" class="font-serif text-xl text-[var(--gold)]">Morrow Industries</a>
+    <div class="flex gap-3 items-center">
+      <span id="userLabel" class="text-sm text-[var(--muted)]"></span>
+      <button id="signOutBtn" class="btn">Sign Out</button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-4 py-10 space-y-10">
+
+  <section id="profileSection" class="glass rounded-2xl p-6">
+    <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Account Details</h2>
+    <div id="profileInfo" class="space-y-2 text-[var(--muted)] text-sm"></div>
+  </section>
+
+  <section id="ordersSection" class="glass rounded-2xl p-6">
+    <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Your Orders</h2>
+    <div id="ordersList" class="space-y-3 text-sm"></div>
+  </section>
+
+</main>
+
+<div id="loadingOverlay" class="fixed inset-0 bg-[rgba(10,11,15,.85)] backdrop-blur-md hidden items-center justify-center z-50">
+  <div class="text-[var(--gold)] text-sm">Loading your account…</div>
+</div>
+
+<script>
+function showToast(msg){
+  const t=document.createElement('div');
+  t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+}
+</script>
+
+<script type="module">
+import { auth, db } from "/assets/js/firebase-init.js";
+import { onAuthStateChanged, signOut } 
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, collection, query, where, orderBy, onSnapshot } 
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const userLabel = document.getElementById("userLabel");
+const signOutBtn = document.getElementById("signOutBtn");
+const loadingOverlay = document.getElementById("loadingOverlay");
+const profileInfo = document.getElementById("profileInfo");
+const ordersList = document.getElementById("ordersList");
+
+signOutBtn.addEventListener("click", ()=> signOut(auth));
+
+function setLoading(v){loadingOverlay.style.display=v?"flex":"none";}
+
+onAuthStateChanged(auth, async (user)=>{
+  setLoading(true);
+  if(!user){
+    location.href = "/"; // redirect if not logged in
+    return;
+  }
+
+  userLabel.textContent = user.displayName || user.email;
+
+  // === Profile Info ===
+  try {
+    const uSnap = await getDoc(doc(db, "users", user.uid));
+    if (uSnap.exists()) {
+      const d = uSnap.data();
+      profileInfo.innerHTML = `
+        <p><strong>Name:</strong> ${d.displayName || user.displayName || "—"}</p>
+        <p><strong>Email:</strong> ${d.email || user.email}</p>
+        <p><strong>Role:</strong> ${d.role || "client"}</p>
+        <p><strong>Created:</strong> ${d.createdAt?.seconds ? new Date(d.createdAt.seconds*1000).toLocaleString() : "—"}</p>
+      `;
+    } else {
+      profileInfo.innerHTML = `<p class="text-[var(--muted)]">Profile not found.</p>`;
+    }
+  } catch (e) {
+    console.error(e);
+    showToast("Error loading profile");
+  }
+
+  // === Orders ===
+  try {
+    const q = query(collection(db, "orders"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+    onSnapshot(q, snap=>{
+      if (snap.empty) {
+        ordersList.innerHTML = `<p class="text-[var(--muted)] italic">No orders yet.</p>`;
+        return;
+      }
+      const html = [];
+      snap.forEach(docSnap=>{
+        const d = docSnap.data();
+        const date = d.createdAt?.seconds ? new Date(d.createdAt.seconds*1000).toLocaleString() : "—";
+        const items = (d.items||[]).map(it => `<li>${it.title || "Item"} × ${it.qty || 1}</li>`).join("");
+        html.push(`
+          <article class="border border-[var(--border)] rounded-xl p-4">
+            <div class="flex justify-between items-center">
+              <h3 class="font-semibold text-[var(--gold)]">Order #${docSnap.id.slice(-6)}</h3>
+              <span class="text-xs text-[var(--muted)]">${date}</span>
+            </div>
+            <ul class="mt-2 text-[var(--muted)]">${items}</ul>
+            <p class="mt-2 text-sm text-[var(--muted)]">Status: 
+              <span class="text-[var(--gold)]">${d.status || "Pending"}</span>
+            </p>
+          </article>
+        `);
+      });
+      ordersList.innerHTML = html.join("");
+    });
+  } catch (e) {
+    console.error(e);
+    showToast("Error loading orders");
+  }
+
+  setLoading(false);
+});
+</script>
+
+<script type="module">
+  import { initDebugToggle } from "/assets/js/debug-listener.js";
+  initDebugToggle?.();
+</script>
+
+</body>
+</html>
