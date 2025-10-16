@@ -3,6 +3,7 @@
   <div class="nav-left">
     <a href="/" class="font-serif text-xl tracking-wide text-[var(--gold)]">Morrow Industries</a>
   </div>
+
   <ul class="nav-links">
     <li><a href="/">Home</a></li>
     <li><a href="/projects">Projects</a></li>
@@ -11,10 +12,15 @@
     <li><a href="/about">About</a></li>
     <li><a href="/contact">Contact</a></li>
   </ul>
-  <div class="burger">
-    <div class="line1"></div>
-    <div class="line2"></div>
-    <div class="line3"></div>
+
+  <div class="nav-actions">
+    <button id="authBtn" class="btn">Sign in</button>
+    <span id="userLabel" class="ml-2 text-[var(--muted)] text-sm hidden"></span>
+    <div class="burger">
+      <div class="line1"></div>
+      <div class="line2"></div>
+      <div class="line3"></div>
+    </div>
   </div>
 </nav>
 
@@ -52,6 +58,30 @@
   color: var(--gold);
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Button styles */
+.btn {
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.6rem;
+  background: rgba(18, 20, 27, 0.8);
+  backdrop-filter: blur(8px);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  background: rgba(18, 20, 27, 0.95);
+}
+
+/* Burger */
 .burger {
   display: none;
   cursor: pointer;
@@ -69,13 +99,14 @@
   transition: all 0.3s ease;
 }
 
+/* Mobile Styles */
 @media (max-width: 768px) {
   .nav-links {
     position: fixed;
     right: 0;
     top: 0;
     height: 100vh;
-    width: 60%;
+    width: 65%;
     background: rgba(18, 20, 27, 0.95);
     backdrop-filter: blur(20px);
     border-left: 1px solid var(--border);
@@ -104,24 +135,59 @@
   .burger.toggle .line3 {
     transform: rotate(45deg) translate(-5px, -6px);
   }
+
+  .nav-actions {
+    gap: 0.6rem;
+  }
 }
 </style>
 
-<script>
-  // Navbar Burger Animation Logic
-  const burger = document.querySelector('.burger');
-  const nav = document.querySelector('.nav-links');
-  const navLinks = document.querySelectorAll('.nav-links li');
+<script type="module">
+import { auth, provider, signInWithPopup, signOut, onAuthStateChanged } from "/assets/js/firebase-init.js";
+import { db } from "/assets/js/firebase-init.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  burger.addEventListener('click', () => {
-    nav.classList.toggle('nav-active');
-    burger.classList.toggle('toggle');
-  });
+const authBtn = document.getElementById("authBtn");
+const userLabel = document.getElementById("userLabel");
 
-  navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      nav.classList.remove('nav-active');
-      burger.classList.remove('toggle');
-    });
-  });
+// === Burger menu logic ===
+const burger = document.querySelector(".burger");
+const nav = document.querySelector(".nav-links");
+const navLinks = document.querySelectorAll(".nav-links li");
+
+burger.addEventListener("click", () => {
+  nav.classList.toggle("nav-active");
+  burger.classList.toggle("toggle");
+});
+navLinks.forEach(link =>
+  link.addEventListener("click", () => {
+    nav.classList.remove("nav-active");
+    burger.classList.remove("toggle");
+  })
+);
+
+// === Firebase Auth Logic ===
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    userLabel.textContent = user.displayName || user.email;
+    userLabel.classList.remove("hidden");
+    authBtn.textContent = "Sign out";
+  } else {
+    userLabel.classList.add("hidden");
+    authBtn.textContent = "Sign in";
+  }
+});
+
+authBtn.addEventListener("click", async () => {
+  const user = auth.currentUser;
+  try {
+    if (user) {
+      await signOut(auth);
+    } else {
+      await signInWithPopup(auth, provider);
+    }
+  } catch (e) {
+    console.error("Auth error:", e);
+  }
+});
 </script>
