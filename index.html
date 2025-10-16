@@ -167,14 +167,24 @@
     </div>
   </header>
   <script>
-document.addEventListener('DOMContentLoaded', () => {
-  fetch("/assets/modules/navbar.html")
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById("navbar-container").innerHTML = html;
-    })
-    .catch(err => console.error("Failed to load navbar:", err));
-});</script>
+fetch("/assets/modules/navbar.html")
+  .then(res => res.text())
+  .then(html => {
+    const container = document.getElementById("navbar-container");
+    container.innerHTML = html;
+
+    // Re-execute any <script> tags inside the fetched module
+    container.querySelectorAll("script").forEach(oldScript => {
+      const newScript = document.createElement("script");
+      newScript.type = oldScript.type || "text/javascript";
+      if (oldScript.src) newScript.src = oldScript.src;
+      else newScript.textContent = oldScript.textContent;
+      document.body.appendChild(newScript);
+      oldScript.remove();
+    });
+  })
+  .catch(err => console.error("Failed to load navbar:", err));
+  </script>
   <main class="mx-auto max-w-7xl px-4 relative z-[2]">
     <div class="grid lg:grid-cols-2 gap-10 items-start">
       <!-- === LEFT COLUMN (Hero Section) === -->
