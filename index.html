@@ -262,31 +262,42 @@
       <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
     </div>
   </footer>
+//prompt install - default
   <script>
-    let deferredPrompt;
-
     window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-
-      // ✅ Create custom install button
-      const installBtn = document.createElement('button');
-      installBtn.className = 'fab'; // use className, not class
-      installBtn.textContent = '⬇️ Install App';
-
-      // ✅ Add click handler
-      installBtn.addEventListener('click', async () => {
-        installBtn.style.display = 'none'; // optional: hide after click
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(outcome === 'accepted' ? '✅ User accepted install' : '❌ User dismissed install');
-        deferredPrompt = null;
-      });
-
-      // ✅ Append to body
-      document.body.appendChild(installBtn);
+      console.log('Ready to show install prompt');
     });
   </script>
+//prompt install - custom
+<script>
+//let deferredPrompt;
+
+//window.addEventListener('beforeinstallprompt', (e) => {
+ // e.preventDefault();
+ //deferredPrompt = e;
+
+  // Show your custom button
+ //const installBtn = document.createElement('button');
+  //installBtn.className = 'fab'; // note: use className, not class
+  //installBtn.textContent = 'Install App';
+  //document.body.appendChild(installBtn);
+
+  //installBtn.addEventListener('click', async () => {
+  //  installBtn.disabled = true;
+   // deferredPrompt.prompt(); // 👈 this must be called to trigger the banner
+
+  //  const choice = await deferredPrompt.userChoice;
+   // if (choice.outcome === 'accepted') {
+   //   console.log('✅ User accepted install');
+    //} else {
+    //  console.log('❌ User dismissed install');
+    //}
+    //deferredPrompt = null;
+   // installBtn.remove();
+  //});
+//});
+</script>
+
   <script>
     document.getElementById('mobileBtn').addEventListener('click', () => document.getElementById('mobileMenu').classList.toggle('hidden'));
     document.getElementById('year').textContent = new Date().getFullYear();
