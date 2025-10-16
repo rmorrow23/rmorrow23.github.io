@@ -159,14 +159,11 @@
 
   <header class="border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
     <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-      <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
-      
-      <div class="flex items-center gap-3">
-        <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
-        <button id="authBtn" class="md:inline btn">Sign in</button>
-        <button id="mobileBtn" class="md:hidden btn">Menu</button>
-      </div>
       <div id="navbar-container"></div>
+      <div class="flex items-center gap-3">
+        <button id="authBtn" class="md:inline btn">Sign in</button>
+      </div>
+      
 <script>
   fetch("/assets/modules/navbar.html")
     .then(res => res.text())
