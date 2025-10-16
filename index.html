@@ -264,38 +264,38 @@
   </footer>
 //prompt install - default
   <script>
-    window.addEventListener('beforeinstallprompt', (e) => {
-      console.log('Ready to show install prompt');
-    });
+    //window.addEventListener('beforeinstallprompt', (e) => {
+     // console.log('Ready to show install prompt');
+    //});
   </script>
 //prompt install - custom
 <script>
-//let deferredPrompt;
+let deferredPrompt;
 
-//window.addEventListener('beforeinstallprompt', (e) => {
- // e.preventDefault();
- //deferredPrompt = e;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
 
   // Show your custom button
- //const installBtn = document.createElement('button');
-  //installBtn.className = 'fab'; // note: use className, not class
-  //installBtn.textContent = 'Install App';
-  //document.body.appendChild(installBtn);
+  const installBtn = document.createElement('button');
+  installBtn.className = 'fab'; // note: use className, not class
+  installBtn.textContent = 'Install App';
+  document.body.appendChild(installBtn);
 
-  //installBtn.addEventListener('click', async () => {
-  //  installBtn.disabled = true;
-   // deferredPrompt.prompt(); // 👈 this must be called to trigger the banner
+  installBtn.addEventListener('click', async () => {
+    installBtn.disabled = true;
+    deferredPrompt.prompt(); // 👈 this must be called to trigger the banner
 
-  //  const choice = await deferredPrompt.userChoice;
-   // if (choice.outcome === 'accepted') {
-   //   console.log('✅ User accepted install');
-    //} else {
-    //  console.log('❌ User dismissed install');
-    //}
-    //deferredPrompt = null;
-   // installBtn.remove();
-  //});
-//});
+    const choice = await deferredPrompt.userChoice;
+    if (choice.outcome === 'accepted') {
+      console.log('✅ User accepted install');
+    } else {
+      console.log('❌ User dismissed install');
+    }
+    deferredPrompt = null;
+    installBtn.remove();
+  });
+});
 </script>
 
   <script>
