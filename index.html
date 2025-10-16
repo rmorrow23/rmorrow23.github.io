@@ -159,32 +159,34 @@
 
   <header class="border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
     <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-      <div id="navbar-container"></div>
-      <div class="flex items-center gap-3">
-        <button id="authBtn" class="md:inline btn">Sign in</button>
-      </div>
+      <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
+      <nav class="hidden md:flex gap-6 text-sm navbar">
+        <a href="/" class='opacity-100'>Home</a>
+        <a href="/projects">Projects</a>
+        <a class="block py-1" href="/printing/store">Store</a>
+        <a href="/printing/request">Custom 3D Printing</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
 
+      </nav>
+      <div class="flex items-center gap-3">
+        <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
+        <button id="authBtn" class="md:inline btn">Sign in</button>
+        <button id="mobileBtn" class="md:hidden btn">Menu</button>
+      </div>
+    </div>
+    <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur">
+      <div class="px-4 py-3 space-y-2">
+        <a class="block py-1" href="/">Home</a>
+        <a class="block py-1" href="/projects">Projects</a>
+        <a class="block py-1" href="/printing/store">Store</a>
+        <a class="block py-1" href="/printing/request">Custom 3D Printing</a>
+        <a class="block py-1" href="/about">About</a>
+        <a class="block py-1" href="/contact">Contact</a>
+      </div>
     </div>
   </header>
-  <script>
-fetch("/assets/modules/navbar.html")
-  .then(res => res.text())
-  .then(html => {
-    const container = document.getElementById("navbar-container");
-    container.innerHTML = html;
 
-    // Re-execute any <script> tags inside the fetched module
-    container.querySelectorAll("script").forEach(oldScript => {
-      const newScript = document.createElement("script");
-      newScript.type = oldScript.type || "text/javascript";
-      if (oldScript.src) newScript.src = oldScript.src;
-      else newScript.textContent = oldScript.textContent;
-      document.body.appendChild(newScript);
-      oldScript.remove();
-    });
-  })
-  .catch(err => console.error("Failed to load navbar:", err));
-  </script>
   <main class="mx-auto max-w-7xl px-4 relative z-[2]">
     <div class="grid lg:grid-cols-2 gap-10 items-start">
       <!-- === LEFT COLUMN (Hero Section) === -->
