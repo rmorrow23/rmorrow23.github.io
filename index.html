@@ -163,18 +163,18 @@
       <div class="flex items-center gap-3">
         <button id="authBtn" class="md:inline btn">Sign in</button>
       </div>
-      
-<script>
+
+    </div>
+  </header>
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
   fetch("/assets/modules/navbar.html")
     .then(res => res.text())
     .then(html => {
       document.getElementById("navbar-container").innerHTML = html;
     })
     .catch(err => console.error("Failed to load navbar:", err));
-</script>
-    </div>
-  </header>
-
+});</script>
   <main class="mx-auto max-w-7xl px-4 relative z-[2]">
     <div class="grid lg:grid-cols-2 gap-10 items-start">
       <!-- === LEFT COLUMN (Hero Section) === -->
