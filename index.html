@@ -138,6 +138,7 @@
     #admin {
       display: none;
     }
+    .fab{position:fixed;right:1.25rem;bottom:1.25rem;background:rgba(18,20,27,.85);
   </style>
 </head>
 
@@ -258,20 +259,21 @@
     e.preventDefault();
     deferredPrompt = e;
 
-    // Show a custom install button or UI here
+    // ✅ Create custom install button
     const installBtn = document.createElement('button');
-    installBtn.textContent = 'Install App';
-    installBtn.onclick = () => {
+    installBtn.className = 'fab'; // use className, not class
+    installBtn.textContent = '⬇️ Install App';
+
+    // ✅ Add click handler
+    installBtn.addEventListener('click', async () => {
+      installBtn.style.display = 'none'; // optional: hide after click
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(choice => {
-        if (choice.outcome === 'accepted') {
-          console.log('User accepted install');
-        } else {
-          console.log('User dismissed install');
-        }
-        deferredPrompt = null;
-      });
-    };
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(outcome === 'accepted' ? '✅ User accepted install' : '❌ User dismissed install');
+      deferredPrompt = null;
+    });
+
+    // ✅ Append to body
     document.body.appendChild(installBtn);
   });
 </script>
