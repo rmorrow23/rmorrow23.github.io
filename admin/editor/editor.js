@@ -1,18 +1,17 @@
 // Morrow Industries Editor — Firebase Auth + Firestore + Autosave
 // Uses /assets/js/firebase-init.js to provide: { db, auth, provider }
-// Firestore collection: editorProjects
+// Firestore collections: editorProjects, currentProject/active
 
 import { db, auth, provider } from "/assets/js/firebase-init.js";
 import {
   collection, addDoc, doc, getDoc, getDocs, query, where, orderBy,
-  onSnapshot, updateDoc, serverTimestamp
+  onSnapshot, updateDoc, setDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// UI nodes
+// === UI Elements ===
 const guard = document.getElementById('guard');
 const area = document.getElementById('editorArea');
-const userLabel = document.getElementById('userLabel');
 const authBtn = document.getElementById('authBtn');
 const authBtnMobile = document.getElementById('authBtnMobile');
 const projectList = document.getElementById('projectList');
@@ -34,15 +33,13 @@ const htmlTA = document.getElementById('htmlEditor');
 const cssTA = document.getElementById('cssEditor');
 const jsTA = document.getElementById('jsEditor');
 
-// CodeMirror editors (initialized later)
+// === State ===
 let HTML, CSS, JS;
-// Current project doc ref/id
 let currentProjectId = null;
-// Autosave timer
 let saveTimer = null;
 const AUTOSAVE_MS = 5000;
 
-// Auth UI
+// === AUTH ===
 onAuthStateChanged(auth, (user) => {
   if (user) {
     authBtn.textContent = "Sign out";
@@ -63,10 +60,12 @@ authBtn.addEventListener('click', async () => {
   try {
     if (user) await signOut(auth);
     else await signInWithPopup(auth, provider);
-  } catch (e) { alert('Auth error: ' + (e?.message || e)); }
+  } catch (e) {
+    alert('Auth error: ' + (e?.message || e));
+  }
 });
 
-// Initialize CodeMirror once CM is available (CDN or local)
+// === Initialize CodeMirror ===
 function initEditors() {
   if (window.CodeMirror && !HTML) {
     HTML = CodeMirror.fromTextArea(htmlTA, { mode: 'xml', lineNumbers: true, lineWrapping: true, tabSize: 2 });
@@ -76,13 +75,13 @@ function initEditors() {
     [HTML, CSS, JS].forEach(ed => ed.on('change', onEditorChange));
     updatePreview();
   } else if (!window.CodeMirror) {
-    // Try again shortly (in case local fallback just loaded)
+    // Try again if fallback loading
     setTimeout(initEditors, 400);
   }
 }
 initEditors();
 
-// Tabs behavior
+// === Tabs Behavior ===
 tabButtons.forEach(b => {
   b.addEventListener('click', () => {
     tabButtons.forEach(x => x.classList.remove('active'));
@@ -92,25 +91,30 @@ tabButtons.forEach(b => {
     cssTA.classList.toggle('hidden', t !== 'css');
     jsTA.classList.toggle('hidden', t !== 'js');
     if (window.CodeMirror) {
-      HTML && HTML.refresh();
-      CSS && CSS.refresh();
-      JS && JS.refresh();
+      HTML?.refresh();
+      CSS?.refresh();
+      JS?.refresh();
     }
   });
 });
 
-// Live preview
+// === Live Preview (inline) ===
 function updatePreview() {
   const iframe = document.getElementById('preview');
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   const html = HTML ? HTML.getValue() : htmlTA.value;
   const css = CSS ? CSS.getValue() : cssTA.value;
   const js = JS ? JS.getValue() : jsTA.value;
-  const tpl = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+  const tpl = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"><style>${css}</style></head>
+    <body>${html}<script>${js}<\/script></body>
+    </html>`;
   doc.open(); doc.write(tpl); doc.close();
 }
 
-// Debounced autosave
+// === Debounced Autosave ===
 function onEditorChange() {
   statusEl.textContent = "Editing…";
   updatePreview();
@@ -118,7 +122,7 @@ function onEditorChange() {
   saveTimer = setTimeout(saveCurrent, AUTOSAVE_MS);
 }
 
-// Firestore: list projects for this user
+// === Load Projects ===
 function loadProjects(uid) {
   projectList.innerHTML = '<div class="text-sm text-[var(--muted)]">Loading…</div>';
   const qy = query(
@@ -126,6 +130,7 @@ function loadProjects(uid) {
     where('owner', '==', uid),
     orderBy('updatedAt', 'desc')
   );
+
   onSnapshot(qy, snap => {
     projectList.innerHTML = '';
     if (snap.empty) {
@@ -136,7 +141,8 @@ function loadProjects(uid) {
       const when = p.updatedAt?.toDate ? p.updatedAt.toDate().toLocaleString() : '—';
       const el = document.createElement('button');
       el.className = "w-full text-left rounded border border-[var(--border)] p-3 hover:bg-white/5 transition";
-      el.innerHTML = `<div class="font-semibold">${p.title || 'Untitled'}</div>
+      el.innerHTML = `
+        <div class="font-semibold">${p.title || 'Untitled'}</div>
         <div class="mt-1 text-xs text-[var(--muted)]">${when}</div>`;
       el.addEventListener('click', () => openProject(d.id));
       projectList.appendChild(el);
@@ -144,45 +150,74 @@ function loadProjects(uid) {
   });
 }
 
-// Create project modal
+// === New Project Modal ===
 newProjectBtn.addEventListener('click', () => {
   modalOverlay.classList.remove('hidden');
   modalTitle.value = "";
   modalTitle.focus();
 });
 cancelModal.addEventListener('click', () => modalOverlay.classList.add('hidden'));
+
 createModal.addEventListener('click', async () => {
   const title = (modalTitle.value || '').trim() || 'Untitled';
   const user = auth.currentUser;
   if (!user) return alert('Please sign in.');
+
   try {
     const ref = await addDoc(collection(db, 'editorProjects'), {
-      title, owner: user.uid, html: '', css: '', js: '', updatedAt: serverTimestamp()
+      title,
+      owner: user.uid,
+      html: '',
+      css: '',
+      js: '',
+      updatedAt: serverTimestamp()
     });
+
     modalOverlay.classList.add('hidden');
-    await openProject(ref.id);
-  } catch (e) { alert('Create error: ' + (e?.message || e)); }
+    await openProject(ref.id); // will also update currentProject/active
+  } catch (e) {
+    alert('Create error: ' + (e?.message || e));
+  }
 });
 
-// Open a project by id
+// === Open Project + Sync to currentProject ===
 async function openProject(id) {
   currentProjectId = id;
   statusEl.textContent = "Opening…";
+
   try {
     const d = await getDoc(doc(db, 'editorProjects', id));
-    if (!d.exists()) { statusEl.textContent = "Not found"; return; }
+    if (!d.exists()) {
+      statusEl.textContent = "Not found";
+      return;
+    }
+
     const p = d.data();
-    if (HTML) { HTML.setValue(p.html || ''); } else { htmlTA.value = p.html || ''; }
-    if (CSS) { CSS.setValue(p.css || ''); } else { cssTA.value = p.css || ''; }
-    if (JS) { JS.setValue(p.js || ''); } else { jsTA.value = p.js || ''; }
+    if (HTML) HTML.setValue(p.html || '');
+    else htmlTA.value = p.html || '';
+
+    if (CSS) CSS.setValue(p.css || '');
+    else cssTA.value = p.css || '';
+
+    if (JS) JS.setValue(p.js || '');
+    else jsTA.value = p.js || '';
+
     updatePreview();
-    // When you switch or create a project:
-    await setDoc(doc(db, "currentProject", "active"), { projectId: newProjectId });
+
+    // 🔁 Update Firestore pointer to tell the preview what to render
+    await setDoc(doc(db, "currentProject", "active"), {
+      projectId: id,
+      updatedAt: serverTimestamp()
+    });
+
     statusEl.textContent = "Loaded";
-  } catch (e) { statusEl.textContent = "Open error"; alert('Open error: ' + (e?.message || e)); }
+  } catch (e) {
+    statusEl.textContent = "Open error";
+    alert('Open error: ' + (e?.message || e));
+  }
 }
 
-// Save explicitly
+// === Save Project (manual or autosave) ===
 saveBtn.addEventListener('click', saveCurrent);
 
 async function saveCurrent() {
@@ -190,12 +225,14 @@ async function saveCurrent() {
     statusEl.textContent = "No project selected";
     return;
   }
+
   const data = {
     html: HTML ? HTML.getValue() : htmlTA.value,
     css: CSS ? CSS.getValue() : cssTA.value,
     js: JS ? JS.getValue() : jsTA.value,
     updatedAt: serverTimestamp()
   };
+
   try {
     await updateDoc(doc(db, 'editorProjects', currentProjectId), data);
     statusEl.textContent = "Saved ✓ " + new Date().toLocaleTimeString();
@@ -205,31 +242,41 @@ async function saveCurrent() {
   }
 }
 
-// Upload single file (html/css/js)
+// === Upload File ===
 uploadInput.addEventListener('change', async (ev) => {
   const file = ev.target.files?.[0];
   if (!file) return;
   if (!currentProjectId) return alert('Open or create a project first.');
+
   const txt = await file.text();
   const name = file.name.toLowerCase();
-  if (name.endsWith('.html')) { HTML ? HTML.setValue(txt) : htmlTA.value = txt; }
-  else if (name.endsWith('.css')) { CSS ? CSS.setValue(txt) : cssTA.value = txt; }
-  else if (name.endsWith('.js')) { JS ? JS.setValue(txt) : jsTA.value = txt; }
-  else { return alert('Please upload an .html, .css, or .js file.'); }
+
+  if (name.endsWith('.html')) HTML ? HTML.setValue(txt) : htmlTA.value = txt;
+  else if (name.endsWith('.css')) CSS ? CSS.setValue(txt) : cssTA.value = txt;
+  else if (name.endsWith('.js')) JS ? JS.setValue(txt) : jsTA.value = txt;
+  else return alert('Please upload an .html, .css, or .js file.');
+
   updatePreview();
   saveCurrent();
   ev.target.value = '';
 });
 
-// Download combined HTML with embedded CSS & JS
+// === Download Combined HTML ===
 downloadHtmlBtn.addEventListener('click', () => {
   const html = HTML ? HTML.getValue() : htmlTA.value;
   const css = CSS ? CSS.getValue() : cssTA.value;
   const js = JS ? JS.getValue() : jsTA.value;
-  const final = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+  const final = `
+    <!DOCTYPE html><html lang="en">
+    <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+
   const blob = new Blob([final], { type: 'text/html' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'project.html';
-  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
 });
