@@ -55,17 +55,25 @@
 </head>
 <body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
 <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
-  <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-    <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
-    <nav class="hidden md:flex gap-6 text-sm">
-      <a href="/admin" class="opacity-100">Admin</a>
-      <span class="badge">Editor</span>
-    </nav>
-    <div class="flex items-center gap-3">
-      <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
-      <button id="authBtn" class="btn">Sign in</button>
-    </div>
-  </div>
+ <div id="navbar-container"></div>
+<script>
+  fetch("/assets/modules/navbar.html")
+    .then(res => res.text())
+    .then(html => {
+      const container = document.getElementById("navbar-container");
+      container.innerHTML = html;
+
+      // Re-run scripts (for burger + auth)
+      container.querySelectorAll("script").forEach(oldScript => {
+        const s = document.createElement("script");
+        s.type = oldScript.type || "text/javascript";
+        if (oldScript.src) s.src = oldScript.src;
+        else s.textContent = oldScript.textContent;
+        document.body.appendChild(s);
+        oldScript.remove();
+      });
+    });
+</script>
 </header>
 
 <main class="mx-auto max-w-7xl px-4 py-8">
