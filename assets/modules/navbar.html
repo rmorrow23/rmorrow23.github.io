@@ -1,6 +1,6 @@
 <!-- =======================
- Morrow Industries – Shared Navbar Module
- Inspired by VaultView Navigation
+ Morrow Industries — Shared Navbar Module
+ VaultView-style Navigation with Responsive Auth Button
 ======================= -->
 <style>
   nav.navbar {
@@ -19,22 +19,245 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   }
 
-  nav.navbar .logo {
+  .logo {
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
 
-  nav.navbar .logo img {
+  .logo img {
     height: 32px;
     width: 32px;
   }
 
-  nav.navbar .logo span {
+  .logo span {
     color: var(--gold);
     font-family: 'Cinzel', serif;
     font-size: 1.25rem;
     letter-spacing: 0.03em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    transition: transform 0.4s ease;
+  }
+
+  .nav-links a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: color 0.25s ease;
+  }
+
+  .nav-links a:hover {
+    color: var(--gold);
+  }
+
+  .burger {
+    display: none;
+    cursor: pointer;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .burger div {
+    width: 25px;
+    height: 3px;
+    background: var(--text);
+    transition: all 0.3s ease;
+    border-radius: 2px;
+  }
+
+  html, body {
+    overflow-x: hidden;
+  }
+
+  /* Sign-in button (desktop position) */
+  #authBtn {
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.5rem;
+    background: transparent;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  #authBtn:hover {
+    background: var(--gold);
+    color: var(--bg);
+  }
+
+  /* ===== Mobile Navigation ===== */
+  @media (max-width: 768px) {
+    .nav-links {
+      position: fixed;
+      right: 0;
+      top: 0;
+      height: 100vh;
+      width: 70%;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(10, 11, 15, 0.97);
+      backdrop-filter: blur(16px) saturate(160%);
+      transform: translateX(100%);
+      visibility: hidden;
+      pointer-events: none;
+      will-change: transform;
+      transition: transform .35s ease, visibility 0s linear .35s;
+      z-index: 9999;
+      box-shadow: -2px 0 12px rgba(212, 175, 55, 0.15);
+    }
+
+    .nav-links.nav-active {
+      transform: translateX(0%);
+      visibility: visible;
+      pointer-events: auto;
+      transition: transform .35s ease;
+    }
+
+    .burger {
+      display: flex;
+      z-index: 10000;
+    }
+
+    .burger.toggle .line1 {
+      transform: rotate(-45deg) translate(-5px, 6px);
+    }
+
+    .burger.toggle .line2 {
+      opacity: 0;
+    }
+
+    .burger.toggle .line3 {
+      transform: rotate(45deg) translate(-5px, -6px);
+    }
+
+    /* Hide desktop sign-in */
+    #authBtn {
+      display: none;
+    }
+
+    /* Mobile sign-in button inside menu */
+    #authBtnMobile {
+      margin-top: 2rem;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      padding: 0.6rem 1rem;
+      border-radius: 0.5rem;
+      background: transparent;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    #authBtnMobile:hover {
+      background: var(--gold);
+      color: var(--bg);
+    }
+
+    @keyframes navLinkFade {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .nav-links li { opacity: 0; }
+    .nav-links.nav-active li { animation: navLinkFade .3s ease forwards; }
+  }
+</style>
+
+<nav class="navbar">
+  <div class="logo">
+    <img src="/morIcon.png" alt="Morrow Industries Icon" />
+    <span>Morrow Industries</span>
+  </div>
+
+  <ul class="nav-links" id="navLinks">
+    <li><a href="/">Home</a></li>
+    <li><a href="/projects">Projects</a></li>
+    <li><a href="/printing/request">3D Printing</a></li>
+    <li><a href="/printing/store">Store</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/contact">Contact</a></li>
+    <li id="adminLink" style="display:none;"><a href="/admin">Admin</a></li>
+
+    <!-- Mobile-only Sign In -->
+    <li><button id="authBtnMobile">Sign In</button></li>
+  </ul>
+
+  <div class="burger" id="burger">
+    <div class="line1"></div>
+    <div class="line2"></div>
+    <div class="line3"></div>
+  </div>
+
+  <!-- Desktop Sign In -->
+  <button id="authBtn">Sign In</button>
+</nav>
+
+<script type="module">
+  import { auth, provider, signInWithPopup, signOut, onAuthStateChanged, db } from "/assets/js/firebase-init.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const burger = document.getElementById("burger");
+  const nav = document.getElementById("navLinks");
+  const authBtn = document.getElementById("authBtn");
+  const authBtnMobile = document.getElementById("authBtnMobile");
+  const adminLink = document.getElementById("adminLink");
+
+  // Toggle nav
+  burger.addEventListener("click", () => {
+    nav.classList.toggle("nav-active");
+    burger.classList.toggle("toggle");
+  });
+
+  // Close after click
+  document.querySelectorAll("#navLinks a").forEach(a => {
+    a.addEventListener("click", () => {
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        nav.classList.remove("nav-active");
+        burger.classList.remove("toggle");
+      }
+    });
+  });
+
+  // Auth state
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      authBtn.textContent = "Sign Out";
+      authBtnMobile.textContent = "Sign Out";
+      try {
+        const uDoc = await getDoc(doc(db, "users", user.uid));
+        const isAdmin = uDoc.exists() && uDoc.data().role === "admin";
+        adminLink.style.display = isAdmin ? "inline-block" : "none";
+      } catch (e) {
+        console.warn("Role check failed:", e);
+      }
+    } else {
+      authBtn.textContent = "Sign In";
+      authBtnMobile.textContent = "Sign In";
+      adminLink.style.display = "none";
+    }
+  });
+
+  // Sign-in/out unified handler
+  const toggleAuth = async () => {
+    const user = auth.currentUser;
+    try {
+      if (user) await signOut(auth);
+      else await signInWithPopup(auth, provider);
+    } catch (e) {
+      console.error("Auth error:", e);
+    }
+  };
+  authBtn.addEventListener("click", toggleAuth);
+  authBtnMobile.addEventListener("click", toggleAuth);
+</script>    letter-spacing: 0.03em;
   }
 
   .nav-links {
