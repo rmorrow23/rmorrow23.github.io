@@ -35,6 +35,7 @@
     font-family: 'Cinzel', serif;
     font-size: 1.25rem;
     letter-spacing: 0.03em;
+    margin-left: -4px;
   }
 
   .nav-links {
@@ -47,7 +48,7 @@
   .nav-links a {
     color: var(--text);
     text-decoration: none;
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 500;
     transition: color 0.25s ease;
   }
@@ -71,7 +72,9 @@
     border-radius: 2px;
   }
 
-  html, body { overflow-x: hidden; }
+  html, body {
+    overflow-x: hidden;
+  }
 
   /* Sign-in button (desktop) */
   #authBtn {
@@ -90,46 +93,49 @@
     color: var(--bg);
   }
 
+  #authBtnMobile {
+    display: none;
+  }
+
   /* ===== Mobile Navigation ===== */
   @media (max-width: 768px) {
     .nav-links {
       position: fixed;
-      right: 0;
       top: 0;
+      right: 0;
+      width: 100%;
       height: 100vh;
-      width: 70%;
+      background-color: rgba(0,0,0,0.98);
+      display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      background: rgba(10, 11, 15, 0.97);
-      backdrop-filter: blur(16px) saturate(160%);
+      justify-content: center;
       transform: translateX(100%);
-      visibility: hidden;
-      pointer-events: none;
-      will-change: transform;
-      transition: transform .35s ease, visibility 0s linear .35s;
-      z-index: 9999;
-      box-shadow: -2px 0 12px rgba(212, 175, 55, 0.15);
+      transition: transform 0.5s ease-in-out;
+      box-sizing: border-box;
+      z-index: 10;
     }
 
+    /* Each link starts hidden for animation */
+    .nav-links li {
+      opacity: 0;
+    }
+
+    /* When nav is active, slide in */
     .nav-links.nav-active {
       transform: translateX(0%);
-      visibility: visible;
-      pointer-events: auto;
-      transition: transform .35s ease;
     }
 
+    /* Burger icon visible on mobile */
     .burger {
       display: flex;
       z-index: 10000;
     }
 
-    .burger.toggle .line1 { transform: rotate(-45deg) translate(-5px, 6px); }
-    .burger.toggle .line2 { opacity: 0; }
-    .burger.toggle .line3 { transform: rotate(45deg) translate(-5px, -6px); }
-
     /* Hide desktop sign-in */
-    #authBtn { display: none; }
+    #authBtn {
+      display: none;
+    }
 
     /* Mobile sign-in button inside menu */
     #authBtnMobile {
@@ -137,16 +143,41 @@
       border: 1px solid var(--gold);
       color: var(--gold);
       padding: 0.6rem 1rem;
-      border-radius: 0.5rem;
+      border-radius: 2.5rem;
       background: transparent;
-      font-size: 1rem;
+      font-size: 1.2rem;
       cursor: pointer;
       transition: all 0.25s ease;
+      display: block;
+      width: 40vw;
     }
 
     #authBtnMobile:hover {
       background: var(--gold);
       color: var(--bg);
+    }
+
+    /* Animation Keyframes */
+    @keyframes navLinkFade {
+      from {
+        opacity: 0;
+        transform: translateX(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Burger transform */
+    .burger.toggle .line1 {
+      transform: rotate(-45deg) translate(-5px, 6px);
+    }
+    .burger.toggle .line2 {
+      opacity: 0;
+    }
+    .burger.toggle .line3 {
+      transform: rotate(45deg) translate(-5px, -6px);
     }
   }
 </style>
@@ -166,7 +197,7 @@
     <li><a href="/contact">Contact</a></li>
     <li id="adminLink" style="display:none;"><a href="/admin">Admin</a></li>
     <!-- Mobile-only Sign In -->
-    <li><button id="authBtnMobile">Sign In</button></li>
+    <li><button id="authBtnMobile">Login</button></li>
   </ul>
 
   <div class="burger" id="burger">
@@ -176,7 +207,7 @@
   </div>
 
   <!-- Desktop Sign In -->
-  <button id="authBtn">Sign In</button>
+  <button id="authBtn">Login</button>
 </nav>
 
 <script>
@@ -185,11 +216,26 @@
   const authBtn = document.getElementById("authBtn");
   const authBtnMobile = document.getElementById("authBtnMobile");
 
-  // Toggle mobile menu
-  burger.addEventListener("click", () => {
-    nav.classList.toggle("nav-active");
-    burger.classList.toggle("toggle");
-  });
+  const navSlide = () => {
+    const navLinks = document.querySelectorAll(".nav-links li");
+    burger.addEventListener("click", () => {
+      // Toggle Nav
+      nav.classList.toggle("nav-active");
+
+      // Animate Links
+      navLinks.forEach((link, index) => {
+        if (link.style.animation) {
+          link.style.animation = ""; // reset
+        } else {
+          link.style.animation = `navLinkFade 0.5s ease forwards ${index / 7 + 0.3}s`;
+        }
+      });
+
+      // Burger animation
+      burger.classList.toggle("toggle");
+    });
+  };
+  navSlide();
 
   // Emit custom event when user clicks sign in/out
   const emitAuthClick = () => {

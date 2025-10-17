@@ -14,6 +14,7 @@ const guard = document.getElementById('guard');
 const area = document.getElementById('editorArea');
 const userLabel = document.getElementById('userLabel');
 const authBtn = document.getElementById('authBtn');
+const authBtnMobile = document.getElementById('authBtnMobile');
 const projectList = document.getElementById('projectList');
 const newProjectBtn = document.getElementById('newProjectBtn');
 const statusEl = document.getElementById('status');
@@ -44,14 +45,14 @@ const AUTOSAVE_MS = 5000;
 // Auth UI
 onAuthStateChanged(auth, (user) => {
   if (user){
-    userLabel.textContent = user.displayName || user.email || "Signed in";
     authBtn.textContent = "Sign out";
+    authBtnMobile.textContent = "Sign out";
     guard.textContent = "Editor access granted.";
     area.classList.remove('hidden');
     loadProjects(user.uid);
   } else {
-    userLabel.textContent = "";
     authBtn.textContent = "Sign in";
+    authBtnMobile.textContent = "Sign in";
     guard.textContent = "Please sign in (top right).";
     area.classList.add('hidden');
   }
