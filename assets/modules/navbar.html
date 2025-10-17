@@ -1,6 +1,6 @@
 <!-- =======================
  Morrow Industries — Shared Navbar Module
- VaultView-style Navigation with Responsive Auth Button
+ VaultView-style Navigation (no Firebase logic)
 ======================= -->
 <style>
   nav.navbar {
@@ -71,11 +71,9 @@
     border-radius: 2px;
   }
 
-  html, body {
-    overflow-x: hidden;
-  }
+  html, body { overflow-x: hidden; }
 
-  /* Sign-in button (desktop position) */
+  /* Sign-in button (desktop) */
   #authBtn {
     border: 1px solid var(--gold);
     color: var(--gold);
@@ -126,22 +124,12 @@
       z-index: 10000;
     }
 
-    .burger.toggle .line1 {
-      transform: rotate(-45deg) translate(-5px, 6px);
-    }
-
-    .burger.toggle .line2 {
-      opacity: 0;
-    }
-
-    .burger.toggle .line3 {
-      transform: rotate(45deg) translate(-5px, -6px);
-    }
+    .burger.toggle .line1 { transform: rotate(-45deg) translate(-5px, 6px); }
+    .burger.toggle .line2 { opacity: 0; }
+    .burger.toggle .line3 { transform: rotate(45deg) translate(-5px, -6px); }
 
     /* Hide desktop sign-in */
-    #authBtn {
-      display: none;
-    }
+    #authBtn { display: none; }
 
     /* Mobile sign-in button inside menu */
     #authBtnMobile {
@@ -160,14 +148,6 @@
       background: var(--gold);
       color: var(--bg);
     }
-
-    @keyframes navLinkFade {
-      from { opacity: 0; transform: translateX(30px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    .nav-links li { opacity: 0; }
-    .nav-links.nav-active li { animation: navLinkFade .3s ease forwards; }
   }
 </style>
 
@@ -185,7 +165,6 @@
     <li><a href="/about">About</a></li>
     <li><a href="/contact">Contact</a></li>
     <li id="adminLink" style="display:none;"><a href="/admin">Admin</a></li>
-
     <!-- Mobile-only Sign In -->
     <li><button id="authBtnMobile">Sign In</button></li>
   </ul>
@@ -200,61 +179,31 @@
   <button id="authBtn">Sign In</button>
 </nav>
 
-<script type="module">
-  import { auth, provider, signInWithPopup, signOut, onAuthStateChanged, db } from "/assets/js/firebase-init.js";
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
+<script>
   const burger = document.getElementById("burger");
   const nav = document.getElementById("navLinks");
   const authBtn = document.getElementById("authBtn");
   const authBtnMobile = document.getElementById("authBtnMobile");
-  const adminLink = document.getElementById("adminLink");
 
-  // Toggle nav
+  // Toggle mobile menu
   burger.addEventListener("click", () => {
     nav.classList.toggle("nav-active");
     burger.classList.toggle("toggle");
   });
 
-  // Close after click
-  document.querySelectorAll("#navLinks a").forEach(a => {
-    a.addEventListener("click", () => {
-      if (window.matchMedia("(max-width: 768px)").matches) {
-        nav.classList.remove("nav-active");
-        burger.classList.remove("toggle");
-      }
-    });
-  });
-
-  // Auth state
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      authBtn.textContent = "Sign Out";
-      authBtnMobile.textContent = "Sign Out";
-      try {
-        const uDoc = await getDoc(doc(db, "users", user.uid));
-        const isAdmin = uDoc.exists() && uDoc.data().role === "admin";
-        adminLink.style.display = isAdmin ? "inline-block" : "none";
-      } catch (e) {
-        console.warn("Role check failed:", e);
-      }
-    } else {
-      authBtn.textContent = "Sign In";
-      authBtnMobile.textContent = "Sign In";
-      adminLink.style.display = "none";
-    }
-  });
-
-  // Sign-in/out unified handler
-  const toggleAuth = async () => {
-    const user = auth.currentUser;
-    try {
-      if (user) await signOut(auth);
-      else await signInWithPopup(auth, provider);
-    } catch (e) {
-      console.error("Auth error:", e);
-    }
+  // Emit custom event when user clicks sign in/out
+  const emitAuthClick = () => {
+    document.dispatchEvent(new CustomEvent("mi-auth-click"));
   };
-  authBtn.addEventListener("click", toggleAuth);
-  authBtnMobile.addEventListener("click", toggleAuth);
+
+  authBtn.addEventListener("click", emitAuthClick);
+  authBtnMobile.addEventListener("click", emitAuthClick);
+
+  // External scripts can update the button text based on auth state
+  window.setAuthState = function (isSignedIn, isAdmin = false) {
+    const text = isSignedIn ? "Sign Out" : "Sign In";
+    authBtn.textContent = text;
+    authBtnMobile.textContent = text;
+    document.getElementById("adminLink").style.display = isAdmin ? "inline-block" : "none";
+  };
 </script>
