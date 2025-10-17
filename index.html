@@ -160,22 +160,34 @@
   <header class="border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
     <div id="navbar-container"></div>
 <script>
-  fetch("/assets/modules/navbar.html")
-    .then(res => res.text())
-    .then(html => {
-      const container = document.getElementById("navbar-container");
-      container.innerHTML = html;
+fetch("/assets/modules/navbar.html")
+  .then(res => res.text())
+  .then(html => {
+    const container = document.getElementById("navbar-container");
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
 
-      // Re-run scripts (for burger + auth)
-      container.querySelectorAll("script").forEach(oldScript => {
-        const s = document.createElement("script");
-        s.type = oldScript.type || "text/javascript";
-        if (oldScript.src) s.src = oldScript.src;
-        else s.textContent = oldScript.textContent;
-        document.body.appendChild(s);
-        oldScript.remove();
-      });
+    // Append styles properly
+    temp.querySelectorAll("style").forEach(style => {
+      const newStyle = document.createElement("style");
+      newStyle.textContent = style.textContent;
+      document.head.appendChild(newStyle);
+      style.remove();
     });
+
+    // Insert main HTML (without script/style)
+    container.innerHTML = temp.innerHTML;
+
+    // Execute scripts safely
+    container.querySelectorAll("script").forEach(oldScript => {
+      const s = document.createElement("script");
+      s.type = oldScript.type || "text/javascript";
+      if (oldScript.src) s.src = oldScript.src;
+      else s.textContent = oldScript.textContent;
+      document.body.appendChild(s);
+    });
+  })
+  .catch(err => console.error("Navbar load failed:", err));
 </script>
   </header>
 
