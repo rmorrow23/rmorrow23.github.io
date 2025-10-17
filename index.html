@@ -17,6 +17,8 @@
       --gold: #d4af37;
       --border: rgba(255, 255, 255, 0.08)
     }
+    
+
 
     /* page background + overlay to match your 404 */
     body {
@@ -156,47 +158,47 @@
   <!-- blur overlay + particles -->
   <div class="page-overlay"></div>
   <div class="particles" id="particles"></div>
+<div id="navbar-container"></div>
+    <script>
+      fetch("/assets/modules/navbar.html")
+        .then(res => res.text())
+        .then(html => {
+          const container = document.getElementById("navbar-container");
+          const temp = document.createElement("div");
+          temp.innerHTML = html;
 
+          // Append styles properly
+          temp.querySelectorAll("style").forEach(style => {
+            const newStyle = document.createElement("style");
+            newStyle.textContent = style.textContent;
+            document.head.appendChild(newStyle);
+            style.remove();
+          });
+
+          // Insert main HTML (without script/style)
+          container.innerHTML = temp.innerHTML;
+
+          // Execute scripts safely
+          container.querySelectorAll("script").forEach(oldScript => {
+            const s = document.createElement("script");
+            s.type = oldScript.type || "text/javascript";
+            if (oldScript.src) s.src = oldScript.src;
+            else s.textContent = oldScript.textContent;
+            document.body.appendChild(s);
+          });
+        })
+        .catch(err => console.error("Navbar load failed:", err));
+    </script>
   <header class="border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
-    <div id="navbar-container"></div>
-<script>
-fetch("/assets/modules/navbar.html")
-  .then(res => res.text())
-  .then(html => {
-    const container = document.getElementById("navbar-container");
-    const temp = document.createElement("div");
-    temp.innerHTML = html;
-
-    // Append styles properly
-    temp.querySelectorAll("style").forEach(style => {
-      const newStyle = document.createElement("style");
-      newStyle.textContent = style.textContent;
-      document.head.appendChild(newStyle);
-      style.remove();
-    });
-
-    // Insert main HTML (without script/style)
-    container.innerHTML = temp.innerHTML;
-
-    // Execute scripts safely
-    container.querySelectorAll("script").forEach(oldScript => {
-      const s = document.createElement("script");
-      s.type = oldScript.type || "text/javascript";
-      if (oldScript.src) s.src = oldScript.src;
-      else s.textContent = oldScript.textContent;
-      document.body.appendChild(s);
-    });
-  })
-  .catch(err => console.error("Navbar load failed:", err));
-</script>
+    
   </header>
 
   <main class="mx-auto max-w-7xl px-4 relative z-[2]">
     <div class="grid lg:grid-cols-2 gap-10 items-start">
       <!-- === LEFT COLUMN (Hero Section) === -->
       <section class="py-2 my-10 sm:py-16 fade-in">
-        <div class="my-10 p-6 fade-in delay-1">
-         <img src="/morIcon.png" class="mb-4" />
+        <div class="my-1 p-6 fade-in delay-1">
+          <img src="/morIcon.png" class="mb-4" style="width: 80vw; max-width: 300px; justify-self: center;" />
           <h1 class="font-serif text-4xl sm:text-5xl leading-tight">
             Building <span class="gold">innovation</span> across software & 3D printing
           </h1>
@@ -226,8 +228,8 @@ fetch("/assets/modules/navbar.html")
         <section id="store" class="py-10 my-10 border-t border-[var(--border)] fade-in delay-3">
           <div class="flex items-end justify-between">
             <h2 class="font-serif text-3xl">Shopping</h2>
-          
-          <div class="mt-6 text-right"><a class="btn" href="/printing/store">All Products</a></div>
+
+            <div class="mt-6 text-right"><a class="btn" href="/printing/store">All Products</a></div>
           </div>
           <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-5" id="recentProducts"></div>
         </section>
@@ -297,7 +299,6 @@ fetch("/assets/modules/navbar.html")
   </script>
 
   <script>
-    document.getElementById('mobileBtn').addEventListener('click', () => document.getElementById('mobileMenu').classList.toggle('hidden'));
     document.getElementById('year').textContent = new Date().getFullYear();
 
     // Gold dust particles (two passes, like your 404)
@@ -382,25 +383,25 @@ fetch("/assets/modules/navbar.html")
       }
     })();
     (async () => {
-  const container = document.getElementById("recentProducts");
-  try {
-    const q = query(collection(db, "products"), orderBy("createdAt", "desc"), limit(3));
-    const snaps = await getDocs(q);
+      const container = document.getElementById("recentProducts");
+      try {
+        const q = query(collection(db, "products"), orderBy("createdAt", "desc"), limit(3));
+        const snaps = await getDocs(q);
 
-    if (snaps.empty) {
-      container.innerHTML = `<div class='text-[var(--muted)]'>No products yet.</div>`;
-      return;
-    }
+        if (snaps.empty) {
+          container.innerHTML = `<div class='text-[var(--muted)]'>No products yet.</div>`;
+          return;
+        }
 
-    const html = [];
-    snaps.forEach(docSnap => {
-      const p = docSnap.data();
-      const title = p.title ?? "Untitled Product";
-      const price = Number(p.price ?? 0).toFixed(2);
-      const category = p.category ?? "General";
-      const image = p.image ?? "/assets/placeholder.png"; // optional fallback
+        const html = [];
+        snaps.forEach(docSnap => {
+          const p = docSnap.data();
+          const title = p.title ?? "Untitled Product";
+          const price = Number(p.price ?? 0).toFixed(2);
+          const category = p.category ?? "General";
+          const image = p.image ?? "/assets/placeholder.png"; // optional fallback
 
-      html.push(`
+          html.push(`
         <article class="glass rounded-xl overflow-hidden border border-[var(--border)]">
           <img src="${image}" alt="${title}" class="w-full h-40 object-cover border-b border-[var(--border)]">
           <div class="p-4">
@@ -413,74 +414,19 @@ fetch("/assets/modules/navbar.html")
           </div>
         </article>
       `);
-    });
+        });
 
-    container.innerHTML = html.join("");
-  } catch (e) {
-    console.error(e);
-    container.innerHTML = `<div class='text-[var(--muted)]'>Failed to load products.</div>`;
-  }
-})();
-  </script>
-
-  <script type="module">
-    import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from "/assets/js/firebase-init.js";
-    import { db } from "/assets/js/firebase-init.js";
-    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const authBtn = document.getElementById("authBtn");
-    const userLabel = document.getElementById("userLabel");
-    const adminLink = document.getElementById("admin");
-
-    // 🔄 Watch authentication state
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // Show signed-in label
-        userLabel.textContent = user.displayName || user.email || "Signed in";
-        authBtn.textContent = "Sign out";
-
-        // Check Firestore for admin role
-        try {
-          const uDoc = await getDoc(doc(db, "users", user.uid));
-          const isAdmin = uDoc.exists() && uDoc.data().role === "admin";
-          adminLink.style.display = isAdmin ? "inline" : "none";
-        } catch (e) {
-          console.warn("Error fetching user role:", e);
-          adminLink.style.display = "none";
-        }
-      } else {
-        // Signed out
-        userLabel.textContent = "";
-        authBtn.textContent = "Sign in";
-        //adminLink.style.display = "none";
-      }
-    });
-
-    // 🔘 Sign in/out toggle
-    authBtn.addEventListener("click", async () => {
-      const user = auth.currentUser;
-      try {
-        if (user) {
-          await signOut(auth);
-        } else {
-          await signInWithPopup(auth, provider);
-        }
+        container.innerHTML = html.join("");
       } catch (e) {
-        alert("Auth error: " + (e?.message || e));
+        console.error(e);
+        container.innerHTML = `<div class='text-[var(--muted)]'>Failed to load products.</div>`;
       }
-    });
+    })();
   </script>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/service-worker.js')
-          .then(() => console.log('✅ Service Worker registered'))
-          .catch(err => console.error('❌ SW registration failed:', err));
-      });
-    }
-  </script>
+  <script src="/assets/js/firebase-auth.js" type="module"></script>
+  <script src="/assets/js/service-worker-reg.js"></script>
+
 </body>
 
 </html>

@@ -1,78 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Morrow Industries — Store</title>
-  <link rel="icon" href="/assets/favicon.ico"/>
+  <link rel="icon" href="/assets/favicon.ico" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{
-      --bg:#0a0b0f; --surface:#12141b; --muted:#a9b0be; --text:#e9eef8;
-      --gold:#d4af37; --border:rgba(255,255,255,0.08)
+    :root {
+      --bg: #000;
+      --surface: #12141b;
+      --muted: #a9b0be;
+      --text: #e9eef8;
+      --gold: #d4af37;
+      --border: rgba(255, 255, 255, 0.08)
     }
-    body{background:var(--bg); color:var(--text)}
-    .glass{background:rgba(18,20,27,.6); backdrop-filter:saturate(140%) blur(14px); border:1px solid var(--border)}
-    .gold{color:var(--gold)}
-    .btn{border:1px solid var(--border); color:var(--text); padding:.6rem .9rem; border-radius:.6rem; transition:transform .15s ease, box-shadow .2s ease, background .2s ease}
-    .btn-primary{border-color:var(--gold)}
-    .btn:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,.35)}
-    .navbar a{opacity:.9} .navbar a:hover{opacity:1}
+
+    body {
+      background: var(--bg);
+      color: var(--text)
+    }
+
+    .glass {
+      background: rgba(18, 20, 27, .6);
+      backdrop-filter: saturate(140%) blur(14px);
+      border: 1px solid var(--border)
+    }
+
+    .gold {
+      color: var(--gold)
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: .6rem .9rem;
+      border-radius: .6rem;
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease
+    }
+
+    .btn-primary {
+      border-color: var(--gold)
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
+    }
+
+    .navbar a {
+      opacity: .9
+    }
+
+    .navbar a:hover {
+      opacity: 1
+    }
+
     /* Toasts */
-    .toast{position:fixed; right:1.25rem; top:1.25rem; background:rgba(18,20,27,.85); color:#e9eef8;
-      border:1px solid var(--gold); border-radius:.75rem; padding:.6rem .9rem; font-size:.9rem;
-      backdrop-filter:blur(14px); box-shadow:0 4px 16px rgba(0,0,0,.4); z-index:9999; animation:fadeIn .2s ease}
-    @keyframes fadeIn{from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:none}}
+    .toast {
+      position: fixed;
+      right: 1.25rem;
+      top: 1.25rem;
+      background: rgba(18, 20, 27, .85);
+      color: #e9eef8;
+      border: 1px solid var(--gold);
+      border-radius: .75rem;
+      padding: .6rem .9rem;
+      font-size: .9rem;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .4);
+      z-index: 9999;
+      animation: fadeIn .2s ease
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
     /* Floating cart button */
-    .cart-fab{position:fixed; bottom:1.25rem; right:1.25rem; width:58px; height:58px; border-radius:50%;
-      background:rgba(18,20,27,.8); color:var(--gold); border:1px solid var(--gold);
-      display:flex; align-items:center; justify-content:center; font-size:1.5rem;
-      box-shadow:0 6px 24px rgba(0,0,0,.45); backdrop-filter:blur(14px);
-      transition:transform .2s ease, box-shadow .2s ease; z-index:50}
-    .cart-fab:hover{transform:scale(1.05); box-shadow:0 8px 28px rgba(0,0,0,.55)}
-    .cart-badge{position:absolute; right:-6px; top:-6px; background:var(--gold); color:#0a0b0f;
-      min-width:20px; height:20px; padding:0 .35rem; border-radius:999px; font-size:.75rem; display:flex; align-items:center; justify-content:center; border:2px solid #0a0b0f}
+    .cart-fab {
+      position: fixed;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: rgba(18, 20, 27, .8);
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, .45);
+      backdrop-filter: blur(14px);
+      transition: transform .2s ease, box-shadow .2s ease;
+      z-index: 50
+    }
+
+    .cart-fab:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, .55)
+    }
+
+    .cart-badge {
+      position: absolute;
+      right: -6px;
+      top: -6px;
+      background: var(--gold);
+      color: #0a0b0f;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 .35rem;
+      border-radius: 999px;
+      font-size: .75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #0a0b0f
+    }
+
     /* Image cover */
-    .img-cover{object-fit:cover; width:100%; height:180px; border-radius:.75rem; border:1px solid var(--border)}
-select{
-background:transparent;
-}
+    .img-cover {
+      object-fit: cover;
+      width: 100%;
+      height: 180px;
+      border-radius: .75rem;
+      border: 1px solid var(--border)
+    }
+
+    select {
+      background: transparent;
+    }
   </style>
 </head>
-<body class="min-h-screen selection:bg-[var(--gold)]/20">
 
+<body class="min-h-screen selection:bg-[var(--gold)]/20">
+<div id="navbar-container"></div>
+    <script>
+      fetch("/assets/modules/navbar.html")
+        .then(res => res.text())
+        .then(html => {
+          const container = document.getElementById("navbar-container");
+          const temp = document.createElement("div");
+          temp.innerHTML = html;
+
+          // Append styles properly
+          temp.querySelectorAll("style").forEach(style => {
+            const newStyle = document.createElement("style");
+            newStyle.textContent = style.textContent;
+            document.head.appendChild(newStyle);
+            style.remove();
+          });
+
+          // Insert main HTML (without script/style)
+          container.innerHTML = temp.innerHTML;
+
+          // Execute scripts safely
+          container.querySelectorAll("script").forEach(oldScript => {
+            const s = document.createElement("script");
+            s.type = oldScript.type || "text/javascript";
+            if (oldScript.src) s.src = oldScript.src;
+            else s.textContent = oldScript.textContent;
+            document.body.appendChild(s);
+          });
+        })
+        .catch(err => console.error("Navbar load failed:", err));
+    </script>
   <!-- Header -->
   <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
-    <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-      <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
-      <nav class="hidden md:flex gap-6 text-sm navbar">
-        <a href="/">Home</a>
-        <a href="/projects">Projects</a>
-        <a href="/printing/request">3D Printing</a>
-        <a href="/printing/store">Store</a>
-        <a href="/about">About</a>
-        <a href="/contact">Contact</a>
-      </nav>
-      <div class="flex items-center gap-3">
-        <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
-        <button id="authBtn" class="md:inline btn">Sign in</button>
-        <button id="mobileBtn" class="md:hidden btn">Menu</button>
-      </div>
-    </div>
-    <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)]">
-      <div class="px-4 py-3 space-y-2">
-        <a class="block py-1" href="/">Home</a>
-        <a class="block py-1" href="/projects">Projects</a>
-        <a class="block py-1" href="/printing/request">3D Printing</a>
-        <a class="block py-1" href="/printing/store">Store</a>
-        <a class="block py-1" href="/about">About</a>
-        <a class="block py-1" href="/contact">Contact</a>
-        <a class="block py-1" href="/admin">Admin</a>
-      </div>
-    </div>
+    
   </header>
 
-  <main class="mx-auto max-w-7xl px-4 py-10">
+  <main class="mx-auto max-w-7xl px-4 py-10 my-10">
     <div class="flex items-end justify-between">
       <h1 class="font-serif text-4xl">Store</h1>
     </div>
@@ -89,14 +198,16 @@ background:transparent;
   </main>
 
   <footer class="mt-10 border-t border-[var(--border)]">
-    <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+    <div
+      class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
       <div>© <span id="year"></span> Morrow Industries</div>
       <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
     </div>
   </footer>
 
   <!-- Floating Cart FAB -->
-  <button id="cartFab" class="cart-fab" title="View Cart" onclick="location.href='/printing/store/cart.html'" style="display:none;">
+  <button id="cartFab" class="cart-fab" title="View Cart" onclick="location.href='/printing/store/cart.html'"
+    style="display:none;">
     🛒
     <span id="cartBadge" class="cart-badge" style="display:none;">0</span>
   </button>
@@ -105,139 +216,110 @@ background:transparent;
   <script>
     // Footer year + mobile menu
     document.getElementById('year').textContent = new Date().getFullYear();
-    document.getElementById('mobileBtn').addEventListener('click',()=>{
-      document.getElementById('mobileMenu').classList.toggle('hidden');
-    });
+
     // Toast helper
-    function showToast(message){
-      const t=document.createElement('div'); t.className='toast'; t.textContent=message;
-      document.body.appendChild(t); setTimeout(()=>t.remove(), 3000);
+    function showToast(message) {
+      const t = document.createElement('div'); t.className = 'toast'; t.textContent = message;
+      document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
     }
   </script>
 
   <!-- Firebase + App Logic (inline, HTML-only build) -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { 
-      getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut 
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { 
-      getFirestore, collection, getDocs, query, orderBy, onSnapshot, doc, setDoc, getDoc, updateDoc 
+    import { auth, db } from "/assets/js/firebase-init.js";
+    import {
+      collection, query, orderBy, getDocs, doc, setDoc, getDoc, updateDoc, onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ---- Firebase Config (from you) ----
-    const firebaseConfig = {
-      apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
-      authDomain: "morrow-industries.firebaseapp.com",
-      databaseURL: "https://morrow-industries-default-rtdb.firebaseio.com",
-      projectId: "morrow-industries",
-      storageBucket: "morrow-industries.appspot.com",
-      messagingSenderId: "75190213345",
-      appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
-    };
 
-    // ---- Init ----
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+    const cartFab = document.getElementById("cartFab");
+    const cartBadge = document.getElementById("cartBadge");
 
-    const authBtn = document.getElementById('authBtn');
-    const userLabel = document.getElementById('userLabel');
-    const cartFab = document.getElementById('cartFab');
-    const cartBadge = document.getElementById('cartBadge');
+    // Listen for global auth event
+    window.addEventListener("mi-auth-state", (e) => {
+      const { user } = e.detail;
 
-    // Auth UI
-    onAuthStateChanged(auth,(user)=>{
-      if(user){
-        userLabel.textContent = user.displayName || user.email;
-        authBtn.textContent = "Sign out";
+      if (user) {
+        // Show FAB
         cartFab.style.display = "flex";
-        // Live cart count
+
+        // Listen for cart updates
         const cartQ = collection(db, "users", user.uid, "cart");
-        onSnapshot(cartQ, (snap)=>{
+        onSnapshot(cartQ, (snap) => {
           const count = snap.size;
-          if(count>0){
-            cartBadge.style.display='flex';
+          if (count > 0) {
+            cartBadge.style.display = "flex";
             cartBadge.textContent = count;
           } else {
-            cartBadge.style.display='none';
+            cartBadge.style.display = "none";
           }
         });
-      }else{
-        userLabel.textContent = "";
-        authBtn.textContent = "Sign in";
+      } else {
         cartFab.style.display = "none";
+        cartBadge.style.display = "none";
       }
     });
 
-    authBtn?.addEventListener('click', async ()=>{
-      const user = auth.currentUser;
-      try{
-        if(user) await signOut(auth);
-        else await signInWithPopup(auth, provider);
-      }catch(e){ showToast("Auth error: " + (e?.message||e)); }
-    });
 
     // ---- Render products ----
     const grid = document.getElementById('grid');
 
-    function productCardHTML(id, p){
+    function productCardHTML(id, p) {
       const colors = Array.isArray(p.colors) ? p.colors : [];
       const colorSelector = colors.length ? `<select data-id="${id}" class="colorSel w-full rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-2 mt-2">
-        ${colors.map(c=>`<option value="${c}">${c}</option>`).join('')}
+        ${colors.map(c => `<option value="${c}">${c}</option>`).join('')}
       </select>` : `<input data-id="${id}" class="colorInp w-full rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-2 mt-2" placeholder="Color (optional)"/>`;
 
-      const availability = (p.availability||"").toLowerCase()==="in_stock" ? "In Stock" : "Made to Order";
-      const img = p.image ? `<img src="${p.image}" alt="${p.title||'Product'}" class="img-cover">` :
-                  `<div class="img-cover flex items-center justify-center text-[var(--muted)]">No image</div>`;
+      const availability = (p.availability || "").toLowerCase() === "in_stock" ? "In Stock" : "Made to Order";
+      const img = p.image ? `<img src="${p.image}" alt="${p.title || 'Product'}" class="img-cover">` :
+        `<div class="img-cover flex items-center justify-center text-[var(--muted)]">No image</div>`;
 
       return `
       <article class="glass rounded-xl p-4 border border-[var(--border)] flex flex-col">
         ${img}
-        <div class="mt-3 text-xs text-[var(--muted)]">${p.category||'General'} • ${availability}</div>
-        <h2 class="mt-1 text-lg font-semibold">${p.title||'Untitled'}</h2>
-        <div class="mt-1 text-sm text-[var(--muted)]">${p.description||''}</div>
-        <div class="mt-3 font-semibold">$${(Number(p.price||0)).toFixed(2)}</div>
-        <div class="mt-3 text-sm text-[var(--muted)]">Estimated: ${p.estimatedDelivery||'—'}</div>
+        <div class="mt-3 text-xs text-[var(--muted)]">${p.category || 'General'} • ${availability}</div>
+        <h2 class="mt-1 text-lg font-semibold">${p.title || 'Untitled'}</h2>
+        <div class="mt-1 text-sm text-[var(--muted)]">${p.description || ''}</div>
+        <div class="mt-3 font-semibold">$${(Number(p.price || 0)).toFixed(2)}</div>
+        <div class="mt-3 text-sm text-[var(--muted)]">Estimated: ${p.estimatedDelivery || '—'}</div>
         ${colorSelector}
         <button data-id="${id}" class="addBtn btn btn-primary mt-3">Add to Cart</button>
       </article>`;
     }
 
-    async function loadProducts(){
-      try{
-        const q = query(collection(db,"products"), orderBy("createdAt","desc"));
+    async function loadProducts() {
+      try {
+        const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
         const snap = await getDocs(q);
-        if(snap.empty){
+        if (snap.empty) {
           grid.innerHTML = "<div class='text-[var(--muted)]'>No products yet.</div>";
           return;
         }
         const cards = [];
-        snap.forEach(docSnap=>{
+        snap.forEach(docSnap => {
           const p = docSnap.data();
           cards.push(productCardHTML(docSnap.id, p));
         });
         grid.innerHTML = cards.join("");
 
         // Bind add-to-cart buttons
-        document.querySelectorAll('.addBtn').forEach(btn=>{
-          btn.addEventListener('click', ()=>handleAddToCart(btn.dataset.id));
+        document.querySelectorAll('.addBtn').forEach(btn => {
+          btn.addEventListener('click', () => handleAddToCart(btn.dataset.id));
         });
-      }catch(e){
+      } catch (e) {
         console.error(e);
         grid.innerHTML = "<div class='text-[var(--muted)]'>Failed to load products.</div>";
       }
     }
 
-    async function handleAddToCart(productId){
+    async function handleAddToCart(productId) {
       const user = auth.currentUser;
-      if(!user){ showToast("Please sign in to add to cart."); await signInWithPopup(auth, provider).catch(()=>{}); return; }
-      try{
+      if (!user) { showToast("Please sign in to add to cart."); await signInWithPopup(auth, provider).catch(() => { }); return; }
+      try {
         // Read product to get details
         const pRef = doc(db, "products", productId);
         const pSnap = await getDoc(pRef);
-        if(!pSnap.exists()){ showToast("Product not found."); return; }
+        if (!pSnap.exists()) { showToast("Product not found."); return; }
         const p = pSnap.data();
 
         // Get chosen color (selector or input)
@@ -249,24 +331,24 @@ background:transparent;
         const cartId = chosenColor ? `${productId}__${chosenColor}` : productId;
         const cRef = doc(db, "users", user.uid, "cart", cartId);
         const existing = await getDoc(cRef);
-        if(existing.exists()){
+        if (existing.exists()) {
           const cur = existing.data();
-          await updateDoc(cRef, { qty: Number(cur.qty||1) + 1 });
-        }else{
+          await updateDoc(cRef, { qty: Number(cur.qty || 1) + 1 });
+        } else {
           await setDoc(cRef, {
             productId,
-            title: p.title||"Untitled",
-            price: Number(p.price||0),
+            title: p.title || "Untitled",
+            price: Number(p.price || 0),
             color: chosenColor || null,
             qty: 1,
-            image: p.image||null,
-            availability: p.availability||"made_to_order",
-            estimatedDelivery: p.estimatedDelivery||null,
+            image: p.image || null,
+            availability: p.availability || "made_to_order",
+            estimatedDelivery: p.estimatedDelivery || null,
             addedAt: new Date()
           });
         }
         showToast("Added to cart");
-      }catch(e){
+      } catch (e) {
         console.error(e);
         showToast("Failed to add to cart");
       }
@@ -274,6 +356,8 @@ background:transparent;
 
     loadProducts();
   </script>
-<script type="module" src="/assets/js/debug-listener.js"></script>
+  <script type="module" src="/assets/js/debug-listener.js"></script>
+  <script src="/assets/js/firebase-auth.js" type="module"></script>
 </body>
+
 </html>
