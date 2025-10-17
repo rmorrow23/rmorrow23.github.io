@@ -158,33 +158,25 @@
   <div class="particles" id="particles"></div>
 
   <header class="border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
-    <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-      <a href="/" class="font-serif text-xl tracking-wide gold">Morrow Industries</a>
-      <nav class="hidden md:flex gap-6 text-sm navbar">
-        <a href="/" class='opacity-100'>Home</a>
-        <a href="/projects">Projects</a>
-        <a class="block py-1" href="/printing/store">Store</a>
-        <a href="/printing/request">Custom 3D Printing</a>
-        <a href="/about">About</a>
-        <a href="/contact">Contact</a>
+    <div id="navbar-container"></div>
+<script>
+  fetch("/assets/modules/navbar.html")
+    .then(res => res.text())
+    .then(html => {
+      const container = document.getElementById("navbar-container");
+      container.innerHTML = html;
 
-      </nav>
-      <div class="flex items-center gap-3">
-        <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
-        <button id="authBtn" class="md:inline btn">Sign in</button>
-        <button id="mobileBtn" class="md:hidden btn">Menu</button>
-      </div>
-    </div>
-    <div id="mobileMenu" class="hidden md:hidden border-t border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur">
-      <div class="px-4 py-3 space-y-2">
-        <a class="block py-1" href="/">Home</a>
-        <a class="block py-1" href="/projects">Projects</a>
-        <a class="block py-1" href="/printing/store">Store</a>
-        <a class="block py-1" href="/printing/request">Custom 3D Printing</a>
-        <a class="block py-1" href="/about">About</a>
-        <a class="block py-1" href="/contact">Contact</a>
-      </div>
-    </div>
+      // Re-run scripts (for burger + auth)
+      container.querySelectorAll("script").forEach(oldScript => {
+        const s = document.createElement("script");
+        s.type = oldScript.type || "text/javascript";
+        if (oldScript.src) s.src = oldScript.src;
+        else s.textContent = oldScript.textContent;
+        document.body.appendChild(s);
+        oldScript.remove();
+      });
+    });
+</script>
   </header>
 
   <main class="mx-auto max-w-7xl px-4 relative z-[2]">
