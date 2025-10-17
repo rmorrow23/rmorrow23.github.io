@@ -5,71 +5,114 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Live Preview — Morrow Industries Editor</title>
   <link rel="icon" href="/assets/favicon.ico" />
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
-      --bg:#0a0b0f;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)
+      --bg: #0a0b0f;
+      --text: #e9eef8;
+      --gold: #d4af37;
+      --border: rgba(255,255,255,0.08);
     }
-    html,body{margin:0;height:100%;width:100%;background:var(--bg);color:var(--text);overflow:hidden}
-    iframe{border:none;width:100%;height:100vh;background:#000}
-    #status{position:fixed;top:1rem;left:1rem;display:flex;align-items:center;gap:.4rem;
-      background:rgba(0,0,0,.6);border:1px solid var(--border);backdrop-filter:blur(10px);
-      padding:.4rem .8rem;border-radius:999px;font-size:.85rem;z-index:10000}
-    #statusDot{width:10px;height:10px;border-radius:50%;background:red;box-shadow:0 0 10px red;transition:all .3s ease}
-    .fab{position:fixed;right:1.25rem;bottom:1.25rem;background:var(--gold);color:#000;
-      border:none;border-radius:999px;padding:.9rem 1.2rem;cursor:pointer;
-      box-shadow:0 8px 24px rgba(0,0,0,.3);transition:all .25s ease;z-index:10000}
-    .fab:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.45)}
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      font-family: system-ui, -apple-system, Roboto, sans-serif;
+    }
+
+    iframe {
+      border: none;
+      width: 100%;
+      height: 100vh;
+      background: #000;
+    }
+
+    #status {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      padding: 0.4rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      z-index: 10000;
+    }
+
+    #statusDot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: red;
+      box-shadow: 0 0 10px red;
+      transition: all 0.3s ease;
+    }
   </style>
 </head>
 
 <body>
-  <div id="status"><span id="statusDot"></span><span id="statusText">Offline</span></div>
+  <div id="status"><span id="statusDot"></span><span id="statusText">Waiting…</span></div>
   <iframe id="previewFrame"></iframe>
-  <button class="fab" id="selectBtn">Select Project</button>
 
   <script type="module">
     import { db } from "/assets/js/firebase-init.js";
-    import { doc, onSnapshot, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const frame = document.getElementById("previewFrame");
     const dot = document.getElementById("statusDot");
     const text = document.getElementById("statusText");
-    const selectBtn = document.getElementById("selectBtn");
-    let unsub = null;
-    let currentId = localStorage.getItem("previewProjectId") || null;
 
-    function setStatus(ok){
-      dot.style.background = ok ? "#16c784" : "red";
-      dot.style.boxShadow = ok ? "0 0 10px #16c784" : "0 0 10px red";
-      text.textContent = ok ? "Connected" : "Offline";
+    let unsubProject = null;
+
+    function setStatus(connected) {
+      if (connected) {
+        dot.style.background = "#16c784";
+        dot.style.boxShadow = "0 0 10px #16c784";
+        text.textContent = "Connected";
+      } else {
+        dot.style.background = "red";
+        dot.style.boxShadow = "0 0 10px red";
+        text.textContent = "Offline";
+      }
     }
 
-    async function loadProject(id){
-      if (unsub) unsub();
-      currentId = id;
-      localStorage.setItem("previewProjectId", id);
-      unsub = onSnapshot(doc(db,"editorprojects",id),(snap)=>{
-        if(snap.exists()){
-          const d=snap.data();
-          const html=d.html||"",css=`<style>${d.css||""}</style>`,js=`<script>${d.js||""}<\/script>`;
-          frame.srcdoc=`<!DOCTYPE html><html><head>${css}</head><body>${html}${js}</body></html>`;
-          setStatus(true);
-        } else {
-          frame.srcdoc="<h3 style='text-align:center;margin-top:2rem;color:red'>Project not found</h3>";
+    // Listen to current project pointer
+    onSnapshot(doc(db, "currentProject", "active"), (snap) => {
+      if (!snap.exists()) {
+        frame.srcdoc = "<h2 style='text-align:center;margin-top:40px;color:gray;'>No active project selected.</h2>";
+        setStatus(false);
+        return;
+      }
+      const { projectId } = snap.data();
+      if (!projectId) return;
+
+      // Unsubscribe from previous
+      if (unsubProject) unsubProject();
+
+      // Subscribe to that project
+      unsubProject = onSnapshot(doc(db, "editorprojects", projectId), (projSnap) => {
+        if (!projSnap.exists()) {
+          frame.srcdoc = `<h2 style='color:red;text-align:center;margin-top:40px;'>Project "${projectId}" not found</h2>`;
           setStatus(false);
+          return;
         }
+
+        const data = projSnap.data();
+        const html = data.html || "";
+        const css = `<style>${data.css || ""}</style>`;
+        const js = `<script>${data.js || ""}<\/script>`;
+        frame.srcdoc = `<!DOCTYPE html><html><head>${css}</head><body>${html}${js}</body></html>`;
+        setStatus(true);
       });
-    }
-
-    async function selectProject(){
-      const q=await getDocs(collection(db,"editorprojects"));
-      const projects=[];q.forEach(d=>projects.push(d.id));
-      const choice=prompt("Select a project to preview:\n\n"+projects.join("\n"),currentId||projects[0]);
-      if(choice&&projects.includes(choice))loadProject(choice);
-    }
-
-    selectBtn.onclick=selectProject;
-    if(currentId)loadProject(currentId);else selectProject();
+    });
   </script>
 </body>
 </html>
