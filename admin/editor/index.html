@@ -8,12 +8,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
-      --bg: #0a0b0f;
+      --bg: #000;
       --surface: #12141b;
       --muted: #a9b0be;
       --text: #e9eef8;
       --gold: #d4af37;
-      --border: rgba(255, 255, 255, 0.08);
+      --border: rgba(255,255,255,0.08);
     }
 
     body {
@@ -22,7 +22,7 @@
     }
 
     .glass {
-      background: rgba(18, 20, 27, .6);
+      background: rgba(18,20,27,.6);
       backdrop-filter: saturate(140%) blur(14px);
       border: 1px solid var(--border);
     }
@@ -44,9 +44,13 @@
       box-shadow: 0 8px 24px rgba(0,0,0,.35);
     }
 
-    textarea.editor {
-      width: 100%;
-      height: 380px;
+    .hidden { display: none; }
+
+    .CodeMirror {
+      height: 400px;
+      border-radius: .5rem;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
     }
   </style>
 
@@ -60,62 +64,104 @@
 
 <body class="min-h-screen selection:bg-[var(--gold)]/20">
   <main class="mx-auto max-w-7xl px-4 py-8">
-    <h1 class="font-serif text-3xl mb-2">Morrow Industries — Editor</h1>
-    <p class="text-[var(--muted)] mb-6">Your work saves automatically to Firestore under <span class="text-[var(--gold)]">editorprojects</span>.</p>
+    <h1 class="font-serif text-3xl">Code Editor</h1>
+    <p class="mt-2 text-[var(--muted)]">Create and manage projects. Stored in <span class="text-[var(--gold)]">editorprojects</span>.</p>
 
-    <!-- Project Controls -->
-    <div class="glass rounded-xl p-4 mb-6">
-      <div class="flex flex-wrap gap-2 items-center justify-between">
-        <div class="flex gap-2">
-          <button id="newProjectBtn" class="btn btn-primary text-sm">New Project</button>
-          <button id="saveBtn" class="btn text-sm">Save Now</button>
+    <div id="guard" class="mt-3 text-[var(--muted)]">Checking auth…</div>
+
+    <section id="editorArea" class="hidden mt-6 grid lg:grid-cols-12 gap-6">
+      <!-- Project List -->
+      <aside class="lg:col-span-4 glass rounded-xl p-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold">Your Projects</h2>
+          <button id="newProjectBtn" class="btn btn-primary text-sm">New</button>
         </div>
-        <div id="status" class="text-sm text-[var(--muted)]">Idle</div>
-      </div>
-    </div>
+        <div id="projectList" class="mt-3 space-y-2"></div>
+      </aside>
 
-    <!-- Tabs -->
-    <div class="flex gap-2 text-sm mb-3">
-      <button data-tab="html" class="tab-btn btn btn-primary">HTML</button>
-      <button data-tab="css" class="tab-btn btn">CSS</button>
-      <button data-tab="js" class="tab-btn btn">JS</button>
-    </div>
+      <!-- Editor -->
+      <section class="lg:col-span-8 space-y-4">
+        <div class="glass rounded-xl p-4">
+          <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex gap-2">
+              <button id="saveBtn" class="btn btn-primary text-sm">Save</button>
+              <button id="downloadHtmlBtn" class="btn text-sm">Download</button>
+              <label class="btn text-sm cursor-pointer">
+                <input id="uploadInput" type="file" accept=".html,.css,.js" class="hidden" />
+                Upload
+              </label>
+            </div>
+            <div id="status" class="text-sm text-[var(--muted)]">Idle</div>
+          </div>
 
-    <!-- Editors -->
-    <div class="glass rounded-xl p-4">
-      <textarea id="htmlEditor" class="editor"></textarea>
-      <textarea id="cssEditor" class="editor hidden"></textarea>
-      <textarea id="jsEditor" class="editor hidden"></textarea>
-    </div>
+          <!-- Tabs -->
+          <div class="mt-3 flex gap-2 text-sm">
+            <button data-tab="html" class="tab-btn active btn btn-primary">HTML</button>
+            <button data-tab="css" class="tab-btn btn">CSS</button>
+            <button data-tab="js" class="tab-btn btn">JS</button>
+          </div>
 
-    <!-- Live preview link -->
-    <div class="mt-6 flex justify-end">
-      <a href="/admin/editor/preview.html" target="_blank" class="btn btn-primary text-sm">Open Live Preview</a>
-    </div>
+          <!-- Editors -->
+          <div class="mt-3 editors-grid">
+            <textarea id="htmlEditor" class="editor"></textarea>
+            <textarea id="cssEditor" class="editor hidden"></textarea>
+            <textarea id="jsEditor" class="editor hidden"></textarea>
+          </div>
+        </div>
+
+        <!-- Live preview link -->
+        <div class="glass rounded-xl p-4 text-right">
+          <a href="/admin/editor/preview.html" target="_blank" class="btn btn-primary text-sm">Open Live Preview</a>
+        </div>
+      </section>
+    </section>
   </main>
 
+  <!-- Modal -->
+  <div id="modalOverlay" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass rounded-xl p-5 max-w-md w-full">
+      <h3 class="text-lg font-semibold">New Project</h3>
+      <label class="block mt-4 text-sm">Title</label>
+      <input id="modalTitle" class="w-full rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2" placeholder="e.g., Landing Page" />
+      <div class="mt-5 flex gap-2 justify-end">
+        <button id="cancelModal" class="btn">Cancel</button>
+        <button id="createModal" class="btn btn-primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-10 border-t border-[var(--border)] text-center text-sm text-[var(--muted)] py-4">
+    © <span id="year"></span> Morrow Industries
+  </footer>
+
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+
+  <!-- Firebase + Logic -->
   <script type="module">
     import { db } from "/assets/js/firebase-init.js";
-    import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { doc, setDoc, getDoc, getDocs, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const htmlTA = document.getElementById("htmlEditor");
     const cssTA = document.getElementById("cssEditor");
     const jsTA = document.getElementById("jsEditor");
+    const projectList = document.getElementById("projectList");
+    const modalOverlay = document.getElementById("modalOverlay");
+    const modalTitle = document.getElementById("modalTitle");
+    const createModal = document.getElementById("createModal");
+    const cancelModal = document.getElementById("cancelModal");
     const status = document.getElementById("status");
-    const saveBtn = document.getElementById("saveBtn");
 
-    let currentProjectId = localStorage.getItem("previewProjectId") || "default";
     let htmlEditor, cssEditor, jsEditor;
+    let currentProjectId = localStorage.getItem("previewProjectId") || null;
     let saveTimeout;
 
+    // Initialize editors
     function setupCodeMirror() {
       htmlEditor = CodeMirror.fromTextArea(htmlTA, { mode: "xml", lineNumbers: true });
       cssEditor = CodeMirror.fromTextArea(cssTA, { mode: "css", lineNumbers: true });
       jsEditor = CodeMirror.fromTextArea(jsTA, { mode: "javascript", lineNumbers: true });
 
-      [htmlEditor, cssEditor, jsEditor].forEach(editor => {
-        editor.on("change", autoSave);
-      });
+      [htmlEditor, cssEditor, jsEditor].forEach(ed => ed.on("change", autoSave));
     }
 
     // Tab switching
@@ -123,37 +169,82 @@
       btn.addEventListener("click", () => {
         document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("btn-primary"));
         btn.classList.add("btn-primary");
-
         const tab = btn.dataset.tab;
-        document.querySelectorAll("textarea.editor, .CodeMirror").forEach(e => e.classList.add("hidden"));
+        [htmlEditor, cssEditor, jsEditor].forEach(e => e.getWrapperElement().classList.add("hidden"));
         if (tab === "html") htmlEditor.getWrapperElement().classList.remove("hidden");
         if (tab === "css") cssEditor.getWrapperElement().classList.remove("hidden");
         if (tab === "js") jsEditor.getWrapperElement().classList.remove("hidden");
       });
     });
 
-    // Auto-save with debounce
-    async function autoSave() {
+    // Auto-save debounce
+    function autoSave() {
       clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(async () => {
-        await saveProject();
-      }, 1000);
+      saveTimeout = setTimeout(saveProject, 1000);
     }
 
     async function saveProject() {
+      if (!currentProjectId) return;
       const html = htmlEditor.getValue();
       const css = cssEditor.getValue();
       const js = jsEditor.getValue();
-      status.textContent = "Saving…";
-      await setDoc(doc(db, "editorprojects", currentProjectId), {
-        html, css, js, updatedAt: serverTimestamp()
-      });
+      status.textContent = "Saving...";
+      await setDoc(doc(db, "editorprojects", currentProjectId), { html, css, js, updatedAt: serverTimestamp() });
       status.textContent = "Saved ✔";
     }
 
-    saveBtn.addEventListener("click", saveProject);
+    // Load list
+    async function loadProjects() {
+      projectList.innerHTML = "Loading...";
+      const snap = await getDocs(collection(db, "editorprojects"));
+      if (snap.empty) {
+        projectList.innerHTML = "<div class='text-[var(--muted)]'>No projects yet.</div>";
+        return;
+      }
+      projectList.innerHTML = "";
+      snap.forEach(docSnap => {
+        const id = docSnap.id;
+        const btn = document.createElement("button");
+        btn.className = "btn w-full text-left";
+        btn.textContent = id;
+        btn.onclick = () => loadProject(id);
+        projectList.appendChild(btn);
+      });
+    }
+
+    async function loadProject(id) {
+      currentProjectId = id;
+      localStorage.setItem("previewProjectId", id);
+      const snap = await getDoc(doc(db, "editorprojects", id));
+      if (snap.exists()) {
+        const d = snap.data();
+        htmlEditor.setValue(d.html || "");
+        cssEditor.setValue(d.css || "");
+        jsEditor.setValue(d.js || "");
+      } else {
+        htmlEditor.setValue("");
+        cssEditor.setValue("");
+        jsEditor.setValue("");
+      }
+      status.textContent = "Loaded " + id;
+    }
+
+    // Modal
+    document.getElementById("newProjectBtn").onclick = () => modalOverlay.classList.remove("hidden");
+    cancelModal.onclick = () => modalOverlay.classList.add("hidden");
+    createModal.onclick = async () => {
+      const title = modalTitle.value.trim();
+      if (!title) return alert("Enter a title");
+      await setDoc(doc(db, "editorprojects", title), { html: "", css: "", js: "", createdAt: serverTimestamp() });
+      modalOverlay.classList.add("hidden");
+      modalTitle.value = "";
+      loadProjects();
+      loadProject(title);
+    };
 
     setupCodeMirror();
+    loadProjects();
+    if (currentProjectId) loadProject(currentProjectId);
   </script>
 </body>
 </html>
