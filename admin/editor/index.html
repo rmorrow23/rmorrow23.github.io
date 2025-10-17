@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Editor — Morrow Industries</title>
+  <title>Morrow Industries — Code Editor</title>
+  <link rel="icon" href="/assets/favicon.ico" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
@@ -13,17 +13,18 @@
       --muted: #a9b0be;
       --text: #e9eef8;
       --gold: #d4af37;
-      --border: rgba(255, 255, 255, 0.08)
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
     }
 
     .glass {
       background: rgba(18, 20, 27, .6);
       backdrop-filter: saturate(140%) blur(14px);
-      border: 1px solid var(--border)
-    }
-
-    .gold {
-      color: var(--gold)
+      border: 1px solid var(--border);
     }
 
     .btn {
@@ -31,169 +32,128 @@
       color: var(--text);
       padding: .55rem .9rem;
       border-radius: .6rem;
-      transition: transform .15s ease, box-shadow .2s ease, background .2s ease
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
     }
 
     .btn-primary {
-      border-color: #d4af37
+      border-color: var(--gold);
     }
 
     .btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
     }
 
-    .badge {
-      border: 1px solid var(--border);
-      padding: .15rem .5rem;
-      border-radius: .5rem;
-      font-size: .75rem;
-      color: var(--muted)
+    textarea.editor {
+      width: 100%;
+      height: 380px;
     }
   </style>
 
-  <!-- CodeMirror (CDN first) -->
-  <link id="cm-css-cdn" rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-  <script id="cm-js-cdn" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <!-- CodeMirror -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
-
-  <!-- Local fallback (populate /admin/editor/libs/codemirror/ yourself) -->
-  <script>
-    (function () {
-      function loadLocal() {
-        var head = document.getElementsByTagName('head')[0];
-        var lcCss = document.createElement('link'); lcCss.rel = 'stylesheet';
-        lcCss.href = './libs/codemirror/codemirror.min.css'; head.appendChild(lcCss);
-
-        var s1 = document.createElement('script'); s1.src = './libs/codemirror/codemirror.min.js'; head.appendChild(s1);
-        var m1 = document.createElement('script'); m1.src = './libs/codemirror/mode/xml/xml.min.js'; head.appendChild(m1);
-        var m2 = document.createElement('script'); m2.src = './libs/codemirror/mode/css/css.min.js'; head.appendChild(m2);
-        var m3 = document.createElement('script'); m3.src = './libs/codemirror/mode/javascript/javascript.min.js'; head.appendChild(m3);
-        var m4 = document.createElement('script'); m4.src = './libs/codemirror/mode/markdown/markdown.min.js'; head.appendChild(m4);
-        var m5 = document.createElement('script'); m5.src = './libs/codemirror/mode/json/json.min.js'; head.appendChild(m5);
-        var m6 = document.createElement('script'); m6.src = './libs/codemirror/mode/python/python.min.js'; head.appendChild(m6);
-      }
-      window.addEventListener('load', function () {
-        setTimeout(function () {
-          if (!window.CodeMirror) { loadLocal(); }
-        }, 1200);
-      });
-    })();
-  </script>
-
-  <link rel="stylesheet" href="./editor.css" />
 </head>
 
-<body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
-  <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
-    <div id="navbar-container"></div>
-    <script>
-      fetch("/assets/modules/navbar.html")
-        .then(res => res.text())
-        .then(html => {
-          const container = document.getElementById("navbar-container");
-          container.innerHTML = html;
-
-          // Re-run scripts (for burger + auth)
-          container.querySelectorAll("script").forEach(oldScript => {
-            const s = document.createElement("script");
-            s.type = oldScript.type || "text/javascript";
-            if (oldScript.src) s.src = oldScript.src;
-            else s.textContent = oldScript.textContent;
-            document.body.appendChild(s);
-            oldScript.remove();
-          });
-        });
-    </script>
-  </header>
-
+<body class="min-h-screen selection:bg-[var(--gold)]/20">
   <main class="mx-auto max-w-7xl px-4 py-8">
-    <h1 class="font-serif text-3xl">Code Editor</h1>
-    <p class="mt-2 text-[var(--muted)]">Create and manage projects. Content is stored in Firestore under <span
-        class="gold">editorProjects</span>.</p>
+    <h1 class="font-serif text-3xl mb-2">Morrow Industries — Editor</h1>
+    <p class="text-[var(--muted)] mb-6">Your work saves automatically to Firestore under <span class="text-[var(--gold)]">editorprojects</span>.</p>
 
-    <div id="guard" class="mt-3 text-[var(--muted)]">Checking auth…</div>
-
-    <section id="editorArea" class="hidden mt-6 grid lg:grid-cols-12 gap-6">
-      <!-- Recent projects list -->
-      <aside class="lg:col-span-4 glass rounded-xl p-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-semibold">Your Projects</h2>
+    <!-- Project Controls -->
+    <div class="glass rounded-xl p-4 mb-6">
+      <div class="flex flex-wrap gap-2 items-center justify-between">
+        <div class="flex gap-2">
           <button id="newProjectBtn" class="btn btn-primary text-sm">New Project</button>
+          <button id="saveBtn" class="btn text-sm">Save Now</button>
         </div>
-        <div id="projectList" class="mt-3 space-y-2"></div>
-      </aside>
-
-      <!-- Editor + Preview -->
-      <section class="lg:col-span-8 space-y-4">
-        <div class="glass rounded-xl p-4">
-          <div class="flex flex-wrap gap-2 items-center justify-between">
-            <div class="flex gap-2">
-              <button id="saveBtn" class="btn btn-primary text-sm">Save</button>
-              <button id="downloadHtmlBtn" class="btn text-sm">Download HTML</button>
-              <label class="btn text-sm cursor-pointer">
-                <input id="uploadInput" type="file" accept=".html,.css,.js" class="hidden" />
-                Upload File
-              </label>
-            </div>
-            <div id="status" class="text-sm text-[var(--muted)]">Idle</div>
-          </div>
-
-          <!-- Tabs -->
-          <div class="mt-3 flex gap-2 text-sm">
-            <button data-tab="html" class="tab-btn active btn">HTML</button>
-            <button data-tab="css" class="tab-btn btn">CSS</button>
-            <button data-tab="js" class="tab-btn btn">JS</button>
-          </div>
-
-          <!-- Editors -->
-          <div class="mt-3 editors-grid">
-            <textarea id="htmlEditor" class="editor"></textarea>
-            <textarea id="cssEditor" class="editor hidden"></textarea>
-            <textarea id="jsEditor" class="editor hidden"></textarea>
-          </div>
-        </div>
-
-        <div class="glass rounded-xl p-4">
-          <div class="text-sm text-[var(--muted)] mb-2">Live Preview</div>
-          <iframe id="preview" class="w-full h-[420px] rounded-lg border border-[var(--border)] bg-black"></iframe>
-        </div>
-      </section>
-    </section>
-  </main>
-
-  <!-- New Project Modal -->
-  <div id="modalOverlay" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass rounded-xl p-5 max-w-md w-full">
-      <h3 class="text-lg font-semibold">New Project</h3>
-      <label class="block mt-4 text-sm">Title</label>
-      <input id="modalTitle" class="w-full rounded border border-[var(--border)] bg-[var(--surface)]/60 p-2"
-        placeholder="e.g., Landing Page V2" />
-      <div class="mt-5 flex gap-2 justify-end">
-        <button id="cancelModal" class="btn">Cancel</button>
-        <button id="createModal" class="btn btn-primary">Create</button>
+        <div id="status" class="text-sm text-[var(--muted)]">Idle</div>
       </div>
     </div>
-  </div>
 
-  <footer class="mt-10 border-t border-[var(--border)]">
-    <div
-      class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-      <div>© <span id="year"></span> Morrow Industries</div>
-      <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+    <!-- Tabs -->
+    <div class="flex gap-2 text-sm mb-3">
+      <button data-tab="html" class="tab-btn btn btn-primary">HTML</button>
+      <button data-tab="css" class="tab-btn btn">CSS</button>
+      <button data-tab="js" class="tab-btn btn">JS</button>
     </div>
-  </footer>
 
-  <!-- Firebase init from your site -->
-  <script type="module" src="/assets/js/firebase-init.js"></script>
-  <script type="module" src="./editor.js"></script>
-  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+    <!-- Editors -->
+    <div class="glass rounded-xl p-4">
+      <textarea id="htmlEditor" class="editor"></textarea>
+      <textarea id="cssEditor" class="editor hidden"></textarea>
+      <textarea id="jsEditor" class="editor hidden"></textarea>
+    </div>
+
+    <!-- Live preview link -->
+    <div class="mt-6 flex justify-end">
+      <a href="/admin/editor/preview.html" target="_blank" class="btn btn-primary text-sm">Open Live Preview</a>
+    </div>
+  </main>
+
+  <script type="module">
+    import { db } from "/assets/js/firebase-init.js";
+    import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const htmlTA = document.getElementById("htmlEditor");
+    const cssTA = document.getElementById("cssEditor");
+    const jsTA = document.getElementById("jsEditor");
+    const status = document.getElementById("status");
+    const saveBtn = document.getElementById("saveBtn");
+
+    let currentProjectId = localStorage.getItem("previewProjectId") || "default";
+    let htmlEditor, cssEditor, jsEditor;
+    let saveTimeout;
+
+    function setupCodeMirror() {
+      htmlEditor = CodeMirror.fromTextArea(htmlTA, { mode: "xml", lineNumbers: true });
+      cssEditor = CodeMirror.fromTextArea(cssTA, { mode: "css", lineNumbers: true });
+      jsEditor = CodeMirror.fromTextArea(jsTA, { mode: "javascript", lineNumbers: true });
+
+      [htmlEditor, cssEditor, jsEditor].forEach(editor => {
+        editor.on("change", autoSave);
+      });
+    }
+
+    // Tab switching
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("btn-primary"));
+        btn.classList.add("btn-primary");
+
+        const tab = btn.dataset.tab;
+        document.querySelectorAll("textarea.editor, .CodeMirror").forEach(e => e.classList.add("hidden"));
+        if (tab === "html") htmlEditor.getWrapperElement().classList.remove("hidden");
+        if (tab === "css") cssEditor.getWrapperElement().classList.remove("hidden");
+        if (tab === "js") jsEditor.getWrapperElement().classList.remove("hidden");
+      });
+    });
+
+    // Auto-save with debounce
+    async function autoSave() {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        await saveProject();
+      }, 1000);
+    }
+
+    async function saveProject() {
+      const html = htmlEditor.getValue();
+      const css = cssEditor.getValue();
+      const js = jsEditor.getValue();
+      status.textContent = "Saving…";
+      await setDoc(doc(db, "editorprojects", currentProjectId), {
+        html, css, js, updatedAt: serverTimestamp()
+      });
+      status.textContent = "Saved ✔";
+    }
+
+    saveBtn.addEventListener("click", saveProject);
+
+    setupCodeMirror();
+  </script>
 </body>
-
 </html>
