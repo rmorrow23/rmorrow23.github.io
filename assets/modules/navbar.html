@@ -1,193 +1,219 @@
-<!-- Morrow Industries Navbar Module -->
+<!-- =======================
+ Morrow Industries – Shared Navbar Module
+ Inspired by VaultView Navigation
+======================= -->
+<style>
+  nav.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.5rem;
+    background: rgba(10, 11, 15, 0.8);
+    backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  nav.navbar .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  nav.navbar .logo img {
+    height: 32px;
+    width: 32px;
+  }
+
+  nav.navbar .logo span {
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 1.25rem;
+    letter-spacing: 0.03em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    transition: transform 0.4s ease;
+  }
+
+  .nav-links a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: color 0.25s ease;
+  }
+
+  .nav-links a:hover {
+    color: var(--gold);
+  }
+
+  /* Burger button */
+  .burger {
+    display: none;
+    cursor: pointer;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .burger div {
+    width: 25px;
+    height: 3px;
+    background: var(--text);
+    transition: all 0.3s ease;
+    border-radius: 2px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .nav-links {
+      position: fixed;
+      right: 0;
+      top: 0;
+      height: 100vh;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 70%;
+      background: rgba(10, 11, 15, 0.97);
+      backdrop-filter: blur(16px) saturate(160%);
+      transform: translateX(100%);
+      z-index: 9999;
+    }
+
+    .nav-links.nav-active {
+      transform: translateX(0%);
+    }
+
+    .burger {
+      display: flex;
+      z-index: 10000;
+    }
+
+    .nav-links li {
+      opacity: 0;
+    }
+
+    .nav-links.nav-active li {
+      animation: navLinkFade 0.3s ease forwards;
+    }
+
+    @keyframes navLinkFade {
+      from {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .burger.toggle .line1 {
+      transform: rotate(-45deg) translate(-5px, 6px);
+    }
+
+    .burger.toggle .line2 {
+      opacity: 0;
+    }
+
+    .burger.toggle .line3 {
+      transform: rotate(45deg) translate(-5px, -6px);
+    }
+  }
+
+  #authBtn {
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.5rem;
+    transition: all 0.25s ease;
+    background: transparent;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  #authBtn:hover {
+    background: var(--gold);
+    color: var(--bg);
+  }
+</style>
+
 <nav class="navbar">
-  <div class="nav-left">
-    <a href="/" class="font-serif text-xl tracking-wide text-[var(--gold)]">Morrow Industries</a>
+  <div class="logo">
+    <img src="/morIcon.png" alt="Morrow Industries Icon" />
+    <span>Morrow Industries</span>
   </div>
 
-  <ul class="nav-links">
+  <ul class="nav-links" id="navLinks">
     <li><a href="/">Home</a></li>
     <li><a href="/projects">Projects</a></li>
     <li><a href="/printing/request">3D Printing</a></li>
     <li><a href="/printing/store">Store</a></li>
     <li><a href="/about">About</a></li>
     <li><a href="/contact">Contact</a></li>
+    <li id="adminLink" style="display:none;"><a href="/admin">Admin</a></li>
   </ul>
 
-  <div class="nav-actions">
-    <button id="authBtn" class="btn">Sign in</button>
-    <span id="userLabel" class="ml-2 text-[var(--muted)] text-sm hidden"></span>
-    <div class="burger">
-      <div class="line1"></div>
-      <div class="line2"></div>
-      <div class="line3"></div>
-    </div>
+  <div class="burger" id="burger">
+    <div class="line1"></div>
+    <div class="line2"></div>
+    <div class="line3"></div>
   </div>
+
+  <button id="authBtn">Sign In</button>
 </nav>
 
-<style>
-/* ===============================
-   Morrow Navbar Module Styling
-   =============================== */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.2rem;
-  background: rgba(10, 11, 15, 0.85);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
-  position: relative;
-  z-index: 1000;
-}
-
-.nav-links {
-  list-style: none;
-  display: flex;
-  gap: 1.2rem;
-  transition: transform 0.3s ease-in-out;
-}
-
-.nav-links li a {
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.nav-links li a:hover {
-  color: var(--gold);
-}
-
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-/* Button styles */
-.btn {
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 0.5rem 0.9rem;
-  border-radius: 0.6rem;
-  background: rgba(18, 20, 27, 0.8);
-  backdrop-filter: blur(8px);
-  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  background: rgba(18, 20, 27, 0.95);
-}
-
-/* Burger */
-.burger {
-  display: none;
-  cursor: pointer;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 18px;
-  width: 26px;
-}
-
-.burger div {
-  width: 100%;
-  height: 3px;
-  background: var(--gold);
-  border-radius: 2px;
-  transition: all 0.3s ease;
-}
-
-/* Mobile Styles */
-@media (max-width: 768px) {
-  .nav-links {
-    position: fixed;
-    right: 0;
-    top: 0;
-    height: 100vh;
-    width: 65%;
-    background: rgba(18, 20, 27, 0.95);
-    backdrop-filter: blur(20px);
-    border-left: 1px solid var(--border);
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transform: translateX(100%);
-  }
-
-  .nav-links.nav-active {
-    transform: translateX(0);
-  }
-
-  .burger {
-    display: flex;
-  }
-
-  .burger.toggle .line1 {
-    transform: rotate(-45deg) translate(-5px, 6px);
-  }
-
-  .burger.toggle .line2 {
-    opacity: 0;
-  }
-
-  .burger.toggle .line3 {
-    transform: rotate(45deg) translate(-5px, -6px);
-  }
-
-  .nav-actions {
-    gap: 0.6rem;
-  }
-}
-</style>
-
 <script type="module">
-import { auth, provider, signInWithPopup, signOut, onAuthStateChanged } from "/assets/js/firebase-init.js";
-import { db } from "/assets/js/firebase-init.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { auth, provider, signInWithPopup, signOut, onAuthStateChanged, db } from "/assets/js/firebase-init.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const authBtn = document.getElementById("authBtn");
-const userLabel = document.getElementById("userLabel");
+  // Burger toggle logic
+  const burger = document.getElementById("burger");
+  const nav = document.getElementById("navLinks");
+  burger.addEventListener("click", () => {
+    nav.classList.toggle("nav-active");
+    burger.classList.toggle("toggle");
+  });
 
-// === Burger menu logic ===
-const burger = document.querySelector(".burger");
-const nav = document.querySelector(".nav-links");
-const navLinks = document.querySelectorAll(".nav-links li");
+  // Auth logic
+  const authBtn = document.getElementById("authBtn");
+  const adminLink = document.getElementById("adminLink");
 
-burger.addEventListener("click", () => {
-  nav.classList.toggle("nav-active");
-  burger.classList.toggle("toggle");
-});
-navLinks.forEach(link =>
-  link.addEventListener("click", () => {
-    nav.classList.remove("nav-active");
-    burger.classList.remove("toggle");
-  })
-);
-
-// === Firebase Auth Logic ===
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    userLabel.textContent = user.displayName || user.email;
-    userLabel.classList.remove("hidden");
-    authBtn.textContent = "Sign out";
-  } else {
-    userLabel.classList.add("hidden");
-    authBtn.textContent = "Sign in";
-  }
-});
-
-authBtn.addEventListener("click", async () => {
-  const user = auth.currentUser;
-  try {
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
-      await signOut(auth);
+      authBtn.textContent = "Sign Out";
+      try {
+        const uDoc = await getDoc(doc(db, "users", user.uid));
+        const isAdmin = uDoc.exists() && uDoc.data().role === "admin";
+        adminLink.style.display = isAdmin ? "inline-block" : "none";
+      } catch (e) {
+        console.warn("Role check failed:", e);
+      }
     } else {
-      await signInWithPopup(auth, provider);
+      authBtn.textContent = "Sign In";
+      adminLink.style.display = "none";
     }
-  } catch (e) {
-    console.error("Auth error:", e);
-  }
-});
+  });
+
+  authBtn.addEventListener("click", async () => {
+    const user = auth.currentUser;
+    try {
+      if (user) {
+        await signOut(auth);
+      } else {
+        await signInWithPopup(auth, provider);
+      }
+    } catch (e) {
+      console.error("Auth error:", e);
+    }
+  });
 </script>
