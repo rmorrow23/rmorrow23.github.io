@@ -340,46 +340,104 @@
   }
 
   // === Orders ===
-  function bindOrders(){
-    const q=query(collection(db,"orders"),orderBy("createdAt","desc"));
-    onSnapshot(q,snap=>{
-      if(snap.empty){panelOrders.innerHTML=`<div class="glass card p-6 text-[var(--muted)]">No orders yet.</div>`;return;}
-      const html=[];
-      snap.forEach(docSnap=>{
-        const d=docSnap.data();
-        const date=d.createdAt?.seconds?new Date(d.createdAt.seconds*1000).toLocaleString():"—";
-        const items=Array.isArray(d.items)
-          ? d.items.map(it=>`<li class='border-b border-[var(--border)] py-1 flex justify-between'><span>${it.title||"Item"}</span><span class='text-[var(--muted)]'>$${Number(it.price||0).toFixed(2)} × ${it.qty||1}</span></li>`).join("")
-          : "<li class='text-[var(--muted)] italic'>No items</li>";
-        const status=d.status||"Pending";
-        const lifecycle=Array.isArray(d.lifecycle)?d.lifecycle:[];
-        html.push(`
-          <article class='glass card p-5'>
-            <div class='flex items-center justify-between'>
-              <h3 class='text-lg font-semibold text-[var(--gold)]'>Order #${docSnap.id.slice(-6)}</h3>
-              <span class='text-sm text-[var(--muted)]'>${date}</span>
-            </div>
-            <p class='mt-1 text-sm text-[var(--muted)]'>User ID: <span class='text-[var(--gold)]'>${d.userId||"Unknown"}</span></p>
-            <ul class='mt-3 text-sm'>${items}</ul>
-            <div class='mt-4 flex items-center justify-between'>
-              <span class='font-semibold text-[var(--gold)]'>${status}</span>
-              <select data-id='${docSnap.id}' class='bg-transparent border border-[var(--border)] text-[var(--gold)] rounded px-2 py-1 text-sm'>
-                ${lifecycle.map(s=>`<option value='${s}' ${s===status?"selected":""}>${s}</option>`).join("")}
-              </select>
-            </div>
-          </article>`);
-      });
-      panelOrders.innerHTML=`<div class='grid md:grid-cols-2 lg:grid-cols-3 gap-5'>${html.join("")}</div>`;
-      document.querySelectorAll("#panel-orders select").forEach(sel=>{
-        sel.addEventListener("change",async e=>{
-          const id=e.target.dataset.id;
-          const newStatus=e.target.value;
-          try{await updateDoc(doc(db,"orders",id),{status:newStatus});showToast("Status updated");}
-          catch(err){console.error(err);showToast("Error updating order");}
-        });
+  // === Orders ===
+function bindOrders() {
+  const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+  onSnapshot(q, async (snap) => {
+    if (snap.empty) {
+      panelOrders.innerHTML = `
+        <div class="glass card p-6 text-[var(--muted)]">
+          No orders yet.
+        </div>`;
+      return;
+    }
+
+    const html = [];
+    for (const docSnap of snap.docs) {
+      const d = docSnap.data();
+      const date = d.createdAt?.seconds
+        ? new Date(d.createdAt.seconds * 1000).toLocaleString()
+        : "—";
+
+      // 🔹 Look up user's display name from users collection
+      let displayName = "Unknown User";
+      if (d.userId) {
+        try {
+          const userSnap = await getDoc(doc(db, "users", d.userId));
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            displayName = userData.displayName || userData.email || d.userId;
+          }
+        } catch (err) {
+          console.warn("Error fetching user:", err);
+        }
+      }
+
+      const items = Array.isArray(d.items)
+        ? d.items
+            .map(
+              (it) => `
+          <li class='border-b border-[var(--border)] py-1 flex justify-between'>
+            <span>${it.title || "Item"}</span>
+            <span class='text-[var(--muted)]'>
+              $${Number(it.price || 0).toFixed(2)} × ${it.qty || 1}
+            </span>
+          </li>`
+            )
+            .join("")
+        : "<li class='text-[var(--muted)] italic'>No items</li>";
+
+      const status = d.status || "Pending";
+      const lifecycle = Array.isArray(d.lifecycle) ? d.lifecycle : [];
+
+      html.push(`
+        <article class='glass card p-5'>
+          <div class='flex items-center justify-between'>
+            <h3 class='text-lg font-semibold text-[var(--gold)]'>
+              Order #${docSnap.id.slice(-6)}
+            </h3>
+            <span class='text-sm text-[var(--muted)]'>${date}</span>
+          </div>
+          <p class='mt-1 text-sm text-[var(--muted)]'>
+            Customer: <span class='text-[var(--gold)]'>${displayName}</span>
+          </p>
+          <ul class='mt-3 text-sm'>${items}</ul>
+          <div class='mt-4 flex items-center justify-between'>
+            <span class='font-semibold text-[var(--gold)]'>${status}</span>
+            <select data-id='${docSnap.id}'
+              class='bg-transparent border border-[var(--border)] text-[var(--gold)] rounded px-2 py-1 text-sm'>
+              ${lifecycle
+                .map(
+                  (s) => `
+                <option value='${s}' ${s === status ? "selected" : ""}>${s}</option>`
+                )
+                .join("")}
+            </select>
+          </div>
+        </article>`);
+    }
+
+    panelOrders.innerHTML = `
+      <div class='grid md:grid-cols-2 lg:grid-cols-3 gap-5'>
+        ${html.join("")}
+      </div>`;
+
+    // === Attach status update events ===
+    document.querySelectorAll("#panel-orders select").forEach((sel) => {
+      sel.addEventListener("change", async (e) => {
+        const id = e.target.dataset.id;
+        const newStatus = e.target.value;
+        try {
+          await updateDoc(doc(db, "orders", id), { status: newStatus });
+          showToast("Status updated");
+        } catch (err) {
+          console.error(err);
+          showToast("Error updating order");
+        }
       });
     });
-  }
+  });
+}
 
   // === Users ===
   function bindUsers(){
