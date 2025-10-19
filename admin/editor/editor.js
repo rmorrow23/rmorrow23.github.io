@@ -55,7 +55,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-authBtn.addEventListener('click', async () => {
+authBtnMobile.addEventListener('click', async () => {
   const user = auth.currentUser;
   try {
     if (user) await signOut(auth);
