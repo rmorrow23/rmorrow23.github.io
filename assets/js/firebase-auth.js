@@ -12,7 +12,7 @@ onAuthStateChanged(auth, async (user) => {
   let isAdmin = false;
 
   if (user) {
-    authBtn.textContent = "Sign out";
+    //authBtn.textContent = "Sign out";
     authBtnMobile.textContent = "Sign out";
     try {
       const uDoc = await getDoc(doc(db, "users", user.uid));
@@ -22,7 +22,7 @@ onAuthStateChanged(auth, async (user) => {
       console.warn("Error fetching user role:", e);
     }
   } else {
-    authBtn.textContent = "Sign in";
+    //authBtn.textContent = "Sign in";
     authBtnMobile.textContent = "Sign in";
     if (adminLink) adminLink.style.display = "none";
   }
