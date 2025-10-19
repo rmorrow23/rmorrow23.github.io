@@ -1,0 +1,44 @@
+<!-- /assets/modules/maintenance-toggle.html -->
+<div id="maintenanceToggleContainer" class="glass rounded-xl p-5 mt-6">
+  <h3 class="text-xl font-semibold text-[var(--gold)] mb-3">Maintenance Mode</h3>
+  <div class="flex items-center gap-3">
+    <label class="relative inline-flex items-center cursor-pointer">
+      <input id="maintenanceSwitch" type="checkbox" class="sr-only peer">
+      <div class="w-11 h-6 bg-[var(--border)] peer-focus:outline-none 
+                  rounded-full peer peer-checked:after:translate-x-full 
+                  peer-checked:after:border-white after:content-[''] 
+                  after:absolute after:top-[2px] after:left-[2px] 
+                  after:bg-[var(--gold)] after:border-[var(--gold)] 
+                  after:border after:rounded-full after:h-5 after:w-5 
+                  after:transition-all peer-checked:bg-[var(--gold)]/30"></div>
+    </label>
+    <span id="maintenanceStatus" class="text-[var(--muted)]">Loading…</span>
+  </div>
+</div>
+
+<script type="module">
+  import { db } from "/assets/js/firebase-init.js";
+  import { doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const toggle = document.getElementById("maintenanceSwitch");
+  const status = document.getElementById("maintenanceStatus");
+  const ref = doc(db, "site", "config"); // you can change this path if needed
+
+  // Listen for live changes
+  onSnapshot(ref, (snap) => {
+    const val = snap.exists() ? snap.data().maintenanceMode === true : false;
+    toggle.checked = val;
+    status.textContent = val ? "Enabled" : "Disabled";
+  });
+
+  // Update Firestore on toggle
+  toggle.addEventListener("change", async () => {
+    try {
+      await updateDoc(ref, { maintenanceMode: toggle.checked });
+      status.textContent = toggle.checked ? "Enabled" : "Disabled";
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update maintenance mode.");
+    }
+  });
+</script>
