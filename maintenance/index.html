@@ -1,0 +1,55 @@
+<!-- /maintenance.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Under Maintenance — Morrow Industries</title>
+  <link rel="icon" href="/assets/favicon.ico"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;
+      --gold:#d4af37;--border:rgba(255,255,255,0.08);
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .glass {
+      background: rgba(18,20,27,.6);
+      backdrop-filter: saturate(140%) blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(0,0,0,.5);
+    }
+    h1 {
+      color: var(--gold);
+      font-size: 2rem;
+      margin-bottom: .5rem;
+    }
+    p {
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 480px;
+      margin: 0 auto 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="glass">
+    <h1>🛠 Under Maintenance</h1>
+    <p>We’re currently performing updates to improve your experience.</p>
+    <p>Please check back soon — Morrow Industries appreciates your patience.</p>
+  </div>
+</body>
+</html>
