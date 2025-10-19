@@ -18,15 +18,28 @@
 
 <script type="module">
   import { db } from "/assets/js/firebase-init.js";
-  import { doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { doc, onSnapshot, updateDoc, setDoc, getDoc } 
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const toggle = document.getElementById("maintenanceSwitch");
   const status = document.getElementById("maintenanceStatus");
-  const ref = doc(db, "site", "config"); // you can change this path if needed
+  const ref = doc(db, "site", "config");
+
+  async function ensureDocExists() {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      console.warn("⚠️ Creating missing /site/config document...");
+      await setDoc(ref, { maintenanceMode: false });
+    }
+  }
+
+  // Make sure the doc exists before listening or writing
+  await ensureDocExists();
 
   // Listen for live changes
   onSnapshot(ref, (snap) => {
-    const val = snap.exists() ? snap.data().maintenanceMode === true : false;
+    if (!snap.exists()) return;
+    const val = snap.data().maintenanceMode === true;
     toggle.checked = val;
     status.textContent = val ? "Enabled" : "Disabled";
   });
@@ -35,9 +48,10 @@
   toggle.addEventListener("change", async () => {
     try {
       await updateDoc(ref, { maintenanceMode: toggle.checked });
+      console.log("✅ Maintenance mode updated:", toggle.checked);
       status.textContent = toggle.checked ? "Enabled" : "Disabled";
     } catch (err) {
-      console.error(err);
+      console.error("❌ Failed to update maintenance mode:", err);
       alert("Failed to update maintenance mode.");
     }
   });
