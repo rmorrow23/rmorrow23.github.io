@@ -98,7 +98,7 @@
       if (unsubProject) unsubProject();
 
       // Subscribe to that project
-      unsubProject = onSnapshot(doc(db, "editorprojects", projectId), (projSnap) => {
+      unsubProject = onSnapshot(doc(db, "editorProjects", projectId), (projSnap) => {
         if (!projSnap.exists()) {
           frame.srcdoc = `<h2 style='color:red;text-align:center;margin-top:40px;'>Project "${projectId}" not found</h2>`;
           setStatus(false);
