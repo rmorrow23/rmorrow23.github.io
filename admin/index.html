@@ -116,6 +116,12 @@
                 after:transition-all peer-checked:bg-[var(--gold)]/30"></div>
   </label>
 </div>
+<div id="maintenance-module"></div>
+<script>
+  fetch("/assets/modules/maintenance-toggle.html")
+    .then(res => res.text())
+    .then(html => document.getElementById("maintenance-module").innerHTML = html);
+</script>
   <div class="mt-6 flex flex-wrap gap-2">
     <button class="tab active" data-tab="products">Products</button>
     <button class="tab" data-tab="orders">Orders</button>
