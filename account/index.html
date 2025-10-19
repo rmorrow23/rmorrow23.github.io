@@ -9,7 +9,7 @@
 
   <style>
     :root {
-      --bg:#000;--surface:#12141b;--muted:#a9b0be;
+      --bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;
       --text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08);
     }
     body {
@@ -25,9 +25,10 @@
     .btn {
       border: 1px solid var(--border);
       color: var(--text);
-      padding: .6rem .9rem;
-      border-radius: .6rem;
+      padding: .5rem .8rem;
+      border-radius: .5rem;
       transition: all .2s;
+      font-size: .9rem;
     }
     .btn-primary { border-color: var(--gold); color: var(--gold); }
     .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.35); }
@@ -37,10 +38,21 @@
       color: #e9eef8; border: 1px solid var(--gold);
       border-radius: .75rem; padding: .6rem .9rem;
       font-size: .9rem; backdrop-filter: blur(14px);
-      z-index: 9999;
-      animation: fadeIn .2s ease;
+      z-index: 9999; animation: fadeIn .2s ease;
     }
-    @keyframes fadeIn { from {opacity:0;transform:translateY(-8px)} to {opacity:1;transform:none}}
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none} }
+    input {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--gold);
+      border-radius: .5rem;
+      padding: .4rem .6rem;
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px rgba(212,175,55,.25);
+    }
   </style>
 </head>
 <body class="min-h-screen">
@@ -62,7 +74,7 @@ fetch("/assets/modules/navbar.html")
   });
 </script>
 
-<main class="max-w-5xl mx-auto px-4 py-12 space-y-10 my-10">
+<main class="max-w-5xl mx-auto px-4 py-12 space-y-10">
   <h1 class="text-3xl font-serif text-[var(--gold)] mb-6">Your Account</h1>
 
   <!-- Profile -->
@@ -98,9 +110,9 @@ function showToast(msg){
 
 <script type="module">
 import { auth, db } from "/assets/js/firebase-init.js";
-import { onAuthStateChanged, signOut } 
+import { onAuthStateChanged, signOut, updateProfile }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc, collection, query, where, orderBy, onSnapshot } 
+import { doc, getDoc, updateDoc, collection, query, where, orderBy, onSnapshot } 
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const signOutBtn = document.getElementById("signOutBtn");
@@ -109,30 +121,66 @@ const profileInfo = document.getElementById("profileInfo");
 const ordersList = document.getElementById("ordersList");
 
 signOutBtn.addEventListener("click", ()=> signOut(auth));
-
 function setLoading(v){loadingOverlay.style.display=v?"flex":"none";}
 
 onAuthStateChanged(auth, async (user)=>{
   setLoading(true);
   if(!user){
-    location.href = "/"; // redirect if not logged in
+    location.href = "/";
     return;
   }
 
   // === Profile Info ===
   try {
     const uSnap = await getDoc(doc(db, "users", user.uid));
-    if (uSnap.exists()) {
-      const d = uSnap.data();
+    const d = uSnap.exists() ? uSnap.data() : {};
+
+    const displayName = d.displayName || user.displayName || "—";
+    const email = d.email || user.email || "—";
+    const role = d.role || "client";
+    const created = d.createdAt?.seconds
+      ? new Date(d.createdAt.seconds*1000).toLocaleString()
+      : "—";
+
+    profileInfo.innerHTML = `
+      <div class="flex items-center justify-between">
+        <p><strong>Name:</strong> <span id="displayNameText">${displayName}</span></p>
+        <button id="editNameBtn" class="btn btn-primary text-xs">Edit</button>
+      </div>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Role:</strong> ${role}</p>
+      <p><strong>Joined:</strong> ${created}</p>
+    `;
+
+    const editBtn = document.getElementById("editNameBtn");
+    editBtn.addEventListener("click", ()=>{
+      const current = document.getElementById("displayNameText").textContent;
       profileInfo.innerHTML = `
-        <p><strong>Name:</strong> ${d.displayName || user.displayName || "—"}</p>
-        <p><strong>Email:</strong> ${d.email || user.email}</p>
-        <p><strong>Role:</strong> ${d.role || "client"}</p>
-        <p><strong>Joined:</strong> ${d.createdAt?.seconds ? new Date(d.createdAt.seconds*1000).toLocaleString() : "—"}</p>
+        <form id="nameForm" class="space-y-2">
+          <label class="block text-[var(--muted)]">New Display Name</label>
+          <input id="newDisplayName" value="${current}" required/>
+          <div class="flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" id="cancelEdit" class="btn">Cancel</button>
+          </div>
+        </form>
       `;
-    } else {
-      profileInfo.innerHTML = `<p class="text-[var(--muted)]">Profile not found.</p>`;
-    }
+      document.getElementById("cancelEdit").onclick = () => onAuthStateChanged(auth,()=>{});
+      document.getElementById("nameForm").onsubmit = async (e)=>{
+        e.preventDefault();
+        const newName = document.getElementById("newDisplayName").value.trim();
+        if(!newName){showToast("Name cannot be empty");return;}
+        try{
+          await updateProfile(user,{ displayName: newName });
+          await updateDoc(doc(db,"users",user.uid),{ displayName: newName });
+          showToast("Name updated!");
+          onAuthStateChanged(auth,()=>{}); // refresh view
+        }catch(err){
+          console.error(err);
+          showToast("Error updating name");
+        }
+      };
+    });
   } catch (e) {
     console.error(e);
     showToast("Error loading profile");
