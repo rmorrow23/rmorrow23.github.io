@@ -7,59 +7,81 @@
   <link rel="icon" href="/assets/favicon.ico" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --bg: #0a0b0f;
-      --text: #e9eef8;
-      --gold: #d4af37;
-      --border: rgba(255,255,255,0.08);
-    }
+  :root {
+    --bg: #0a0b0f;
+    --text: #e9eef8;
+    --gold: #d4af37;
+    --border: rgba(255,255,255,0.08);
+  }
 
-    html, body {
-      margin: 0;
-      height: 100%;
-      width: 100%;
-      background: var(--bg);
-      color: var(--text);
-      overflow: hidden;
-      font-family: system-ui, -apple-system, Roboto, sans-serif;
-    }
+  html, body {
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    font-family: system-ui, -apple-system, Roboto, sans-serif;
+  }
 
-    iframe {
-      border: none;
-      width: 100%;
-      height: 100vh;
-      background: #000;
-    }
+  iframe {
+    border: none;
+    width: 100%;
+    height: 100vh;
+    background: #000;
+  }
 
-    #status {
-      position: fixed;
-      top: 1rem;
-      left: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: rgba(0,0,0,0.6);
-      border: 1px solid var(--border);
-      backdrop-filter: blur(10px);
-      padding: 0.4rem 0.8rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      z-index: 10000;
-    }
+  /* Status container defaults to circle */
+  #status {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    border-radius: 999px;
+    padding: 0.4rem;
+    width: 2rem;
+    height: 2rem;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    z-index: 10000;
+  }
 
-    #statusDot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: red;
-      box-shadow: 0 0 10px red;
-      transition: all 0.3s ease;
-    }
-  </style>
-</head>
+  #status.expanded {
+    width: auto;
+    padding: 0.4rem 0.9rem;
+    gap: 0.5rem;
+  }
+
+  #statusDot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: red;
+    box-shadow: 0 0 10px red;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  #statusText {
+    white-space: nowrap;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  #status.expanded #statusText {
+    opacity: 1;
+  }
+</style>
 
 <body>
-  <div id="status"><span id="statusDot"></span><span id="statusText">Waiting…</span></div>
+  <div id="status"><span id="statusDot"></span><span id="statusText"></span></div>
   <iframe id="previewFrame"></iframe>
 
   <script type="module">
@@ -69,39 +91,39 @@
     const frame = document.getElementById("previewFrame");
     const dot = document.getElementById("statusDot");
     const text = document.getElementById("statusText");
+    const statusBox = document.getElementById("status");
 
     let unsubProject = null;
+    let collapseTimer = null;
 
-    function setStatus(connected) {
-      if (connected) {
-        dot.style.background = "#16c784";
-        dot.style.boxShadow = "0 0 10px #16c784";
-        text.textContent = "Connected";
-      } else {
-        dot.style.background = "red";
-        dot.style.boxShadow = "0 0 10px red";
-        text.textContent = "Offline";
-      }
+    function showStatus(msg, color) {
+      text.textContent = msg;
+      statusBox.classList.add("expanded");
+      dot.style.background = color;
+      dot.style.boxShadow = `0 0 10px ${color}`;
+      clearTimeout(collapseTimer);
+      collapseTimer = setTimeout(() => {
+        statusBox.classList.remove("expanded");
+      }, 2000);
     }
 
     // Listen to current project pointer
     onSnapshot(doc(db, "currentProject", "active"), (snap) => {
       if (!snap.exists()) {
         frame.srcdoc = "<h2 style='text-align:center;margin-top:40px;color:gray;'>No active project selected.</h2>";
-        setStatus(false);
+        showStatus("No project", "red");
         return;
       }
       const { projectId } = snap.data();
       if (!projectId) return;
 
-      // Unsubscribe from previous
       if (unsubProject) unsubProject();
 
       // Subscribe to that project
       unsubProject = onSnapshot(doc(db, "editorProjects", projectId), (projSnap) => {
         if (!projSnap.exists()) {
           frame.srcdoc = `<h2 style='color:red;text-align:center;margin-top:40px;'>Project "${projectId}" not found</h2>`;
-          setStatus(false);
+          showStatus("Project not found", "red");
           return;
         }
 
@@ -110,7 +132,7 @@
         const css = `<style>${data.css || ""}</style>`;
         const js = `<script>${data.js || ""}<\/script>`;
         frame.srcdoc = `<!DOCTYPE html><html><head>${css}</head><body>${html}${js}</body></html>`;
-        setStatus(true);
+        showStatus("Updated", "#16c784");
       });
     });
   </script>
