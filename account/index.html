@@ -9,46 +9,81 @@
 
   <style>
     :root {
-      --bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;
-      --gold:#d4af37;--border:rgba(255,255,255,0.08);
+      --bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;
+      --text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08);
     }
-    body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif}
-    .glass{background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);
-      border:1px solid var(--border)}
-    .btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:all .2s}
-    .btn-primary{border-color:var(--gold);color:var(--gold)}
-    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.35)}
-    .toast{position:fixed;right:1rem;top:1rem;background:rgba(18,20,27,.92);
-      color:#e9eef8;border:1px solid var(--gold);border-radius:.75rem;
-      padding:.6rem .9rem;font-size:.9rem;backdrop-filter:blur(14px);z-index:9999;}
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, sans-serif;
+    }
+    .glass {
+      background: rgba(18,20,27,.6);
+      backdrop-filter: saturate(140%) blur(14px);
+      border: 1px solid var(--border);
+    }
+    .btn {
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: .6rem .9rem;
+      border-radius: .6rem;
+      transition: all .2s;
+    }
+    .btn-primary { border-color: var(--gold); color: var(--gold); }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+    .toast {
+      position: fixed; right: 1rem; top: 1rem;
+      background: rgba(18,20,27,.92);
+      color: #e9eef8; border: 1px solid var(--gold);
+      border-radius: .75rem; padding: .6rem .9rem;
+      font-size: .9rem; backdrop-filter: blur(14px);
+      z-index: 9999;
+      animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn { from {opacity:0;transform:translateY(-8px)} to {opacity:1;transform:none}}
   </style>
 </head>
 <body class="min-h-screen">
 
-<header class="sticky top-0 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
-  <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
-    <a href="/" class="font-serif text-xl text-[var(--gold)]">Morrow Industries</a>
-    <div class="flex gap-3 items-center">
-      <span id="userLabel" class="text-sm text-[var(--muted)]"></span>
-      <button id="signOutBtn" class="btn">Sign Out</button>
-    </div>
-  </div>
-</header>
+<!-- Shared Navbar -->
+<div id="navbar-container"></div>
+<script>
+fetch("/assets/modules/navbar.html")
+  .then(res => res.text())
+  .then(html => {
+    const container = document.getElementById("navbar-container");
+    container.innerHTML = html;
+    container.querySelectorAll("script").forEach(oldScript=>{
+      const s=document.createElement("script");
+      s.textContent=oldScript.textContent;
+      document.body.appendChild(s);
+      oldScript.remove();
+    });
+  });
+</script>
 
-<main class="max-w-5xl mx-auto px-4 py-10 space-y-10">
+<main class="max-w-5xl mx-auto px-4 py-12 space-y-10">
+  <h1 class="text-3xl font-serif text-[var(--gold)] mb-6">Your Account</h1>
 
+  <!-- Profile -->
   <section id="profileSection" class="glass rounded-2xl p-6">
     <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Account Details</h2>
     <div id="profileInfo" class="space-y-2 text-[var(--muted)] text-sm"></div>
   </section>
 
+  <!-- Orders -->
   <section id="ordersSection" class="glass rounded-2xl p-6">
     <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Your Orders</h2>
     <div id="ordersList" class="space-y-3 text-sm"></div>
   </section>
 
+  <!-- Sign Out -->
+  <div class="flex justify-end">
+    <button id="signOutBtn" class="btn">Sign Out</button>
+  </div>
 </main>
 
+<!-- Loading overlay -->
 <div id="loadingOverlay" class="fixed inset-0 bg-[rgba(10,11,15,.85)] backdrop-blur-md hidden items-center justify-center z-50">
   <div class="text-[var(--gold)] text-sm">Loading your account…</div>
 </div>
@@ -68,7 +103,6 @@ import { onAuthStateChanged, signOut }
 import { doc, getDoc, collection, query, where, orderBy, onSnapshot } 
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const userLabel = document.getElementById("userLabel");
 const signOutBtn = document.getElementById("signOutBtn");
 const loadingOverlay = document.getElementById("loadingOverlay");
 const profileInfo = document.getElementById("profileInfo");
@@ -85,8 +119,6 @@ onAuthStateChanged(auth, async (user)=>{
     return;
   }
 
-  userLabel.textContent = user.displayName || user.email;
-
   // === Profile Info ===
   try {
     const uSnap = await getDoc(doc(db, "users", user.uid));
@@ -96,7 +128,7 @@ onAuthStateChanged(auth, async (user)=>{
         <p><strong>Name:</strong> ${d.displayName || user.displayName || "—"}</p>
         <p><strong>Email:</strong> ${d.email || user.email}</p>
         <p><strong>Role:</strong> ${d.role || "client"}</p>
-        <p><strong>Created:</strong> ${d.createdAt?.seconds ? new Date(d.createdAt.seconds*1000).toLocaleString() : "—"}</p>
+        <p><strong>Joined:</strong> ${d.createdAt?.seconds ? new Date(d.createdAt.seconds*1000).toLocaleString() : "—"}</p>
       `;
     } else {
       profileInfo.innerHTML = `<p class="text-[var(--muted)]">Profile not found.</p>`;
@@ -118,15 +150,17 @@ onAuthStateChanged(auth, async (user)=>{
       snap.forEach(docSnap=>{
         const d = docSnap.data();
         const date = d.createdAt?.seconds ? new Date(d.createdAt.seconds*1000).toLocaleString() : "—";
-        const items = (d.items||[]).map(it => `<li>${it.title || "Item"} × ${it.qty || 1}</li>`).join("");
+        const items = (d.items||[])
+          .map(it => `<li class='flex justify-between'><span>${it.title||"Item"}</span><span class='text-[var(--muted)]'>× ${it.qty||1}</span></li>`)
+          .join("");
         html.push(`
           <article class="border border-[var(--border)] rounded-xl p-4">
             <div class="flex justify-between items-center">
               <h3 class="font-semibold text-[var(--gold)]">Order #${docSnap.id.slice(-6)}</h3>
               <span class="text-xs text-[var(--muted)]">${date}</span>
             </div>
-            <ul class="mt-2 text-[var(--muted)]">${items}</ul>
-            <p class="mt-2 text-sm text-[var(--muted)]">Status: 
+            <ul class="mt-2 text-[var(--muted)] space-y-1">${items}</ul>
+            <p class="mt-3 text-sm text-[var(--muted)]">Status:
               <span class="text-[var(--gold)]">${d.status || "Pending"}</span>
             </p>
           </article>
