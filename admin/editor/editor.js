@@ -37,7 +37,7 @@ const jsTA = document.getElementById('jsEditor');
 let HTML, CSS, JS;
 let currentProjectId = null;
 let saveTimer = null;
-const AUTOSAVE_MS = 5000;
+const AUTOSAVE_MS = 100;
 
 // === AUTH ===
 onAuthStateChanged(auth, (user) => {
