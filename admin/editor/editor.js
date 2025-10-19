@@ -42,13 +42,11 @@ const AUTOSAVE_MS = 5000;
 // === AUTH ===
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    authBtn.textContent = "Sign out";
     authBtnMobile.textContent = "Sign out";
     guard.textContent = "Editor access granted.";
     area.classList.remove('hidden');
     loadProjects(user.uid);
   } else {
-    authBtn.textContent = "Sign in";
     authBtnMobile.textContent = "Sign in";
     guard.textContent = "Please sign in (top right).";
     area.classList.add('hidden');
