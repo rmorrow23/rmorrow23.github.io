@@ -133,9 +133,20 @@
 <section id="panel-promos" class="hidden"></section>
 <script>
 fetch("/assets/modules/promos.html")
-  .then(res=>res.text())
-  .then(html=>{
-    document.getElementById("panel-promos").innerHTML = html;
+  .then(res => res.text())
+  .then(html => {
+    const container = document.getElementById("panel-promos");
+    container.innerHTML = html;
+
+    // Re-run embedded scripts so the modal + logic initialize
+    container.querySelectorAll("script").forEach(oldScript => {
+      const s = document.createElement("script");
+      s.type = oldScript.type || "text/javascript";
+      if (oldScript.src) s.src = oldScript.src;
+      else s.textContent = oldScript.textContent;
+      document.body.appendChild(s);
+      oldScript.remove();
+    });
   });
 </script>
   <section id="panel-products" class="mt-6"></section>
