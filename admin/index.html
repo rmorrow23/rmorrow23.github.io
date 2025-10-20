@@ -237,7 +237,7 @@ fetch("/assets/modules/promos.html")
 
   // === Tabs ===
   const tabs=document.querySelectorAll('.tab');
-  const panels=['products','orders','users','projects','editor'].map(id=>document.getElementById('panel-'+id));
+  const panels=['products','orders','users','projects','editor','promos'].map(id=>document.getElementById('panel-'+id));
   tabs.forEach(t=>t.addEventListener('click',()=>{
     tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active');
     panels.forEach(p=>p.classList.toggle('hidden',p.id!=='panel-'+t.dataset.tab));
