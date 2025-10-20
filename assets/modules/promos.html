@@ -1,198 +1,280 @@
-<section id="promosTab" class="mt-6">
-  <div class="flex items-center justify-between mb-4">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    :root {
+      --bg:#000;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;
+      --gold:#d4af37;--border:rgba(255,255,255,0.08);
+    }
+    .glass{background:rgba(18,20,27,.8);backdrop-filter:saturate(140%) blur(14px);
+      border:1px solid var(--border);}
+    .btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;
+      border-radius:.6rem;transition:transform .15s,box-shadow .2s,background .2s}
+    .btn-primary{border-color:var(--gold);color:var(--gold)}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    input,select,textarea{
+      background:transparent!important;color:var(--gold)!important;
+      border:1px solid var(--border);border-radius:.5rem;padding:.5rem;width:100%}
+    input:focus,select:focus,textarea:focus{
+      outline:none;border-color:var(--gold);
+      box-shadow:0 0 0 2px rgba(212,175,55,.25)}
+    label{color:var(--gold)}
+    .toast{position:fixed;right:1rem;top:1rem;background:rgba(18,20,27,.92);
+      color:#e9eef8;border:1px solid var(--gold);border-radius:.75rem;
+      padding:.6rem .9rem;font-size:.9rem;backdrop-filter:blur(14px);z-index:9999;}
+    .modal-overlay{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);
+      backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;}
+    .modal{animation:fadeIn .25s ease;}
+    @keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+  </style>
+</head>
+<body>
+
+<section class="mt-6">
+  <div class="flex justify-between items-center mb-4">
     <h2 class="text-2xl font-serif text-[var(--gold)]">Promo Codes</h2>
-    <button id="newPromoBtn" class="btn btn-primary text-sm">New Promo</button>
-  </div>
-  <div id="promoList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-
-  <!-- === Modal === -->
-  <div id="promoModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="glass rounded-xl p-6 w-full max-w-lg relative">
-      <h3 id="promoModalTitle" class="text-xl font-semibold text-[var(--gold)]">Add Promo Code</h3>
-
-      <form id="promoForm" class="mt-4 space-y-4 text-sm">
-        <label>Code<input name="p_code" required class="w-full border border-[var(--border)] bg-transparent p-2 rounded"/></label>
-        <label>Description<input name="p_desc" class="w-full border border-[var(--border)] bg-transparent p-2 rounded"/></label>
-
-        <div class="grid grid-cols-2 gap-3">
-          <label>Type
-            <select name="p_type" class="w-full border border-[var(--border)] bg-transparent p-2 rounded">
-              <option value="percent">Percent</option>
-              <option value="amount">Amount ($)</option>
-            </select>
-          </label>
-          <label>Value<input name="p_amount" type="number" min="0" step="0.01" class="w-full border border-[var(--border)] bg-transparent p-2 rounded"/></label>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <label>Max Uses<input name="p_max" type="number" min="0" class="w-full border border-[var(--border)] bg-transparent p-2 rounded"/></label>
-          <label>Expires<input name="p_exp" type="date" class="w-full border border-[var(--border)] bg-transparent p-2 rounded"/></label>
-        </div>
-
-        <label class="block">Access</label>
-        <div class="flex flex-col gap-3">
-          <label class="flex items-center gap-2 text-sm">
-            <input type="radio" name="p_access" value="all" checked> Allow all users
-          </label>
-
-          <label class="flex items-start gap-2 text-sm">
-            <input type="radio" name="p_access" value="custom">
-            <div class="flex-1">
-              <div>Allow specific users only</div>
-
-              <div id="selectedUsers" class="flex flex-wrap gap-2 mt-2 mb-2"></div>
-
-              <input id="userSearch" type="text"
-                class="w-full p-2 rounded border border-[var(--border)] bg-transparent"
-                placeholder="Search users by name or email..." />
-
-              <div id="userResults"
-                class="mt-2 border border-[var(--border)] rounded-lg bg-[var(--surface)]/80 backdrop-blur-md hidden max-h-48 overflow-auto text-sm"></div>
-            </div>
-          </label>
-        </div>
-
-        <div class="flex justify-end gap-2 mt-6">
-          <button type="button" id="cancelPromo" class="btn">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save</button>
-        </div>
-      </form>
-    </div>
+    <button id="newPromoBtn" class="btn btn-primary">＋ New Promo</button>
   </div>
 
-  <script type="module">
-    import { db } from "/assets/js/firebase-init.js";
-    import {
-      doc, setDoc, deleteDoc, getDoc,
-      collection, onSnapshot, orderBy, query
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const promoList = document.getElementById("promoList");
-    const promoModal = document.getElementById("promoModal");
-    const newBtn = document.getElementById("newPromoBtn");
-    const cancelPromo = document.getElementById("cancelPromo");
-    const form = document.getElementById("promoForm");
-    const searchInput = document.getElementById("userSearch");
-    const resultsBox = document.getElementById("userResults");
-    const selectedBox = document.getElementById("selectedUsers");
-    let editId = null;
-    let selectedUsers = [];
-    let allUsers = [];
-
-    /* ===== Toast ===== */
-    function toast(msg){
-      const t=document.createElement("div");
-      t.className="toast";
-      t.textContent=msg;
-      document.body.appendChild(t);
-      setTimeout(()=>t.remove(),3000);
-    }
-
-    /* ===== Modal ===== */
-    newBtn.onclick = ()=> openModal();
-    cancelPromo.onclick = ()=> closeModal();
-    promoModal.addEventListener("click",e=>{if(e.target===promoModal)closeModal();});
-    function openModal(id=null){editId=id;promoModal.classList.remove("hidden");loadUsers();}
-    function closeModal(){promoModal.classList.add("hidden");form.reset();selectedUsers=[];renderSelectedUsers();}
-
-    /* ===== Firestore real-time promos list ===== */
-    const qPromos = query(collection(db,"promoCodes"),orderBy("createdAt","desc"));
-    onSnapshot(qPromos,snap=>{
-      if(snap.empty){promoList.innerHTML="<div class='text-[var(--muted)]'>No promo codes yet.</div>";return;}
-      const html=[];
-      snap.forEach(d=>{
-        const p=d.data();
-        html.push(`
-          <article class="glass p-4 rounded-xl">
-            <div class="flex justify-between items-center">
-              <h3 class="text-lg text-[var(--gold)] font-semibold">${d.id}</h3>
-              <button data-del="${d.id}" class="text-sm text-red-400">Delete</button>
-            </div>
-            <p class="text-sm text-[var(--muted)]">${p.description||""}</p>
-            <p class="text-sm mt-1">Value: ${p.amount}${p.discountType==="percent"?"%":"$"}</p>
-            <p class="text-xs text-[var(--muted)] mt-1">Mode: ${p.allowedUsersMode}</p>
-          </article>`);
-      });
-      promoList.innerHTML=html.join("");
-      promoList.querySelectorAll("[data-del]").forEach(b=>{
-        b.onclick=async()=>{if(!confirm("Delete this promo?"))return;await deleteDoc(doc(db,"promoCodes",b.dataset.del));toast("Deleted");};
-      });
-    });
-
-    /* ===== Real-time users ===== */
-    import { onSnapshot as userSnap, collection as colUsers } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    function loadUsers(){
-      if(window.unsubUsers) window.unsubUsers();
-      window.unsubUsers = userSnap(colUsers(db,"users"),snap=>{
-        allUsers = snap.docs.map(d=>({uid:d.id,name:d.data().displayName||"Unnamed",email:d.data().email||"—"}));
-      });
-    }
-
-    /* ===== Search users ===== */
-    searchInput.addEventListener("input", e=>{
-      const term=e.target.value.trim().toLowerCase();
-      if(!term){resultsBox.classList.add("hidden");return;}
-      const matches = allUsers.filter(u=>u.name.toLowerCase().includes(term)||u.email.toLowerCase().includes(term));
-      if(matches.length===0){
-        resultsBox.innerHTML="<div class='p-2 text-[var(--muted)]'>No users found</div>";
-      }else{
-        resultsBox.innerHTML=matches.map(u=>`
-          <div data-uid="${u.uid}" class="p-2 hover:bg-[var(--gold)]/10 cursor-pointer border-b border-[var(--border)]">
-            <strong>${u.name}</strong><br><span class="text-xs text-[var(--muted)]">${u.email}</span>
-          </div>`).join("");
-      }
-      resultsBox.classList.remove("hidden");
-      resultsBox.querySelectorAll("[data-uid]").forEach(el=>{
-        el.onclick=()=>{
-          const uid=el.dataset.uid;
-          if(selectedUsers.some(s=>s.uid===uid))return;
-          const u=allUsers.find(x=>x.uid===uid);
-          selectedUsers.push(u);renderSelectedUsers();
-          searchInput.value="";resultsBox.classList.add("hidden");
-        };
-      });
-    });
-
-    function renderSelectedUsers(){
-      selectedBox.innerHTML = selectedUsers.map(u=>`
-        <span class="flex items-center gap-2 bg-[var(--gold)]/15 border border-[var(--gold)] px-3 py-1 rounded-full text-sm">
-          ${u.name}
-          <button data-remove="${u.uid}" class="text-[var(--gold)] text-xs font-bold hover:text-red-400">✕</button>
-        </span>`).join("");
-      selectedBox.querySelectorAll("[data-remove]").forEach(b=>{
-        b.onclick=()=>{selectedUsers=selectedUsers.filter(x=>x.uid!==b.dataset.remove);renderSelectedUsers();};
-      });
-    }
-
-    document.querySelectorAll("[name='p_access']").forEach(r=>{
-      r.addEventListener("change",e=>{
-        const custom=e.target.value==="custom";
-        searchInput.disabled=!custom;
-        resultsBox.classList.add("hidden");
-        if(!custom){selectedUsers=[];renderSelectedUsers();}
-      });
-    });
-
-    /* ===== Save promo ===== */
-    form.addEventListener("submit", async e=>{
-      e.preventDefault();
-      const f=e.target;
-      const code=f.p_code.value.trim().toUpperCase();
-      const mode=f.p_access.value;
-      const data={
-        description:f.p_desc.value,
-        discountType:f.p_type.value,
-        amount:Number(f.p_amount.value),
-        maxUses:Number(f.p_max.value||0),
-        expiresAt:f.p_exp.value?new Date(f.p_exp.value).toISOString():null,
-        allowedUsersMode:mode,
-        allowedUsers:mode==="custom"?selectedUsers.map(u=>u.uid):[],
-        active:true,
-        updatedAt:new Date().toISOString(),
-      };
-      if(!editId)data.createdAt=new Date().toISOString();
-      await setDoc(doc(db,"promoCodes",code),data,{merge:true});
-      toast("Saved");closeModal();
-    });
-  </script>
+  <div id="promosList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
 </section>
+
+<!-- Modal -->
+<div id="promoModal" class="modal-overlay">
+  <div class="glass rounded-2xl p-6 w-full max-w-lg modal">
+    <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Add Promo Code</h2>
+    <form id="promoForm" class="space-y-4">
+      <label>Code<input id="p_code" placeholder="e.g. FRIENDS20" required></label>
+      <label>Description<input id="p_desc" placeholder="Short description"></label>
+
+      <div class="grid grid-cols-2 gap-3">
+        <label>Type
+          <select id="p_type">
+            <option value="percent">Percent</option>
+            <option value="amount">Amount</option>
+          </select>
+        </label>
+        <label>Value<input id="p_value" type="number" step="0.01" placeholder="e.g. 20" required></label>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <label>Max Uses<input id="p_max" type="number" min="1" placeholder="Unlimited"></label>
+        <label>Expires<input id="p_expires" type="date"></label>
+      </div>
+
+      <div>
+        <span class="block mb-2 font-medium">Access</span>
+        <label class="flex items-center gap-2 text-sm mb-2">
+          <input type="radio" name="p_access" value="all" checked>
+          <span>Allow all users</span>
+        </label>
+
+        <label class="flex items-start gap-2 text-sm">
+          <input type="radio" name="p_access" value="custom">
+          <div class="flex-1">
+            <div>Allow specific users only</div>
+
+            <!-- Real-time user list -->
+            <div id="userListBox" class="hidden mt-3 border border-[var(--border)] rounded-lg bg-[var(--surface)]/80 backdrop-blur-md max-h-60 overflow-auto p-2">
+              <div id="userList" class="flex flex-col gap-2 text-sm"></div>
+            </div>
+
+            <!-- Selected chips -->
+            <div id="selectedUsers" class="flex flex-wrap gap-2 mt-3"></div>
+          </div>
+        </label>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3">
+        <button type="button" id="cancelPromo" class="btn">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { db } from "/assets/js/firebase-init.js";
+import {
+  collection, addDoc, query, orderBy, onSnapshot,
+  doc, deleteDoc, onSnapshot as userSnap, collectionGroup
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const promosList = document.getElementById("promosList");
+const promoModal = document.getElementById("promoModal");
+const promoForm = document.getElementById("promoForm");
+const newPromoBtn = document.getElementById("newPromoBtn");
+const cancelPromo = document.getElementById("cancelPromo");
+const userList = document.getElementById("userList");
+const userListBox = document.getElementById("userListBox");
+const selectedUsersBox = document.getElementById("selectedUsers");
+
+let allUsers=[], selectedUsers=[];
+
+/* ===== Helpers ===== */
+function showToast(msg){
+  const t=document.createElement('div');
+  t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+}
+function openModal(){promoModal.style.display="flex";}
+function closeModal(){promoModal.style.display="none";promoForm.reset();selectedUsers=[];renderSelectedUsers();}
+
+/* ===== Real-time Promos with Use Count ===== */
+function bindPromos(){
+  const q=query(collection(db,"promos"),orderBy("createdAt","desc"));
+  onSnapshot(q,snap=>{
+    if(snap.empty){
+      promosList.innerHTML=`<div class='glass p-6 text-[var(--muted)] rounded-xl'>No promo codes yet.</div>`;
+      return;
+    }
+    promosList.innerHTML="";
+    snap.forEach(docSnap=>{
+      const d=docSnap.data();
+      const id=docSnap.id;
+      const expires = d.expires ? new Date(d.expires).toLocaleDateString() : "—";
+      const card=document.createElement("article");
+      card.className="glass rounded-xl p-5 flex flex-col justify-between";
+      card.innerHTML=`
+        <div>
+          <h3 class="text-lg font-semibold text-[var(--gold)]">${d.code}</h3>
+          <p class="text-sm text-[var(--muted)]">${d.description||""}</p>
+          <p class="mt-1 text-sm">Type: ${d.type} | Value: ${d.value}</p>
+          <p class="text-sm">Max Uses: ${d.maxUses||"Unlimited"}</p>
+          <p class="text-sm">Expires: ${expires}</p>
+          <p class="text-sm">Access: ${d.access==="all"?"All users":`${(d.allowedUsers||[]).length} users`}</p>
+          <p id="uses-${id}" class="text-sm mt-2 text-[var(--gold)]">Uses: loading…</p>
+        </div>
+        <button data-id="${id}" class="btn mt-4">Delete</button>
+      `;
+      promosList.appendChild(card);
+      card.querySelector("[data-id]").onclick=()=>deletePromo(id);
+      bindUseCount(id,d.maxUses);
+    });
+  });
+}
+
+/* ===== Track uses per promo ===== */
+function bindUseCount(promoId,maxUses){
+  const usesEl=document.getElementById(`uses-${promoId}`);
+  const usesRef=collection(db,"promos",promoId,"uses");
+  onSnapshot(usesRef,snap=>{
+    const usedCount=snap.size;
+    const maxText=maxUses?` / ${maxUses}`:" / Unlimited";
+    usesEl.textContent=`Uses: ${usedCount}${maxText}`;
+  });
+}
+
+/* ===== Add Promo ===== */
+promoForm.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const code = document.getElementById("p_code").value.trim();
+  const desc = document.getElementById("p_desc").value.trim();
+  const type = document.getElementById("p_type").value;
+  const value = parseFloat(document.getElementById("p_value").value||0);
+  const max = parseInt(document.getElementById("p_max").value||0);
+  const expires = document.getElementById("p_expires").value||null;
+  const access = document.querySelector("[name='p_access']:checked").value;
+
+  try{
+    await addDoc(collection(db,"promos"),{
+      code, description:desc, type, value, maxUses:max||null,
+      expires:expires?new Date(expires).toISOString():null,
+      access, allowedUsers:access==="custom"?selectedUsers:[],
+      createdAt:new Date()
+    });
+    showToast("Promo added!");
+    closeModal();
+  }catch(err){
+    console.error(err);
+    showToast("Error saving promo");
+  }
+});
+
+/* ===== Delete Promo ===== */
+async function deletePromo(id){
+  if(!confirm("Delete this promo?"))return;
+  try{
+    await deleteDoc(doc(db,"promos",id));
+    showToast("Promo deleted");
+  }catch(err){
+    console.error(err);
+    showToast("Error deleting promo");
+  }
+}
+
+/* ===== Users (Real-time) ===== */
+function loadUsers(){
+  if(window.unsubUsers) window.unsubUsers();
+  window.unsubUsers = userSnap(collection(db,"users"),snap=>{
+    allUsers = snap.docs.map(d=>({uid:d.id,name:d.data().displayName||"Unnamed",email:d.data().email||"—"}));
+    renderUserList();
+  });
+}
+
+function renderUserList(){
+  if(allUsers.length===0){
+    userList.innerHTML=`<div class="text-[var(--muted)] text-center py-3">No users found.</div>`;
+    return;
+  }
+  userList.innerHTML=allUsers.map(u=>{
+    const checked = selectedUsers.some(s=>s.uid===u.uid);
+    return `
+      <label class="flex items-center justify-between border-b border-[var(--border)] px-2 py-1 last:border-none cursor-pointer hover:bg-[var(--gold)]/10 rounded">
+        <div>
+          <span class="font-medium text-[var(--gold)]">${u.name}</span><br>
+          <span class="text-xs text-[var(--muted)]">${u.email}</span>
+        </div>
+        <input type="checkbox" data-uid="${u.uid}" ${checked?"checked":""} class="accent-[var(--gold)]">
+      </label>`;
+  }).join("");
+  userList.querySelectorAll("[data-uid]").forEach(cb=>{
+    cb.onchange=()=>{
+      const uid=cb.dataset.uid;
+      const user=allUsers.find(x=>x.uid===uid);
+      if(cb.checked){
+        if(!selectedUsers.some(s=>s.uid===uid)) selectedUsers.push(user);
+      }else{
+        selectedUsers=selectedUsers.filter(x=>x.uid!==uid);
+      }
+      renderSelectedUsers();
+    };
+  });
+}
+
+function renderSelectedUsers(){
+  selectedUsersBox.innerHTML = selectedUsers.map(u=>`
+    <span class="flex items-center gap-2 bg-[var(--gold)]/15 border border-[var(--gold)] px-3 py-1 rounded-full text-sm">
+      ${u.name}
+      <button data-remove="${u.uid}" class="text-[var(--gold)] text-xs font-bold hover:text-red-400">✕</button>
+    </span>`).join("");
+  selectedUsersBox.querySelectorAll("[data-remove]").forEach(b=>{
+    b.onclick=()=>{
+      selectedUsers=selectedUsers.filter(x=>x.uid!==b.dataset.remove);
+      renderUserList();renderSelectedUsers();
+    };
+  });
+}
+
+/* ===== Access Mode Toggle ===== */
+document.querySelectorAll("[name='p_access']").forEach(r=>{
+  r.addEventListener("change", e=>{
+    const custom = e.target.value==="custom";
+    userListBox.classList.toggle("hidden",!custom);
+    if(custom) loadUsers(); else selectedUsers=[];
+    renderSelectedUsers();
+  });
+});
+
+/* ===== Modal Triggers ===== */
+newPromoBtn.onclick=openModal;
+cancelPromo.onclick=closeModal;
+
+/* ===== Init ===== */
+bindPromos();
+</script>
+
+</body>
+</html>
