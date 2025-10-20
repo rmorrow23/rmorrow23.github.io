@@ -62,6 +62,9 @@
       display: none;
       align-items: center;
       justify-content: center;
+      max-height: 95%;
+      padding: -5rem;
+      overflow-y:scroll;
     }
     .modal {
       animation: fadeIn .25s ease;
@@ -82,8 +85,8 @@
       width: 85%;
       justify-self: center;
     }
-    #userListBox::-webkit-scrollbar { width: 6px; }
-    #userListBox::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+    #userListBox::-webkit-scrollbar, .modal-overlay::-webkit-scrollbar { width: 6px; }
+    #userListBox::-webkit-scrollbar-thumb, .modal-overlay::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
 
     /* User cards */
     .userCard {
