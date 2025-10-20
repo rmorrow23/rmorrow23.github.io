@@ -66,6 +66,11 @@
       font-size:1.6rem;box-shadow:0 6px 24px rgba(0,0,0,.45);
       backdrop-filter:blur(14px);transition:transform .2s,box-shadow .2s;z-index:40}
     .fab:hover{transform:scale(1.05);box-shadow:0 8px 28px rgba(0,0,0,.55)}
+    #productModal{
+    position: absolute;
+    top:0px;
+    left:0px;
+    }
   </style>
 </head>
 <body class="min-h-screen selection:bg-[var(--gold)]/20">
@@ -180,7 +185,7 @@ fetch("/assets/modules/promos.html")
 <button id="addFab" class="fab" title="+ Add Product" style="display:none;">＋</button>
 
 <!-- Add / Edit Product Modal -->
-<div id="productModal" class="modal-overlay">
+<div id="productModal" class="modal-overlay" style="display:none;">
   <div class="mx-auto modal glass card p-6 rounded-2xl mt-20">
     <div class="flex items-center justify-between">
       <h2 id="modalTitle" class="text-2xl font-serif text-[var(--gold)]">Add Product</h2>
