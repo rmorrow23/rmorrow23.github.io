@@ -49,15 +49,15 @@
       width: 500px; /* bigger logo */
       height: auto;
       opacity: 0;
+      margin-left: 20px;
       animation: logoFade 2s ease forwards;
       filter: drop-shadow(0 0 25px rgba(212,175,55,0.5));
     }
 
-    h1 {
+    #headMaint {
       color: var(--gold);
-      font-size: 3.2rem;
+      font-size: 2.0rem;
       margin-top: 1.5rem;
-      font-weight: 600;
       letter-spacing: 1px;
       animation: textFade 2s ease 0.3s forwards;
       opacity: 0;
@@ -79,8 +79,8 @@
     }
 
     @keyframes logoFade {
-      from { opacity: 0; transform: translateY(-20px) scale(0.95); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      from { opacity: 0; transform: translateY(-20px) scale(0); }
+      to { opacity: 1; transform: translateY(0px) scale(1); }
     }
 
     @keyframes textFade {
@@ -95,7 +95,7 @@
 
   <div class="content">
     <img src="/morIcon.png" alt="Morrow Industries Logo" class="logo" />
-    <h1>Under Maintenance</h1>
+    <h2 id="headMaint">Under Maintenance</h2>
     <p>We’re enhancing our systems to serve you better.<br>
        Please check back soon — thank you for your patience.</p>
   </div>
