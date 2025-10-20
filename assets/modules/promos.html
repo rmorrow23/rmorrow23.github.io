@@ -75,7 +75,12 @@
     /* User list */
     #userListBox {
       border-radius: 1rem;
-      overflow-y: auto;
+      margin:-5px;
+      justify-items: center;
+    }
+    #userSearch {
+      width: 85%;
+      justify-self: center;
     }
     #userListBox::-webkit-scrollbar { width: 6px; }
     #userListBox::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
@@ -160,13 +165,13 @@
         </label>
 
         <label class="flex items-start gap-2 text-sm">
-          <input type="radio" name="p_access" value="custom" style="width: 15px; height: 15px;">          
+          <input type="radio" name="p_access" value="custom" style="width: 15px; height: 15px;">
+          <span>Allow specific users only</span>          
         </label>
-        <div class="flex-1" >
-            <span>Allow specific users only</span>
+        <div class="flex-1" >      
 
             <!-- User list -->
-            <div id="userListBox" class="hidden mt-3 border border-[var(--border)] rounded-xl bg-[var(--surface)]/70 backdrop-blur-md p-3 space-y-2" style="overflow: scroll; max-height: 25vh;">
+            <div id="userListBox" class="hidden mt-3 border border-[var(--border)] rounded-xl bg-[var(--surface)]/70 backdrop-blur-md p-3 space-y-2" style="overflow-y: scroll; max-height: 25vh;">
               <input id="userSearch" type="text"
                 placeholder="Search users..."
                 class="w-full mb-3 p-2 rounded bg-transparent border border-[var(--border)] text-[var(--gold)] text-sm focus:border-[var(--gold)] outline-none" style="overflow: scroll;">
