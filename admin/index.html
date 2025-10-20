@@ -126,10 +126,18 @@
     <button class="tab active" data-tab="products">Products</button>
     <button class="tab" data-tab="orders">Orders</button>
     <button class="tab" data-tab="users">Users</button>
+<button class="tab" data-tab="promos">Promos</button>
     <button class="tab" data-tab="projects">Projects</button>
     <button class="tab" data-tab="editor">Code Editor</button>
   </div>
-
+<section id="panel-promos" class="hidden"></section>
+<script>
+fetch("/assets/modules/promos.html")
+  .then(res=>res.text())
+  .then(html=>{
+    document.getElementById("panel-promos").innerHTML = html;
+  });
+</script>
   <section id="panel-products" class="mt-6"></section>
   <section id="panel-orders" class="mt-6 hidden"></section>
   <section id="panel-users" class="mt-6 hidden"></section>
