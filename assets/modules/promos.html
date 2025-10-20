@@ -1,0 +1,198 @@
+<section id="promosTab" class="mt-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-2xl font-serif text-[var(--gold)]">Promo Codes</h2>
+    <button id="newPromoBtn" class="btn btn-primary text-sm">New Promo</button>
+  </div>
+  <div id="promoList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+  <!-- === Modal === -->
+  <div id="promoModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="glass rounded-xl p-6 w-full max-w-lg relative">
+      <h3 id="promoModalTitle" class="text-xl font-semibold text-[var(--gold)]">Add Promo Code</h3>
+
+      <form id="promoForm" class="mt-4 space-y-4 text-sm">
+        <label>Code<input name="p_code" required class="w-full border border-[var(--border)] bg-transparent p-2 rounded"/></label>
+        <label>Description<input name="p_desc" class="w-full border border-[var(--border)] bg-transparent p-2 rounded"/></label>
+
+        <div class="grid grid-cols-2 gap-3">
+          <label>Type
+            <select name="p_type" class="w-full border border-[var(--border)] bg-transparent p-2 rounded">
+              <option value="percent">Percent</option>
+              <option value="amount">Amount ($)</option>
+            </select>
+          </label>
+          <label>Value<input name="p_amount" type="number" min="0" step="0.01" class="w-full border border-[var(--border)] bg-transparent p-2 rounded"/></label>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <label>Max Uses<input name="p_max" type="number" min="0" class="w-full border border-[var(--border)] bg-transparent p-2 rounded"/></label>
+          <label>Expires<input name="p_exp" type="date" class="w-full border border-[var(--border)] bg-transparent p-2 rounded"/></label>
+        </div>
+
+        <label class="block">Access</label>
+        <div class="flex flex-col gap-3">
+          <label class="flex items-center gap-2 text-sm">
+            <input type="radio" name="p_access" value="all" checked> Allow all users
+          </label>
+
+          <label class="flex items-start gap-2 text-sm">
+            <input type="radio" name="p_access" value="custom">
+            <div class="flex-1">
+              <div>Allow specific users only</div>
+
+              <div id="selectedUsers" class="flex flex-wrap gap-2 mt-2 mb-2"></div>
+
+              <input id="userSearch" type="text"
+                class="w-full p-2 rounded border border-[var(--border)] bg-transparent"
+                placeholder="Search users by name or email..." />
+
+              <div id="userResults"
+                class="mt-2 border border-[var(--border)] rounded-lg bg-[var(--surface)]/80 backdrop-blur-md hidden max-h-48 overflow-auto text-sm"></div>
+            </div>
+          </label>
+        </div>
+
+        <div class="flex justify-end gap-2 mt-6">
+          <button type="button" id="cancelPromo" class="btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from "/assets/js/firebase-init.js";
+    import {
+      doc, setDoc, deleteDoc, getDoc,
+      collection, onSnapshot, orderBy, query
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const promoList = document.getElementById("promoList");
+    const promoModal = document.getElementById("promoModal");
+    const newBtn = document.getElementById("newPromoBtn");
+    const cancelPromo = document.getElementById("cancelPromo");
+    const form = document.getElementById("promoForm");
+    const searchInput = document.getElementById("userSearch");
+    const resultsBox = document.getElementById("userResults");
+    const selectedBox = document.getElementById("selectedUsers");
+    let editId = null;
+    let selectedUsers = [];
+    let allUsers = [];
+
+    /* ===== Toast ===== */
+    function toast(msg){
+      const t=document.createElement("div");
+      t.className="toast";
+      t.textContent=msg;
+      document.body.appendChild(t);
+      setTimeout(()=>t.remove(),3000);
+    }
+
+    /* ===== Modal ===== */
+    newBtn.onclick = ()=> openModal();
+    cancelPromo.onclick = ()=> closeModal();
+    promoModal.addEventListener("click",e=>{if(e.target===promoModal)closeModal();});
+    function openModal(id=null){editId=id;promoModal.classList.remove("hidden");loadUsers();}
+    function closeModal(){promoModal.classList.add("hidden");form.reset();selectedUsers=[];renderSelectedUsers();}
+
+    /* ===== Firestore real-time promos list ===== */
+    const qPromos = query(collection(db,"promoCodes"),orderBy("createdAt","desc"));
+    onSnapshot(qPromos,snap=>{
+      if(snap.empty){promoList.innerHTML="<div class='text-[var(--muted)]'>No promo codes yet.</div>";return;}
+      const html=[];
+      snap.forEach(d=>{
+        const p=d.data();
+        html.push(`
+          <article class="glass p-4 rounded-xl">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg text-[var(--gold)] font-semibold">${d.id}</h3>
+              <button data-del="${d.id}" class="text-sm text-red-400">Delete</button>
+            </div>
+            <p class="text-sm text-[var(--muted)]">${p.description||""}</p>
+            <p class="text-sm mt-1">Value: ${p.amount}${p.discountType==="percent"?"%":"$"}</p>
+            <p class="text-xs text-[var(--muted)] mt-1">Mode: ${p.allowedUsersMode}</p>
+          </article>`);
+      });
+      promoList.innerHTML=html.join("");
+      promoList.querySelectorAll("[data-del]").forEach(b=>{
+        b.onclick=async()=>{if(!confirm("Delete this promo?"))return;await deleteDoc(doc(db,"promoCodes",b.dataset.del));toast("Deleted");};
+      });
+    });
+
+    /* ===== Real-time users ===== */
+    import { onSnapshot as userSnap, collection as colUsers } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    function loadUsers(){
+      if(window.unsubUsers) window.unsubUsers();
+      window.unsubUsers = userSnap(colUsers(db,"users"),snap=>{
+        allUsers = snap.docs.map(d=>({uid:d.id,name:d.data().displayName||"Unnamed",email:d.data().email||"—"}));
+      });
+    }
+
+    /* ===== Search users ===== */
+    searchInput.addEventListener("input", e=>{
+      const term=e.target.value.trim().toLowerCase();
+      if(!term){resultsBox.classList.add("hidden");return;}
+      const matches = allUsers.filter(u=>u.name.toLowerCase().includes(term)||u.email.toLowerCase().includes(term));
+      if(matches.length===0){
+        resultsBox.innerHTML="<div class='p-2 text-[var(--muted)]'>No users found</div>";
+      }else{
+        resultsBox.innerHTML=matches.map(u=>`
+          <div data-uid="${u.uid}" class="p-2 hover:bg-[var(--gold)]/10 cursor-pointer border-b border-[var(--border)]">
+            <strong>${u.name}</strong><br><span class="text-xs text-[var(--muted)]">${u.email}</span>
+          </div>`).join("");
+      }
+      resultsBox.classList.remove("hidden");
+      resultsBox.querySelectorAll("[data-uid]").forEach(el=>{
+        el.onclick=()=>{
+          const uid=el.dataset.uid;
+          if(selectedUsers.some(s=>s.uid===uid))return;
+          const u=allUsers.find(x=>x.uid===uid);
+          selectedUsers.push(u);renderSelectedUsers();
+          searchInput.value="";resultsBox.classList.add("hidden");
+        };
+      });
+    });
+
+    function renderSelectedUsers(){
+      selectedBox.innerHTML = selectedUsers.map(u=>`
+        <span class="flex items-center gap-2 bg-[var(--gold)]/15 border border-[var(--gold)] px-3 py-1 rounded-full text-sm">
+          ${u.name}
+          <button data-remove="${u.uid}" class="text-[var(--gold)] text-xs font-bold hover:text-red-400">✕</button>
+        </span>`).join("");
+      selectedBox.querySelectorAll("[data-remove]").forEach(b=>{
+        b.onclick=()=>{selectedUsers=selectedUsers.filter(x=>x.uid!==b.dataset.remove);renderSelectedUsers();};
+      });
+    }
+
+    document.querySelectorAll("[name='p_access']").forEach(r=>{
+      r.addEventListener("change",e=>{
+        const custom=e.target.value==="custom";
+        searchInput.disabled=!custom;
+        resultsBox.classList.add("hidden");
+        if(!custom){selectedUsers=[];renderSelectedUsers();}
+      });
+    });
+
+    /* ===== Save promo ===== */
+    form.addEventListener("submit", async e=>{
+      e.preventDefault();
+      const f=e.target;
+      const code=f.p_code.value.trim().toUpperCase();
+      const mode=f.p_access.value;
+      const data={
+        description:f.p_desc.value,
+        discountType:f.p_type.value,
+        amount:Number(f.p_amount.value),
+        maxUses:Number(f.p_max.value||0),
+        expiresAt:f.p_exp.value?new Date(f.p_exp.value).toISOString():null,
+        allowedUsersMode:mode,
+        allowedUsers:mode==="custom"?selectedUsers.map(u=>u.uid):[],
+        active:true,
+        updatedAt:new Date().toISOString(),
+      };
+      if(!editId)data.createdAt=new Date().toISOString();
+      await setDoc(doc(db,"promoCodes",code),data,{merge:true});
+      toast("Saved");closeModal();
+    });
+  </script>
+</section>
