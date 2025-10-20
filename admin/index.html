@@ -125,7 +125,21 @@
 <script>
   fetch("/assets/modules/maintenance-toggle.html")
     .then(res => res.text())
-    .then(html => document.getElementById("maintenance-module").innerHTML = html);
+    .then(html => {
+      const container = document.getElementById("maintenance-module");
+      container.innerHTML = html;
+
+      // ✅ Re-execute all scripts in the loaded module
+      container.querySelectorAll("script").forEach(oldScript => {
+        const s = document.createElement("script");
+        s.type = oldScript.type || "text/javascript";
+        if (oldScript.src) s.src = oldScript.src; // external scripts
+        else s.textContent = oldScript.textContent; // inline scripts
+        document.body.appendChild(s);
+        oldScript.remove();
+      });
+    })
+    .catch(err => console.error("Error loading maintenance module:", err));
 </script>
   <div class="mt-6 flex flex-wrap gap-2">
     <button class="tab active" data-tab="products">Products</button>
