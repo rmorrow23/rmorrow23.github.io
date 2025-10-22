@@ -11,33 +11,56 @@
       --bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;
       --gold:#d4af37;--border:rgba(255,255,255,0.08);
     }
-    body {background:var(--bg);color:var(--text)}
-    .glass {background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border);}
-    .btn {border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease;}
-    .btn-primary {border-color:var(--gold);}
+    body {background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;}
+    .glass {
+      background:rgba(18,20,27,.6);
+      backdrop-filter:saturate(140%) blur(14px);
+      border:1px solid var(--border);
+    }
+    .btn {
+      border:1px solid var(--border);
+      color:var(--text);
+      padding:.6rem .9rem;
+      border-radius:.6rem;
+      transition:transform .15s,box-shadow .2s,background .2s;
+    }
+    .btn-primary {border-color:var(--gold);color:var(--gold);}
     .btn:hover {transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35);}
-    .toast {position:fixed;right:1.25rem;top:1.25rem;background:rgba(18,20,27,.85);color:#e9eef8;border:1px solid var(--gold);border-radius:.75rem;padding:.6rem .9rem;font-size:.9rem;backdrop-filter:blur(14px);box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:9999;animation:fadeIn .2s ease;}
+    .toast {
+      position:fixed;right:1.25rem;top:1.25rem;
+      background:rgba(18,20,27,.85);color:#e9eef8;
+      border:1px solid var(--gold);border-radius:.75rem;
+      padding:.6rem .9rem;font-size:.9rem;
+      backdrop-filter:blur(14px);box-shadow:0 4px 16px rgba(0,0,0,.4);
+      z-index:9999;animation:fadeIn .2s ease;
+    }
     @keyframes fadeIn {from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-    .item {border:1px solid var(--border);border-radius:.75rem;padding:1rem;display:flex;gap:1rem;align-items:center;}
-    .item img {width:80px;height:80px;object-fit:cover;border-radius:.5rem;}
-    #loadingOverlay {position:fixed;inset:0;z-index:200;background:rgba(10,11,15,.85);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;}
-    .spinner {width:56px;height:56px;border-radius:50%;border:3px solid rgba(212,175,55,.25);border-top-color:var(--gold);animation:spin .8s linear infinite;}
+    .item {border:1px solid var(--border);border-radius:.75rem;padding:1rem;display:flex;gap:1rem;align-items:center}
+    .item img {width:80px;height:80px;object-fit:cover;border-radius:.5rem}
+    #loadingOverlay {
+      position:fixed;inset:0;z-index:200;background:rgba(10,11,15,.85);
+      backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;
+    }
+    .spinner {
+      width:56px;height:56px;border-radius:50%;
+      border:3px solid rgba(212,175,55,.25);
+      border-top-color:var(--gold);
+      animation:spin .8s linear infinite;
+    }
     @keyframes spin {to{transform:rotate(360deg)}}
-    input[type="text"] {background:transparent;border:1px solid var(--border);border-radius:.5rem;padding:.5rem;color:var(--gold);width:100%;text-align:center;}
+    input[type="text"] {
+      background:transparent;border:1px solid var(--border);
+      border-radius:.5rem;padding:.5rem;color:var(--gold);
+      width:100%;text-align:center;
+    }
     input[type="text"]:focus {outline:none;border-color:var(--gold);}
   </style>
 </head>
 
 <body class="min-h-screen selection:bg-[var(--gold)]/20">
-<header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
-  <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-    <a href="/" class="font-serif text-xl tracking-wide text-[var(--gold)]">Morrow Industries</a>
-    <div class="flex items-center gap-3">
-      <span id="userLabel" class="hidden sm:inline text-sm text-[var(--muted)]"></span>
-      <button id="authBtn" class="btn">Sign in</button>
-    </div>
-  </div>
-</header>
+
+<!-- Navbar container -->
+<div id="navbar-container"></div>
 
 <!-- Loading overlay -->
 <div id="loadingOverlay" class="flex">
@@ -72,16 +95,36 @@
   </div>
 </main>
 
-<!-- Toasts -->
 <script>
   function showToast(m){
     const t=document.createElement('div');t.className='toast';t.textContent=m;
     document.body.appendChild(t);setTimeout(()=>t.remove(),4000);
   }
-  function setLoading(v){document.getElementById('loadingOverlay').style.display=v?'flex':'none';}
+  function setLoading(v){
+    document.getElementById('loadingOverlay').style.display=v?'flex':'none';
+  }
+
+  // === Universal module loader (executes scripts) ===
+  async function loadModule(targetSelector, url){
+    const target=document.querySelector(targetSelector);
+    if(!target)return console.error("Target not found:",targetSelector);
+    const html=await(await fetch(url,{cache:"no-store"})).text();
+    target.innerHTML=html;
+    const scripts=Array.from(target.querySelectorAll("script"));
+    for(const oldS of scripts){
+      const s=document.createElement("script");
+      if(oldS.type)s.type=oldS.type;
+      if(oldS.getAttribute("type")==="module")s.type="module";
+      if(oldS.src)s.src=oldS.src;else s.textContent=oldS.textContent;
+      document.body.appendChild(s);
+    }
+  }
+
+  // Load Navbar
+  loadModule("#navbar-container","/assets/modules/navbar.html")
+    .catch(err=>console.error("Navbar load failed:",err));
 </script>
 
-<!-- === FIREBASE & CART LOGIC === -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -90,6 +133,7 @@ import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc
 const firebaseConfig={
   apiKey:"AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
   authDomain:"morrow-industries.firebaseapp.com",
+  databaseURL:"https://morrow-industries-default-rtdb.firebaseio.com",
   projectId:"morrow-industries",
   storageBucket:"morrow-industries.appspot.com",
   messagingSenderId:"75190213345",
@@ -106,35 +150,21 @@ const finalTotalEl=document.getElementById('finalTotal');
 const discountLine=document.getElementById('discountLine');
 const discountAmountEl=document.getElementById('discountAmount');
 const cartSummary=document.getElementById('cartSummary');
-const authBtn=document.getElementById('authBtn');
-const userLabel=document.getElementById('userLabel');
-const placeOrderBtn=document.getElementById('placeOrderBtn');
 const promoInput=document.getElementById('promoInput');
 const applyPromoBtn=document.getElementById('applyPromoBtn');
 const promoFeedback=document.getElementById('promoFeedback');
+const placeOrderBtn=document.getElementById('placeOrderBtn');
 
 let cartTotal=0, appliedPromo=null, discountValue=0;
 
+// === Auth ===
 onAuthStateChanged(auth,u=>{
-  if(u){
-    userLabel.textContent=u.displayName||u.email;
-    authBtn.textContent="Sign out";
-    loadCart(u);
-  }else{
-    userLabel.textContent="";
-    authBtn.textContent="Sign in";
+  if(u){loadCart(u);}else{
     cartList.innerHTML="<p class='text-[var(--muted)]'>Please sign in to view your cart.</p>";
     cartSummary.classList.add('hidden');
   }
 });
 
-authBtn.addEventListener('click',async()=>{
-  const u=auth.currentUser;
-  if(u)await signOut(auth);
-  else await signInWithPopup(auth,provider).catch(e=>console.error(e));
-});
-
-/* === Load Cart === */
 async function loadCart(user){
   const cRef=collection(db,"users",user.uid,"cart");
   onSnapshot(cRef,snap=>{
@@ -170,9 +200,8 @@ async function loadCart(user){
   });
 }
 
-/* === Promo Code === */
+// === Promo ===
 applyPromoBtn.addEventListener('click',()=>applyPromo());
-
 async function applyPromo(){
   const code=promoInput.value.trim().toUpperCase();
   const user=auth.currentUser;
@@ -187,21 +216,12 @@ async function applyPromo(){
       if(data.code.toUpperCase()===code)found={id:d.id,...data};
     });
     if(!found)return showFeedback("Invalid promo code.",false);
-
-    if(found.expires && new Date(found.expires)<new Date()){
-      return showFeedback("This promo code has expired.",false);
-    }
-
+    if(found.expires && new Date(found.expires)<new Date())return showFeedback("This promo has expired.",false);
     const usesSnap=await getDocs(collection(db,"promos",found.id,"uses"));
-    if(found.maxUses && usesSnap.size>=found.maxUses){
-      return showFeedback("This promo has reached its usage limit.",false);
-    }
-
+    if(found.maxUses && usesSnap.size>=found.maxUses)return showFeedback("This promo has reached its usage limit.",false);
     if(found.access==="custom"){
       const allowed=(found.allowedUsers||[]).map(u=>u.uid);
-      if(!allowed.includes(user.uid)){
-        return showFeedback("You are not eligible for this promo.",false);
-      }
+      if(!allowed.includes(user.uid))return showFeedback("You are not eligible for this promo.",false);
     }
 
     let discount=0;
@@ -211,69 +231,55 @@ async function applyPromo(){
     appliedPromo=found;discountValue=Math.min(discount,cartTotal);
     updateTotals();
     showFeedback(`Promo applied! -${found.type==="percent"?found.value+"%":"$"+found.value}`,true);
-
-    await setDoc(doc(db,"promos",found.id,"uses",user.uid),{usedAt:new Date(),userId:user.uid,email:user.email});
+    await setDoc(doc(db,"promos",found.id,"uses",user.uid),{
+      usedAt:new Date(),userId:user.uid,email:user.email
+    });
   }catch(e){console.error(e);showFeedback("Error validating promo.",false);}
 }
-
 function showFeedback(msg,success){
   promoFeedback.textContent=msg;
   promoFeedback.style.color=success?"#16c784":"#ff5555";
 }
-
-/* === Update Totals === */
 function updateTotals(){
-  const final=cartTotal - discountValue;
+  const final=cartTotal-discountValue;
   totalEl.textContent=cartTotal.toFixed(2);
   finalTotalEl.textContent=Math.max(0,final).toFixed(2);
   discountAmountEl.textContent=discountValue.toFixed(2);
   discountLine.classList.toggle('hidden',discountValue<=0);
 }
 
-/* === Quantity / Remove === */
+// === Cart Ops ===
 async function updateQty(uid,id,val){await updateDoc(doc(db,"users",uid,"cart",id),{qty:Number(val)});}
 async function removeItem(uid,id){await deleteDoc(doc(db,"users",uid,"cart",id));}
 
-/* === Place Order === */
+// === Place Order ===
 placeOrderBtn.addEventListener('click',async()=>{
-  const user=auth.currentUser;if(!user)return console.error("Sign in first");
+  const user=auth.currentUser;if(!user)return showToast("Sign in first");
   try{
     setLoading(true);
     const cRef=collection(db,"users",user.uid,"cart");
     const cartSnap=await getDocs(cRef);
-    if(cartSnap.empty){setLoading(false);return console.error("Cart is empty");}
+    if(cartSnap.empty){setLoading(false);return showToast("Your cart is empty");}
     const items=[];cartSnap.forEach(d=>items.push(d.data()));
-
-    const orderRef=await addDoc(collection(db,"orders"),{
+    await addDoc(collection(db,"orders"),{
       userId:user.uid,items,status:"Pending",total:cartTotal,
-      discount:discountValue,promo:appliedPromo?.code||null,
-      createdAt:new Date()
+      discount:discountValue,promo:appliedPromo?.code||null,createdAt:new Date()
     });
-
     for(const d of cartSnap.docs){await deleteDoc(d.ref);}
-
-    showOrderSuccess();   // 🎉 play animation
-    setTimeout(()=>showReceipt(orderRef.id),1000); // 🧾 show receipt after animation
-  }catch(e){console.error(e);}finally{setLoading(false);}
+    showToast("Order placed successfully!");
+    // Show confirmation animation
+    if(window.showOrderSuccess) window.showOrderSuccess();
+  }catch(e){console.error(e);showToast("Error placing order");}
+  finally{setLoading(false);}
 });
 </script>
 
-<!-- Import Receipt Viewer Module -->
-<div id="receipt-viewer-module"></div>
+<!-- Order Confirmation Module -->
+<div id="order-success-module"></div>
 <script>
-  fetch("/assets/modules/receipt-viewer.html")
-    .then(r=>r.text())
-    .then(html=>{
-      const c=document.getElementById("receipt-viewer-module");
-      c.innerHTML=html;
-      c.querySelectorAll("script").forEach(s=>{
-        const n=document.createElement("script");
-        if(s.src)n.src=s.src;else n.textContent=s.textContent;
-        document.body.appendChild(n);
-      });
-    });
+  loadModule("#order-success-module","/assets/modules/order-success.html")
+    .catch(err=>console.error("Order success animation failed:",err));
 </script>
 
-<script type="module" src="/assets/js/debug-listener.js"></script>
 </body>
 </html>
