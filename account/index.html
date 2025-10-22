@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Account — Morrow Industries</title>
+  <title>My Account — Morrow Industries</title>
   <link rel="icon" href="/assets/favicon.ico"/>
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
     :root {
       --bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;
@@ -57,25 +56,25 @@
 </head>
 <body class="min-h-screen">
 
-<!-- Shared Navbar -->
+<!-- Navbar -->
 <div id="navbar-container"></div>
 <script>
 fetch("/assets/modules/navbar.html")
-  .then(res => res.text())
-  .then(html => {
-    const container = document.getElementById("navbar-container");
-    container.innerHTML = html;
-    container.querySelectorAll("script").forEach(oldScript=>{
+  .then(res=>res.text())
+  .then(html=>{
+    const container=document.getElementById("navbar-container");
+    container.innerHTML=html;
+    container.querySelectorAll("script").forEach(old=>{
       const s=document.createElement("script");
-      s.textContent=oldScript.textContent;
+      s.textContent=old.textContent;
       document.body.appendChild(s);
-      oldScript.remove();
+      old.remove();
     });
   });
 </script>
 
 <main class="max-w-5xl mx-auto px-4 py-12 space-y-10">
-  <h1 class="text-3xl font-serif text-[var(--gold)] mb-6">Your Account</h1>
+  <h1 class="text-3xl font-serif text-[var(--gold)] mb-6">My Account</h1>
 
   <!-- Profile -->
   <section id="profileSection" class="glass rounded-2xl p-6">
@@ -85,17 +84,16 @@ fetch("/assets/modules/navbar.html")
 
   <!-- Orders -->
   <section id="ordersSection" class="glass rounded-2xl p-6">
-    <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Your Orders</h2>
+    <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Order History</h2>
     <div id="ordersList" class="space-y-3 text-sm"></div>
   </section>
 
-  <!-- Sign Out -->
   <div class="flex justify-end">
     <button id="signOutBtn" class="btn">Sign Out</button>
   </div>
 </main>
 
-<!-- Loading overlay -->
+<!-- Loading -->
 <div id="loadingOverlay" class="fixed inset-0 bg-[rgba(10,11,15,.85)] backdrop-blur-md hidden items-center justify-center z-50">
   <div class="text-[var(--gold)] text-sm">Loading your account…</div>
 </div>
@@ -104,7 +102,11 @@ fetch("/assets/modules/navbar.html")
 function showToast(msg){
   const t=document.createElement('div');
   t.className='toast';t.textContent=msg;
-  document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+function setLoading(v){
+  document.getElementById("loadingOverlay").style.display=v?"flex":"none";
 }
 </script>
 
@@ -112,50 +114,39 @@ function showToast(msg){
 import { auth, db } from "/assets/js/firebase-init.js";
 import { onAuthStateChanged, signOut, updateProfile }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc, updateDoc, collection, query, where, orderBy, onSnapshot } 
+import { doc, getDoc, updateDoc, collection, query, where, orderBy, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const signOutBtn = document.getElementById("signOutBtn");
-const loadingOverlay = document.getElementById("loadingOverlay");
-const profileInfo = document.getElementById("profileInfo");
-const ordersList = document.getElementById("ordersList");
+const signOutBtn=document.getElementById("signOutBtn");
+const profileInfo=document.getElementById("profileInfo");
+const ordersList=document.getElementById("ordersList");
 
-signOutBtn.addEventListener("click", ()=> signOut(auth));
-function setLoading(v){loadingOverlay.style.display=v?"flex":"none";}
+signOutBtn.addEventListener("click",()=>signOut(auth));
 
-onAuthStateChanged(auth, async (user)=>{
+onAuthStateChanged(auth,async(user)=>{
   setLoading(true);
-  if(!user){
-    location.href = "/";
-    return;
-  }
+  if(!user){location.href="/";return;}
 
   // === Profile Info ===
-  try {
-    const uSnap = await getDoc(doc(db, "users", user.uid));
-    const d = uSnap.exists() ? uSnap.data() : {};
+  try{
+    const uSnap=await getDoc(doc(db,"users",user.uid));
+    const d=uSnap.exists()?uSnap.data():{};
+    const displayName=d.displayName||user.displayName||"—";
+    const email=d.email||user.email||"—";
+    const joined=d.createdAt?.seconds?new Date(d.createdAt.seconds*1000).toLocaleString():"—";
 
-    const displayName = d.displayName || user.displayName || "—";
-    const email = d.email || user.email || "—";
-    const role = d.role || "client";
-    const created = d.createdAt?.seconds
-      ? new Date(d.createdAt.seconds*1000).toLocaleString()
-      : "—";
-
-    profileInfo.innerHTML = `
+    profileInfo.innerHTML=`
       <div class="flex items-center justify-between">
         <p><strong>Name:</strong> <span id="displayNameText">${displayName}</span></p>
         <button id="editNameBtn" class="btn btn-primary text-xs">Edit</button>
       </div>
       <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Role:</strong> ${role}</p>
-      <p><strong>Joined:</strong> ${created}</p>
+      <p><strong>Member Since:</strong> ${joined}</p>
     `;
-
-    const editBtn = document.getElementById("editNameBtn");
-    editBtn.addEventListener("click", ()=>{
-      const current = document.getElementById("displayNameText").textContent;
-      profileInfo.innerHTML = `
+    const editBtn=document.getElementById("editNameBtn");
+    editBtn.addEventListener("click",()=>{
+      const current=document.getElementById("displayNameText").textContent;
+      profileInfo.innerHTML=`
         <form id="nameForm" class="space-y-2">
           <label class="block text-[var(--muted)]">New Display Name</label>
           <input id="newDisplayName" value="${current}" required/>
@@ -163,71 +154,73 @@ onAuthStateChanged(auth, async (user)=>{
             <button type="submit" class="btn btn-primary">Save</button>
             <button type="button" id="cancelEdit" class="btn">Cancel</button>
           </div>
-        </form>
-      `;
-      document.getElementById("cancelEdit").onclick = () => onAuthStateChanged(auth,()=>{});
-      document.getElementById("nameForm").onsubmit = async (e)=>{
+        </form>`;
+      document.getElementById("cancelEdit").onclick=()=>onAuthStateChanged(auth,()=>{});
+      document.getElementById("nameForm").onsubmit=async(e)=>{
         e.preventDefault();
-        const newName = document.getElementById("newDisplayName").value.trim();
+        const newName=document.getElementById("newDisplayName").value.trim();
         if(!newName){showToast("Name cannot be empty");return;}
         try{
-          await updateProfile(user,{ displayName: newName });
-          await updateDoc(doc(db,"users",user.uid),{ displayName: newName });
-          showToast("Name updated!");
-          onAuthStateChanged(auth,()=>{}); // refresh view
-        }catch(err){
-          console.error(err);
-          showToast("Error updating name");
-        }
+          await updateProfile(user,{displayName:newName});
+          await updateDoc(doc(db,"users",user.uid),{displayName:newName});
+          showToast("Name updated!");onAuthStateChanged(auth,()=>{});
+        }catch(err){console.error(err);showToast("Error updating name");}
       };
     });
-  } catch (e) {
-    console.error(e);
-    showToast("Error loading profile");
-  }
+  }catch(e){console.error(e);showToast("Error loading profile");}
 
   // === Orders ===
-  try {
-    const q = query(collection(db, "orders"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
-    onSnapshot(q, snap=>{
-      if (snap.empty) {
-        ordersList.innerHTML = `<p class="text-[var(--muted)] italic">No orders yet.</p>`;
+  try{
+    const q=query(collection(db,"orders"),where("userId","==",user.uid),orderBy("createdAt","desc"));
+    onSnapshot(q,snap=>{
+      if(snap.empty){
+        ordersList.innerHTML=`<p class="text-[var(--muted)] italic">You haven’t placed any orders yet.</p>`;
         return;
       }
-      const html = [];
+      const html=[];
       snap.forEach(docSnap=>{
-        const d = docSnap.data();
-        const date = d.createdAt?.seconds ? new Date(d.createdAt.seconds*1000).toLocaleString() : "—";
-        const items = (d.items||[])
-          .map(it => `<li class='flex justify-between'><span>${it.title||"Item"}</span><span class='text-[var(--muted)]'>× ${it.qty||1}</span></li>`)
-          .join("");
+        const d=docSnap.data();
+        const date=d.createdAt?.seconds?new Date(d.createdAt.seconds*1000).toLocaleString():"—";
+        const total=(d.total-(d.discount||0)).toFixed(2);
+        const statusColor=d.status==="Delivered"?"text-green-400":
+                          d.status==="Shipped"?"text-blue-400":"text-[var(--gold)]";
         html.push(`
           <article class="border border-[var(--border)] rounded-xl p-4">
             <div class="flex justify-between items-center">
               <h3 class="font-semibold text-[var(--gold)]">Order #${docSnap.id.slice(-6)}</h3>
               <span class="text-xs text-[var(--muted)]">${date}</span>
             </div>
-            <ul class="mt-2 text-[var(--muted)] space-y-1">${items}</ul>
-            <p class="mt-3 text-sm text-[var(--muted)]">Status:
-              <span class="text-[var(--gold)]">${d.status || "Pending"}</span>
-            </p>
+            <div class="mt-2 flex justify-between text-sm text-[var(--muted)]">
+              <span>Status: <span class="${statusColor}">${d.status||"Pending"}</span></span>
+              <span>Total: <span class="text-[var(--gold)]">$${total}</span></span>
+            </div>
+            <button class="mt-3 btn btn-primary text-xs" onclick="showReceipt('${docSnap.id}')">
+              View Receipt
+            </button>
           </article>
         `);
       });
-      ordersList.innerHTML = html.join("");
+      ordersList.innerHTML=html.join("");
     });
-  } catch (e) {
-    console.error(e);
-    showToast("Error loading orders");
-  }
-
+  }catch(e){console.error(e);showToast("Error loading orders");}
   setLoading(false);
 });
 </script>
 
-<script type="module">
-  import { initDebugToggle } from "/assets/js/debug-listener.js";
-  initDebugToggle?.();
+<!-- === Receipt Viewer Module === -->
+<div id="receipt-viewer-module"></div>
+<script>
+fetch("/assets/modules/receipt-viewer.html")
+  .then(r=>r.text())
+  .then(html=>{
+    const c=document.getElementById("receipt-viewer-module");
+    c.innerHTML=html;
+    c.querySelectorAll("script").forEach(s=>{
+      const n=document.createElement("script");
+      if(s.src)n.src=s.src;else n.textContent=s.textContent;
+      document.body.appendChild(n);
+    });
+  });
 </script>
 
 </body>
