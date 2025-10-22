@@ -1,0 +1,70 @@
+<!-- order-success.html -->
+<div id="orderSuccessOverlay" class="fixed inset-0 hidden items-center justify-center z-[9999] bg-[rgba(10,11,15,0.85)] backdrop-blur-md">
+  <div class="glass p-10 rounded-3xl text-center flex flex-col items-center justify-center relative overflow-hidden shadow-[0_0_40px_rgba(212,175,55,0.15)]">
+    <!-- Animated Circle -->
+    <div class="absolute inset-0 flex items-center justify-center">
+      <div class="w-56 h-56 rounded-full border-4 border-[rgba(212,175,55,0.3)] animate-pulse"></div>
+    </div>
+
+    <!-- Checkmark / Logo -->
+    <div class="relative z-10 mt-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-[var(--gold)] animate-scaleIn" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+
+    <h2 class="text-2xl font-serif text-[var(--gold)] mt-6">Order Placed Successfully!</h2>
+    <p class="text-[var(--muted)] mt-2 max-w-xs">Your order has been confirmed and will appear in your account shortly.</p>
+
+    <div class="mt-8">
+      <button id="closeSuccessBtn" class="btn btn-primary">Continue</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  :root {
+    --gold:#d4af37;--muted:#a9b0be;--border:rgba(255,255,255,0.08);
+  }
+  .glass {
+    background:rgba(18,20,27,.6);
+    backdrop-filter:saturate(140%) blur(14px);
+    border:1px solid var(--border);
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.95); }
+  }
+  @keyframes scaleIn {
+    0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+    60% { transform: scale(1.15) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); }
+  }
+  .animate-scaleIn {
+    animation: scaleIn 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+</style>
+
+<script>
+  // === Order Success Animation Logic ===
+  window.showOrderSuccess = function() {
+    const overlay = document.getElementById('orderSuccessOverlay');
+    if (!overlay) return;
+    overlay.style.display = 'flex';
+    overlay.animate([{opacity:0},{opacity:1}],{duration:300,fill:'forwards'});
+  };
+
+  document.addEventListener('click', (e)=>{
+    if(e.target.id === 'closeSuccessBtn'){
+      const overlay = document.getElementById('orderSuccessOverlay');
+      if(!overlay) return;
+      overlay.animate([{opacity:1},{opacity:0}],{duration:300,fill:'forwards'}).onfinish=()=>{
+        overlay.style.display='none';
+      };
+    }
+  });
+</script>
