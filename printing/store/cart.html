@@ -12,47 +12,18 @@
       --gold:#d4af37;--border:rgba(255,255,255,0.08);
     }
     body {background:var(--bg);color:var(--text)}
-    .glass {
-      background:rgba(18,20,27,.6);
-      backdrop-filter:saturate(140%) blur(14px);
-      border:1px solid var(--border);
-    }
-    .btn {
-      border:1px solid var(--border);
-      color:var(--text);
-      padding:.6rem .9rem;
-      border-radius:.6rem;
-      transition:transform .15s ease,box-shadow .2s ease,background .2s ease;
-    }
-    .btn-primary {border-color:var(--gold)}
-    .btn:hover {transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
-    .toast {
-      position:fixed;right:1.25rem;top:1.25rem;
-      background:rgba(18,20,27,.85);color:#e9eef8;
-      border:1px solid var(--gold);border-radius:.75rem;
-      padding:.6rem .9rem;font-size:.9rem;
-      backdrop-filter:blur(14px);box-shadow:0 4px 16px rgba(0,0,0,.4);
-      z-index:9999;animation:fadeIn .2s ease;
-    }
+    .glass {background:rgba(18,20,27,.6);backdrop-filter:saturate(140%) blur(14px);border:1px solid var(--border);}
+    .btn {border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease;}
+    .btn-primary {border-color:var(--gold);}
+    .btn:hover {transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35);}
+    .toast {position:fixed;right:1.25rem;top:1.25rem;background:rgba(18,20,27,.85);color:#e9eef8;border:1px solid var(--gold);border-radius:.75rem;padding:.6rem .9rem;font-size:.9rem;backdrop-filter:blur(14px);box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:9999;animation:fadeIn .2s ease;}
     @keyframes fadeIn {from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-    .item {border:1px solid var(--border);border-radius:.75rem;padding:1rem;display:flex;gap:1rem;align-items:center}
-    .item img {width:80px;height:80px;object-fit:cover;border-radius:.5rem}
-    #loadingOverlay {
-      position:fixed;inset:0;z-index:200;background:rgba(10,11,15,.85);
-      backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;
-    }
-    .spinner {
-      width:56px;height:56px;border-radius:50%;
-      border:3px solid rgba(212,175,55,.25);
-      border-top-color:var(--gold);
-      animation:spin .8s linear infinite;
-    }
+    .item {border:1px solid var(--border);border-radius:.75rem;padding:1rem;display:flex;gap:1rem;align-items:center;}
+    .item img {width:80px;height:80px;object-fit:cover;border-radius:.5rem;}
+    #loadingOverlay {position:fixed;inset:0;z-index:200;background:rgba(10,11,15,.85);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;}
+    .spinner {width:56px;height:56px;border-radius:50%;border:3px solid rgba(212,175,55,.25);border-top-color:var(--gold);animation:spin .8s linear infinite;}
     @keyframes spin {to{transform:rotate(360deg)}}
-    input[type="text"] {
-      background:transparent;border:1px solid var(--border);
-      border-radius:.5rem;padding:.5rem;color:var(--gold);
-      width:100%;text-align:center;
-    }
+    input[type="text"] {background:transparent;border:1px solid var(--border);border-radius:.5rem;padding:.5rem;color:var(--gold);width:100%;text-align:center;}
     input[type="text"]:focus {outline:none;border-color:var(--gold);}
   </style>
 </head>
@@ -101,21 +72,16 @@
   </div>
 </main>
 
+<!-- Toasts -->
 <script>
   function showToast(m){
     const t=document.createElement('div');t.className='toast';t.textContent=m;
     document.body.appendChild(t);setTimeout(()=>t.remove(),4000);
   }
-  function setLoading(v){
-    document.getElementById('loadingOverlay').style.display=v?'flex':'none';
-  }
-  const origError=console.error;
-  console.error=function(...a){origError.apply(console,a);
-    const msg=a.map(x=>(x?.message||x?.toString())).join(" | ");showToast("⚠️ "+msg)};
-  window.addEventListener("error",e=>showToast("❌ "+(e.message||"Script error")));
-  window.addEventListener("unhandledrejection",e=>showToast("⚠️ "+(e.reason?.message||e.reason||"Unhandled rejection")));
+  function setLoading(v){document.getElementById('loadingOverlay').style.display=v?'flex':'none';}
 </script>
 
+<!-- === FIREBASE & CART LOGIC === -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -124,7 +90,6 @@ import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc
 const firebaseConfig={
   apiKey:"AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
   authDomain:"morrow-industries.firebaseapp.com",
-  databaseURL:"https://morrow-industries-default-rtdb.firebaseio.com",
   projectId:"morrow-industries",
   storageBucket:"morrow-industries.appspot.com",
   messagingSenderId:"75190213345",
@@ -223,18 +188,15 @@ async function applyPromo(){
     });
     if(!found)return showFeedback("Invalid promo code.",false);
 
-    // Expiration check
     if(found.expires && new Date(found.expires)<new Date()){
       return showFeedback("This promo code has expired.",false);
     }
 
-    // Max uses check
     const usesSnap=await getDocs(collection(db,"promos",found.id,"uses"));
     if(found.maxUses && usesSnap.size>=found.maxUses){
       return showFeedback("This promo has reached its usage limit.",false);
     }
 
-    // Access check
     if(found.access==="custom"){
       const allowed=(found.allowedUsers||[]).map(u=>u.uid);
       if(!allowed.includes(user.uid)){
@@ -242,7 +204,6 @@ async function applyPromo(){
       }
     }
 
-    // Apply discount
     let discount=0;
     if(found.type==="percent")discount=cartTotal*(found.value/100);
     else if(found.type==="amount")discount=found.value;
@@ -251,14 +212,8 @@ async function applyPromo(){
     updateTotals();
     showFeedback(`Promo applied! -${found.type==="percent"?found.value+"%":"$"+found.value}`,true);
 
-    // Log usage
-    await setDoc(doc(db,"promos",found.id,"uses",user.uid),{
-      usedAt:new Date(),userId:user.uid,email:user.email
-    });
-  }catch(e){
-    console.error(e);
-    showFeedback("Error validating promo.",false);
-  }
+    await setDoc(doc(db,"promos",found.id,"uses",user.uid),{usedAt:new Date(),userId:user.uid,email:user.email});
+  }catch(e){console.error(e);showFeedback("Error validating promo.",false);}
 }
 
 function showFeedback(msg,success){
@@ -276,12 +231,8 @@ function updateTotals(){
 }
 
 /* === Quantity / Remove === */
-async function updateQty(uid,id,val){
-  await updateDoc(doc(db,"users",uid,"cart",id),{qty:Number(val)});
-}
-async function removeItem(uid,id){
-  await deleteDoc(doc(db,"users",uid,"cart",id));
-}
+async function updateQty(uid,id,val){await updateDoc(doc(db,"users",uid,"cart",id),{qty:Number(val)});}
+async function removeItem(uid,id){await deleteDoc(doc(db,"users",uid,"cart",id));}
 
 /* === Place Order === */
 placeOrderBtn.addEventListener('click',async()=>{
@@ -292,16 +243,37 @@ placeOrderBtn.addEventListener('click',async()=>{
     const cartSnap=await getDocs(cRef);
     if(cartSnap.empty){setLoading(false);return console.error("Cart is empty");}
     const items=[];cartSnap.forEach(d=>items.push(d.data()));
-    await addDoc(collection(db,"orders"),{
+
+    const orderRef=await addDoc(collection(db,"orders"),{
       userId:user.uid,items,status:"Pending",total:cartTotal,
       discount:discountValue,promo:appliedPromo?.code||null,
       createdAt:new Date()
     });
+
     for(const d of cartSnap.docs){await deleteDoc(d.ref);}
-    showToast("Order placed successfully!");
+
+    showOrderSuccess();   // 🎉 play animation
+    setTimeout(()=>showReceipt(orderRef.id),1000); // 🧾 show receipt after animation
   }catch(e){console.error(e);}finally{setLoading(false);}
 });
 </script>
+
+<!-- Import Receipt Viewer Module -->
+<div id="receipt-viewer-module"></div>
+<script>
+  fetch("/assets/modules/receipt-viewer.html")
+    .then(r=>r.text())
+    .then(html=>{
+      const c=document.getElementById("receipt-viewer-module");
+      c.innerHTML=html;
+      c.querySelectorAll("script").forEach(s=>{
+        const n=document.createElement("script");
+        if(s.src)n.src=s.src;else n.textContent=s.textContent;
+        document.body.appendChild(n);
+      });
+    });
+</script>
+
 <script type="module" src="/assets/js/debug-listener.js"></script>
 </body>
 </html>
