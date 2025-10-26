@@ -1,0 +1,179 @@
+<div id="receiptModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-[rgba(0,0,0,0.75)] backdrop-blur-sm">
+  <div class="glass max-w-md w-[90%] rounded-2xl border border-[var(--border)] p-6 text-[var(--text)] relative">
+    <button id="closeReceiptBtn" class="absolute top-3 right-3 text-[var(--muted)] hover:text-[var(--gold)]">✕</button>
+    <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Order Receipt</h2>
+    <div id="receiptContent" class="space-y-2 text-sm text-[var(--muted)]">
+      <p>Loading receipt...</p>
+    </div>
+    <button id="downloadPdfBtn" class="mt-5 btn btn-primary w-full">Download PDF</button>
+  </div>
+</div>
+
+<!-- Success Animation Overlay -->
+<div id="orderSuccessOverlay" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-[rgba(0,0,0,0.85)] backdrop-blur-md">
+  <lottie-player
+    src="https://lottie.host/2c02f15e-afea-4a31-8a12-1e70e12e123c/success.json"
+    background="transparent"
+    speed="1"
+    style="width: 200px; height: 200px;"
+    autoplay
+  ></lottie-player>
+</div>
+
+<script type="module">
+  import { db } from "/assets/js/firebase-init.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const modal = document.getElementById("receiptModal");
+  const closeBtn = document.getElementById("closeReceiptBtn");
+  const content = document.getElementById("receiptContent");
+  const successOverlay = document.getElementById("orderSuccessOverlay");
+  const downloadBtn = document.getElementById("downloadPdfBtn");
+
+  let currentOrder = null;
+
+  // === Show Receipt Modal ===
+  window.showReceipt = async function(orderId) {
+    modal.classList.remove("hidden");
+    content.innerHTML = `<p>Loading receipt...</p>`;
+    downloadBtn.style.display = "none";
+
+    try {
+      const ref = doc(db, "orders", orderId);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        content.innerHTML = `<p class='text-red-500'>Receipt not found.</p>`;
+        return;
+      }
+
+      const d = snap.data();
+      currentOrder = { id: orderId, ...d };
+      const date = d.createdAt?.seconds ? new Date(d.createdAt.seconds * 1000).toLocaleString() : "—";
+      const items = (d.items||[]).map(it=>`
+        <li class="flex justify-between border-b border-[var(--border)] py-1">
+          <span>${it.title} × ${it.qty}</span>
+          <span>$${(it.price * it.qty).toFixed(2)}</span>
+        </li>`).join("");
+      const discountLine = d.discount ? `<div class="flex justify-between text-[var(--gold)]"><span>Discount</span><span>-$${d.discount.toFixed(2)}</span></div>` : "";
+      const promoLine = d.promo ? `<div class="flex justify-between text-[var(--gold)]"><span>Promo</span><span>${d.promo}</span></div>` : "";
+
+      content.innerHTML = `
+        <div class="text-sm">
+          <div class="flex justify-between">
+            <span>Order ID:</span><span class="text-[var(--gold)]">${orderId}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Date:</span><span>${date}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Status:</span><span class="capitalize text-[var(--gold)]">${d.status||"Pending"}</span>
+          </div>
+          <hr class="my-2 border-[var(--border)]"/>
+          <ul>${items}</ul>
+          <hr class="my-2 border-[var(--border)]"/>
+          ${promoLine}
+          ${discountLine}
+          <div class="flex justify-between text-lg font-semibold mt-2">
+            <span>Total</span><span>$${(d.total - (d.discount||0)).toFixed(2)}</span>
+          </div>
+        </div>`;
+      
+      downloadBtn.style.display = "block";
+    } catch (e) {
+      console.error(e);
+      content.innerHTML = `<p class='text-red-500'>Error loading receipt.</p>`;
+    }
+  };
+
+  closeBtn.onclick = () => modal.classList.add("hidden");
+
+  // === Success Animation ===
+  window.showOrderSuccess = function() {
+    successOverlay.classList.remove("hidden");
+    setTimeout(() => successOverlay.classList.add("hidden"), 2500);
+  };
+
+  // === PDF Generation (Luxury Design) ===
+  downloadBtn.addEventListener("click", async () => {
+    if (!currentOrder) return;
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: "pt", format: "a4" });
+
+    const black = "#0a0b0f";
+    const gold = "#d4af37";
+    const white = "#ffffff";
+
+    // Background
+    pdf.setFillColor(10, 11, 15);
+    pdf.rect(0, 0, 595, 842, "F");
+
+    // Gold Header Bar
+    pdf.setFillColor(212, 175, 55);
+    pdf.rect(0, 0, 595, 80, "F");
+
+    // Logo + Header
+    const logo = new Image();
+    logo.src = "/morIcon.png";
+    await new Promise(r => logo.onload = r);
+    pdf.addImage(logo, "PNG", 40, 20, 40, 40);
+    pdf.setFontSize(20);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text("Morrow Industries", 90, 48);
+
+    // Watermark
+    pdf.addImage(logo, "PNG", 200, 300, 200, 200, "", "FAST");
+    pdf.setGState(new pdf.GState({ opacity: 0.08 }));
+
+    // Reset color for main text
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(12);
+    pdf.text(`Order Receipt`, 40, 120);
+    pdf.text(`Order ID: ${currentOrder.id}`, 40, 140);
+    pdf.text(`Date: ${(new Date(currentOrder.createdAt?.seconds * 1000)).toLocaleString()}`, 40, 155);
+    pdf.text(`Status: ${currentOrder.status || "Pending"}`, 40, 170);
+
+    let y = 200;
+    pdf.setDrawColor(80, 80, 80);
+    pdf.line(40, y, 555, y);
+    y += 25;
+
+    pdf.setFontSize(11);
+    pdf.setTextColor(230, 230, 230);
+    currentOrder.items.forEach(it => {
+      pdf.text(`${it.title} × ${it.qty}`, 40, y);
+      pdf.text(`$${(it.price * it.qty).toFixed(2)}`, 520, y, { align: "right" });
+      y += 18;
+    });
+
+    y += 10;
+    pdf.setDrawColor(212, 175, 55);
+    pdf.line(40, y, 555, y);
+    y += 25;
+
+    if (currentOrder.promo) {
+      pdf.setTextColor(212, 175, 55);
+      pdf.text(`Promo Code: ${currentOrder.promo}`, 40, y);
+      y += 18;
+    }
+    if (currentOrder.discount) {
+      pdf.text(`Discount: -$${currentOrder.discount.toFixed(2)}`, 40, y);
+      y += 18;
+    }
+
+    pdf.setFontSize(13);
+    pdf.setTextColor(212, 175, 55);
+    pdf.text(`Total: $${(currentOrder.total - (currentOrder.discount || 0)).toFixed(2)}`, 40, y + 10);
+
+    // Footer
+    pdf.setTextColor(160, 160, 160);
+    pdf.setFontSize(10);
+    pdf.text("Thank you for your order!", 40, 780);
+    pdf.text("Morrow Industries — Quality. Innovation. Precision.", 40, 795);
+
+    pdf.save(`MorrowIndustries_Receipt_${currentOrder.id}.pdf`);
+  });
+</script>
+
+<!-- External Libraries -->
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
