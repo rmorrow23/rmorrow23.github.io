@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morrow Industries — File Portal</title>
+  <link rel="icon" href="/assets/favicon.ico" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+  <style>
+    :root {
+      --bg: #050505;
+      --surface: rgba(20, 20, 20, 0.6);
+      --border: rgba(255, 215, 0, 0.15);
+      --gold: #d4af37;
+      --text: #f5f5f5;
+    }
+    body {
+      background: radial-gradient(circle at top, #0a0a0a 0%, #000 100%);
+      color: var(--text);
+      font-family: 'Cinzel', serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 2rem;
+      overflow-x: hidden;
+    }
+    .glass {
+      background: var(--surface);
+      backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.05);
+      padding: 2rem;
+      max-width: 900px;
+      width: 100%;
+    }
+    h1 {
+      color: var(--gold);
+      text-align: center;
+      font-size: 5rem;
+      margin-bottom: 1rem;
+    }
+    button {
+      background: var(--gold);
+      color: #000;
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.6rem;
+      width: 100%;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 10px var(--gold);
+    }
+    input, textarea {
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.6rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 0.5rem;
+    }
+    a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 0.8rem 0;
+    }
+    #fileList {
+      margin-top: 1rem;
+      max-height: 300px;
+      overflow-y: auto;
+      scrollbar-color: transparent transparent;
+    }
+    #uploadForm {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      margin-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="glass">
+    <img src="/morIcon.png"> <h1>Morrow Industries — File Portal</h1>
+
+    <div id="uploadForm">
+      <input type="file" id="fileInput" />
+      <textarea id="fileDesc" style="display: none;" placeholder="Enter file description (optional)..."></textarea>
+      <button id="uploadBtn">Upload File</button>
+    </div>
+
+    <h2 style="margin-top:1.5rem;color:var(--gold)">Uploaded Files</h2>
+    <div id="fileList"></div>
+  </div>
+
+  <script type="module">
+    // === FIREBASE CONFIG ===
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "morrow-industries.firebaseapp.com",
+      projectId: "morrow-industries",
+      storageBucket: "morrow-industries.appspot.com",
+      messagingSenderId: "75190213345",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+    const db = getFirestore(app);
+
+    const fileInput = document.getElementById("fileInput");
+    const fileDesc = document.getElementById("fileDesc");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const fileList = document.getElementById("fileList");
+
+    async function loadFiles() {
+      const listRef = ref(storage);
+      const res = await listAll(listRef);
+      fileList.innerHTML = "";
+
+      for (const itemRef of res.items) {
+        const url = await getDownloadURL(itemRef);
+        const name = itemRef.name;
+        const item = document.createElement("div");
+        item.className = "file-item";
+        item.innerHTML = `
+          <span>${name}</span>
+          <a href="${url}" target="_blank" download>Download</a>
+        `;
+        fileList.appendChild(item);
+      }
+    }
+
+    uploadBtn.addEventListener("click", async () => {
+      const file = fileInput.files[0];
+      if (!file) return alert("Please select a file first.");
+
+      const desc = fileDesc.value || "No description";
+      const storageRef = ref(storage, file.name);
+
+      await uploadBytes(storageRef, file);
+      const fileURL = await getDownloadURL(storageRef);
+
+      await addDoc(collection(db, "Uploaded"), {
+        fileName: file.name,
+        description: desc,
+        url: fileURL,
+        timestamp: serverTimestamp()
+      });
+
+      alert("Upload successful!");
+      fileInput.value = "";
+      fileDesc.value = "";
+      loadFiles();
+    });
+
+    loadFiles();
+  </script>
+</body>
+</html>
