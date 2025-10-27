@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Morrow Industries — Bills Paid Tracker</title>
-  <link rel="icon" href="morIcon.png">
+  <link rel="icon" href="/assets/morIcon.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
@@ -64,7 +64,7 @@
   <!-- Header -->
   <header class="flex items-center justify-between p-4 sticky top-0 bg-black/70 backdrop-blur-md z-50">
     <div class="flex items-center space-x-2">
-      <img src="morIcon.png" alt="Morrow Icon" class="w-8 h-8">
+      <img src="/assets/morIcon.png" alt="Morrow Icon" class="w-8 h-8">
       <h1 class="text-lg font-semibold gold">Bills Paid Tracker</h1>
     </div>
     <button id="authBtn" class="btn">Sign In</button>
@@ -120,15 +120,12 @@
   </div>
 
   <!-- Firebase -->
-  <script type="module" src="/bills/firebase.js"></script>
-
   <script type="module">
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, doc, addDoc, deleteDoc, getDoc, getDocs, updateDoc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { db, app } from "/assets/js/firebase-init.js";
-
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    import {
+      app, db, auth, provider,
+      signInWithPopup, onAuthStateChanged, signOut,
+      collection, addDoc, getDocs, getDoc, updateDoc, deleteObject, doc
+    } from "/assets/js/firebase-init.js";
 
     const authBtn = document.getElementById('authBtn');
     const billsContainer = document.getElementById('billsContainer');
@@ -143,8 +140,6 @@ import { db, app } from "/assets/js/firebase-init.js";
     document.getElementById('monthName').textContent = monthDisplay[currentDate.getMonth()];
 
     let userId = null;
-
-    const provider = new GoogleAuthProvider();
 
     authBtn.addEventListener('click', () => {
       if (auth.currentUser) signOut(auth);
@@ -167,13 +162,7 @@ import { db, app } from "/assets/js/firebase-init.js";
       const billsRef = collection(db, "users", userId, "bills");
       onSnapshot(billsRef, (snapshot) => {
         billsContainer.innerHTML = '';
-        let totalPaid = 0, totalDue = 0;
-        snapshot.forEach(docSnap => {
-          const bill = docSnap.data();
-          renderBill(docSnap.id, bill);
-          totalDue += bill.amount;
-        });
-        // Totals will be computed later from transactions
+        snapshot.forEach(docSnap => renderBill(docSnap.id, docSnap.data()));
       });
     }
 
@@ -188,11 +177,11 @@ import { db, app } from "/assets/js/firebase-init.js";
         </div>
         <div class="text-xs mb-2">Due: ${bill.dueDay} | Last Paid: ${bill.lastPaid ? new Date(bill.lastPaid.seconds*1000).toLocaleDateString() : 'Never'}</div>
         <div class="flex flex-wrap mb-2">
-          ${monthNames.map(m => {
-            const status = bill.months?.[m] || 'unpaid';
-            const icon = status==='paid'?'✓':status==='partial'?'✓':status==='late'?'✕':'';
-            const cls = status==='paid'?'status-paid':status==='partial'?'status-partial':status==='late'?'status-late':'status-unpaid';
-            return `<div class="month-circle ${cls}">${icon}</div>`;
+          ${monthNames.map(m=>{
+            const s=bill.months?.[m]||'unpaid';
+            const i=s==='paid'?'✓':s==='partial'?'✓':s==='late'?'✕':'';
+            const c=s==='paid'?'status-paid':s==='partial'?'status-partial':s==='late'?'status-late':'status-unpaid';
+            return `<div class="month-circle ${c}">${i}</div>`;
           }).join('')}
         </div>
         <div class="text-sm border-t border-[var(--border)] pt-2">
@@ -204,81 +193,63 @@ import { db, app } from "/assets/js/firebase-init.js";
       billsContainer.appendChild(card);
     }
 
-    // Modals
-    paymentBtn.onclick = () => { paymentModal.classList.remove('hidden'); populateBillSelect(); };
-    addBillBtn.onclick = () => { manageModal.classList.remove('hidden'); };
-    [paymentModal, manageModal].forEach(m => m.addEventListener('click', e => { if (e.target===m) m.classList.add('hidden'); }));
+    paymentBtn.onclick = ()=>{ paymentModal.classList.remove('hidden'); populateBillSelect(); };
+    addBillBtn.onclick = ()=>{ manageModal.classList.remove('hidden'); };
+    [paymentModal, manageModal].forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hidden');}));
 
-    // Add Bill
-    document.getElementById('addBill').onclick = async () => {
-      if (!userId) return;
-      const name = document.getElementById('billName').value;
-      const amount = parseFloat(document.getElementById('billAmount').value);
-      const dueDay = parseInt(document.getElementById('billDueDay').value);
-      if (!name || !amount || !dueDay) return alert('Fill all fields');
-      await addDoc(collection(db, "users", userId, "bills"), {
-        name, amount, dueDay,
-        lastPaid: null,
-        months: {},
-        transactions: []
+    document.getElementById('addBill').onclick = async ()=>{
+      if(!userId)return;
+      const name=document.getElementById('billName').value;
+      const amount=parseFloat(document.getElementById('billAmount').value);
+      const dueDay=parseInt(document.getElementById('billDueDay').value);
+      if(!name||!amount||!dueDay)return alert('Fill all fields');
+      await addDoc(collection(db,"users",userId,"bills"),{
+        name,amount,dueDay,lastPaid:null,months:{},transactions:[]
       });
       manageModal.classList.add('hidden');
     };
 
-    // Delete Bill (by name)
-    document.getElementById('deleteBill').onclick = async () => {
-      const name = document.getElementById('billName').value;
-      if (!name) return;
-      const billsRef = collection(db, "users", userId, "bills");
-      const snap = await getDocs(billsRef);
-      snap.forEach(async docSnap => {
-        if (docSnap.data().name === name) await deleteDoc(docSnap.ref);
-      });
+    document.getElementById('deleteBill').onclick = async ()=>{
+      const name=document.getElementById('billName').value;
+      if(!name)return;
+      const billsRef=collection(db,"users",userId,"bills");
+      const snap=await getDocs(billsRef);
+      snap.forEach(async d=>{if(d.data().name===name)await deleteDoc(d.ref);});
       manageModal.classList.add('hidden');
     };
 
-    // Payment
-    function populateBillSelect() {
-      const select = document.getElementById('paymentBillSelect');
-      select.innerHTML = '';
-      getDocs(collection(db, "users", userId, "bills")).then(snap => {
-        snap.forEach(docSnap => {
-          const opt = document.createElement('option');
-          opt.value = docSnap.id;
-          opt.textContent = docSnap.data().name;
-          select.appendChild(opt);
+    function populateBillSelect(){
+      const select=document.getElementById('paymentBillSelect');
+      select.innerHTML='';
+      getDocs(collection(db,"users",userId,"bills")).then(snap=>{
+        snap.forEach(d=>{
+          const o=document.createElement('option');
+          o.value=d.id;o.textContent=d.data().name;select.appendChild(o);
         });
       });
-      document.getElementById('paymentDate').valueAsDate = new Date();
+      document.getElementById('paymentDate').valueAsDate=new Date();
     }
 
-    document.getElementById('submitPayment').onclick = async () => {
-      const billId = document.getElementById('paymentBillSelect').value;
-      const amountPaid = parseFloat(document.getElementById('paymentAmount').value);
-      const datePaid = new Date(document.getElementById('paymentDate').value);
-      if (!billId || isNaN(amountPaid)) return;
-      const billRef = doc(db, "users", userId, "bills", billId);
-      const billSnap = await getDoc(billRef);
-      if (!billSnap.exists()) return;
-      const bill = billSnap.data();
-      const monthKey = monthNames[datePaid.getMonth()];
-      let status = 'paid';
-      if (amountPaid < bill.amount) status = 'partial';
-      if (datePaid.getDate() > bill.dueDay) status = 'late';
-      const newMonths = {...bill.months, [monthKey]: status};
-      const newTransactions = bill.transactions || [];
-      newTransactions.push({ date: {seconds: datePaid.getTime()/1000}, amountPaid, status });
-      await updateDoc(billRef, {
-        months: newMonths,
-        lastPaid: datePaid,
-        transactions: newTransactions
-      });
+    document.getElementById('submitPayment').onclick = async ()=>{
+      const billId=document.getElementById('paymentBillSelect').value;
+      const amountPaid=parseFloat(document.getElementById('paymentAmount').value);
+      const datePaid=new Date(document.getElementById('paymentDate').value);
+      if(!billId||isNaN(amountPaid))return;
+      const billRef=doc(db,"users",userId,"bills",billId);
+      const billSnap=await getDoc(billRef);
+      if(!billSnap.exists())return;
+      const bill=billSnap.data();
+      const monthKey=monthNames[datePaid.getMonth()];
+      let status='paid';
+      if(amountPaid<bill.amount)status='partial';
+      if(datePaid.getDate()>bill.dueDay)status='late';
+      const newMonths={...bill.months,[monthKey]:status};
+      const newTransactions=bill.transactions||[];
+      newTransactions.push({date:{seconds:datePaid.getTime()/1000},amountPaid,status});
+      await updateDoc(billRef,{months:newMonths,lastPaid:datePaid,transactions:newTransactions});
       paymentModal.classList.add('hidden');
-      const card = document.getElementById(`bill-${billId}`);
-      if (card) {
-        card.classList.add('glow');
-        setTimeout(()=>card.classList.remove('glow'), 1000);
-      }
+      const card=document.getElementById(`bill-${billId}`);
+      if(card){card.classList.add('glow');setTimeout(()=>card.classList.remove('glow'),1000);}
     };
   </script>
 </body>
