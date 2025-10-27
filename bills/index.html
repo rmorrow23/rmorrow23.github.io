@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Morrow Industries — Bills Paid Tracker</title>
+  <link rel="icon" href="morIcon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --gold: #d4af37;
+      --bg: #0a0b0f;
+      --surface: rgba(18,20,27,0.7);
+      --text: #e9eef8;
+      --border: rgba(255,255,255,0.08);
+    }
+    body {
+      background: radial-gradient(circle at center, var(--bg) 0%, #000 100%);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+    .glass {
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+    .gold {
+      color: var(--gold);
+    }
+    .btn {
+      border: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      border-radius: 0.75rem;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: rgba(212,175,55,0.1);
+      border-color: var(--gold);
+    }
+    .month-circle {
+      width: 1.3rem; height: 1.3rem;
+      border-radius: 50%;
+      margin: 0.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: #000;
+    }
+    .status-paid { background: #22c55e; }
+    .status-partial { background: #facc15; }
+    .status-late { background: #ef4444; }
+    .status-unpaid { background: #6b7280; }
+    .glow {
+      box-shadow: 0 0 20px 4px rgba(212,175,55,0.25);
+      transition: box-shadow 0.8s ease-out;
+    }
+  </style>
+</head>
+<body class="pb-28">
+  <!-- Header -->
+  <header class="flex items-center justify-between p-4 sticky top-0 bg-black/70 backdrop-blur-md z-50">
+    <div class="flex items-center space-x-2">
+      <img src="morIcon.png" alt="Morrow Icon" class="w-8 h-8">
+      <h1 class="text-lg font-semibold gold">Bills Paid Tracker</h1>
+    </div>
+    <button id="authBtn" class="btn">Sign In</button>
+  </header>
+
+  <!-- Summary -->
+  <section id="summary" class="glass m-4 p-4 grid grid-cols-2 gap-2 text-center">
+    <div>✅ Paid: <span id="paidCount" class="gold">0</span></div>
+    <div>⚠️ Partial: <span id="partialCount" class="gold">0</span></div>
+    <div>❌ Unpaid: <span id="unpaidCount" class="gold">0</span></div>
+    <div>💰 Total: <span id="totalSummary" class="gold">$0 / $0</span></div>
+  </section>
+
+  <!-- Bills Container -->
+  <main id="billsContainer" class="space-y-4 px-4"></main>
+
+  <!-- Totals Section -->
+  <section id="totals" class="glass m-4 p-4 text-center">
+    <div class="mb-2">📆 <span id="monthName" class="gold"></span></div>
+    <div>This Month — Paid: <span id="monthPaid" class="gold">$0</span> | Remaining: <span id="monthRemain" class="gold">$0</span></div>
+    <div class="mt-2">This Year — Paid: <span id="yearPaid" class="gold">$0</span> | Remaining: <span id="yearRemain" class="gold">$0</span></div>
+  </section>
+
+  <!-- Floating Action Buttons -->
+  <div class="fixed bottom-6 right-6 flex flex-col space-y-3">
+    <button id="addBillBtn" class="rounded-full bg-[var(--gold)] text-black w-14 h-14 shadow-lg text-3xl">＋</button>
+    <button id="paymentBtn" class="rounded-full bg-[var(--gold)] text-black w-14 h-14 shadow-lg text-2xl">💰</button>
+  </div>
+
+  <!-- Submit Payment Modal -->
+  <div id="paymentModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div class="glass p-6 w-80">
+      <h2 class="text-xl mb-4 gold font-semibold">Submit Payment</h2>
+      <select id="paymentBillSelect" class="w-full mb-3 p-2 rounded bg-black/30 border border-[var(--border)]"></select>
+      <input id="paymentAmount" type="number" placeholder="Amount Paid" class="w-full mb-3 p-2 rounded bg-black/30 border border-[var(--border)]">
+      <input id="paymentDate" type="date" class="w-full mb-3 p-2 rounded bg-black/30 border border-[var(--border)]">
+      <button id="submitPayment" class="btn w-full border-[var(--gold)] gold font-semibold">Submit</button>
+    </div>
+  </div>
+
+  <!-- Manage Bills Modal -->
+  <div id="manageModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div class="glass p-6 w-80">
+      <h2 class="text-xl mb-4 gold font-semibold">Manage Bills</h2>
+      <input id="billName" placeholder="Bill Name" class="w-full mb-3 p-2 rounded bg-black/30 border border-[var(--border)]">
+      <input id="billAmount" type="number" placeholder="Amount" class="w-full mb-3 p-2 rounded bg-black/30 border border-[var(--border)]">
+      <input id="billDueDay" type="number" placeholder="Due Day (1-31)" min="1" max="31" class="w-full mb-3 p-2 rounded bg-black/30 border border-[var(--border)]">
+      <div class="flex space-x-2">
+        <button id="addBill" class="btn flex-1 border-[var(--gold)] gold font-semibold">Add</button>
+        <button id="deleteBill" class="btn flex-1 border-red-500 text-red-400">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module" src="/bills/firebase.js"></script>
+
+  <script type="module">
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, doc, addDoc, deleteDoc, getDoc, getDocs, updateDoc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { db, app } from "/assets/js/firebase-init.js";
+
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const authBtn = document.getElementById('authBtn');
+    const billsContainer = document.getElementById('billsContainer');
+    const addBillBtn = document.getElementById('addBillBtn');
+    const paymentBtn = document.getElementById('paymentBtn');
+    const paymentModal = document.getElementById('paymentModal');
+    const manageModal = document.getElementById('manageModal');
+
+    const currentDate = new Date();
+    const monthNames = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+    const monthDisplay = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    document.getElementById('monthName').textContent = monthDisplay[currentDate.getMonth()];
+
+    let userId = null;
+
+    const provider = new GoogleAuthProvider();
+
+    authBtn.addEventListener('click', () => {
+      if (auth.currentUser) signOut(auth);
+      else signInWithPopup(auth, provider);
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userId = user.uid;
+        authBtn.textContent = 'Sign Out';
+        loadBills();
+      } else {
+        userId = null;
+        authBtn.textContent = 'Sign In';
+        billsContainer.innerHTML = '';
+      }
+    });
+
+    function loadBills() {
+      const billsRef = collection(db, "users", userId, "bills");
+      onSnapshot(billsRef, (snapshot) => {
+        billsContainer.innerHTML = '';
+        let totalPaid = 0, totalDue = 0;
+        snapshot.forEach(docSnap => {
+          const bill = docSnap.data();
+          renderBill(docSnap.id, bill);
+          totalDue += bill.amount;
+        });
+        // Totals will be computed later from transactions
+      });
+    }
+
+    function renderBill(id, bill) {
+      const card = document.createElement('div');
+      card.className = "glass p-4";
+      card.id = `bill-${id}`;
+      card.innerHTML = `
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-lg font-semibold gold">${bill.name}</h3>
+          <div class="text-sm opacity-80">$${bill.amount}</div>
+        </div>
+        <div class="text-xs mb-2">Due: ${bill.dueDay} | Last Paid: ${bill.lastPaid ? new Date(bill.lastPaid.seconds*1000).toLocaleDateString() : 'Never'}</div>
+        <div class="flex flex-wrap mb-2">
+          ${monthNames.map(m => {
+            const status = bill.months?.[m] || 'unpaid';
+            const icon = status==='paid'?'✓':status==='partial'?'✓':status==='late'?'✕':'';
+            const cls = status==='paid'?'status-paid':status==='partial'?'status-partial':status==='late'?'status-late':'status-unpaid';
+            return `<div class="month-circle ${cls}">${icon}</div>`;
+          }).join('')}
+        </div>
+        <div class="text-sm border-t border-[var(--border)] pt-2">
+          ${(bill.transactions||[]).slice().reverse().map(t=>`
+            <div>💳 $${t.amountPaid} — ${new Date(t.date.seconds*1000).toLocaleDateString()} (${t.status})</div>
+          `).join('')}
+        </div>
+      `;
+      billsContainer.appendChild(card);
+    }
+
+    // Modals
+    paymentBtn.onclick = () => { paymentModal.classList.remove('hidden'); populateBillSelect(); };
+    addBillBtn.onclick = () => { manageModal.classList.remove('hidden'); };
+    [paymentModal, manageModal].forEach(m => m.addEventListener('click', e => { if (e.target===m) m.classList.add('hidden'); }));
+
+    // Add Bill
+    document.getElementById('addBill').onclick = async () => {
+      if (!userId) return;
+      const name = document.getElementById('billName').value;
+      const amount = parseFloat(document.getElementById('billAmount').value);
+      const dueDay = parseInt(document.getElementById('billDueDay').value);
+      if (!name || !amount || !dueDay) return alert('Fill all fields');
+      await addDoc(collection(db, "users", userId, "bills"), {
+        name, amount, dueDay,
+        lastPaid: null,
+        months: {},
+        transactions: []
+      });
+      manageModal.classList.add('hidden');
+    };
+
+    // Delete Bill (by name)
+    document.getElementById('deleteBill').onclick = async () => {
+      const name = document.getElementById('billName').value;
+      if (!name) return;
+      const billsRef = collection(db, "users", userId, "bills");
+      const snap = await getDocs(billsRef);
+      snap.forEach(async docSnap => {
+        if (docSnap.data().name === name) await deleteDoc(docSnap.ref);
+      });
+      manageModal.classList.add('hidden');
+    };
+
+    // Payment
+    function populateBillSelect() {
+      const select = document.getElementById('paymentBillSelect');
+      select.innerHTML = '';
+      getDocs(collection(db, "users", userId, "bills")).then(snap => {
+        snap.forEach(docSnap => {
+          const opt = document.createElement('option');
+          opt.value = docSnap.id;
+          opt.textContent = docSnap.data().name;
+          select.appendChild(opt);
+        });
+      });
+      document.getElementById('paymentDate').valueAsDate = new Date();
+    }
+
+    document.getElementById('submitPayment').onclick = async () => {
+      const billId = document.getElementById('paymentBillSelect').value;
+      const amountPaid = parseFloat(document.getElementById('paymentAmount').value);
+      const datePaid = new Date(document.getElementById('paymentDate').value);
+      if (!billId || isNaN(amountPaid)) return;
+      const billRef = doc(db, "users", userId, "bills", billId);
+      const billSnap = await getDoc(billRef);
+      if (!billSnap.exists()) return;
+      const bill = billSnap.data();
+      const monthKey = monthNames[datePaid.getMonth()];
+      let status = 'paid';
+      if (amountPaid < bill.amount) status = 'partial';
+      if (datePaid.getDate() > bill.dueDay) status = 'late';
+      const newMonths = {...bill.months, [monthKey]: status};
+      const newTransactions = bill.transactions || [];
+      newTransactions.push({ date: {seconds: datePaid.getTime()/1000}, amountPaid, status });
+      await updateDoc(billRef, {
+        months: newMonths,
+        lastPaid: datePaid,
+        transactions: newTransactions
+      });
+      paymentModal.classList.add('hidden');
+      const card = document.getElementById(`bill-${billId}`);
+      if (card) {
+        card.classList.add('glow');
+        setTimeout(()=>card.classList.remove('glow'), 1000);
+      }
+    };
+  </script>
+</body>
+</html>
