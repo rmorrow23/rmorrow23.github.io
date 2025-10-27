@@ -27,9 +27,7 @@
       border-radius: 1rem;
       box-shadow: 0 4px 16px rgba(0,0,0,0.4);
     }
-    .gold {
-      color: var(--gold);
-    }
+    .gold { color: var(--gold); }
     .btn {
       border: 1px solid var(--border);
       padding: 0.6rem 1rem;
@@ -44,9 +42,7 @@
       width: 1.3rem; height: 1.3rem;
       border-radius: 50%;
       margin: 0.15rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       font-size: 0.8rem;
       color: #000;
     }
@@ -58,6 +54,61 @@
       box-shadow: 0 0 20px 4px rgba(212,175,55,0.25);
       transition: box-shadow 0.8s ease-out;
     }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      background: rgba(18,20,27,0.85);
+      border: 1px solid var(--gold);
+      color: var(--text);
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 0 15px rgba(212,175,55,0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      z-index: 1000;
+      font-size: 0.9rem;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    /* Logs Drawer */
+    #logsOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(6px);
+      display: none;
+      z-index: 60;
+      justify-content: flex-end;
+      flex-direction: column;
+    }
+    #logsPanel {
+      background: rgba(18,20,27,0.9);
+      border-top: 1px solid var(--border);
+      border-radius: 1rem 1rem 0 0;
+      max-height: 50%;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+    }
+    #logsPanel.show {
+      transform: translateY(0);
+    }
+    .log-entry {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .log-normal { color: var(--gold); }
+    .log-warn { color: #facc15; }
+    .log-error { color: #ef4444; }
   </style>
 </head>
 <body class="pb-28">
@@ -89,9 +140,22 @@
   </section>
 
   <!-- Floating Action Buttons -->
-  <div class="fixed bottom-6 right-6 flex flex-col space-y-3">
+  <div class="fixed bottom-6 right-6 flex flex-col space-y-3 z-40">
     <button id="addBillBtn" class="rounded-full bg-[var(--gold)] text-black w-14 h-14 shadow-lg text-3xl">＋</button>
     <button id="paymentBtn" class="rounded-full bg-[var(--gold)] text-black w-14 h-14 shadow-lg text-2xl">💰</button>
+  </div>
+
+  <!-- Logs Button -->
+  <button id="logsBtn" class="fixed bottom-6 left-6 bg-[var(--gold)] text-black px-4 py-2 rounded-full shadow-md text-sm z-40">Logs</button>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <!-- Logs Overlay -->
+  <div id="logsOverlay" class="hidden flex">
+    <div id="logsPanel" class="glass w-full">
+      <div id="logsContainer"></div>
+    </div>
   </div>
 
   <!-- Submit Payment Modal -->
@@ -119,63 +183,107 @@
     </div>
   </div>
 
-  <!-- Firebase -->
+  <!-- Firebase & Logic -->
   <script type="module">
     import {
       app, db, auth, provider,
       signInWithPopup, onAuthStateChanged, signOut,
-      collection, addDoc, getDocs, getDoc, updateDoc, deleteObject, doc
+      collection, addDoc, getDocs, getDoc, updateDoc, doc
     } from "/assets/js/firebase-init.js";
 
-    const authBtn = document.getElementById('authBtn');
-    const billsContainer = document.getElementById('billsContainer');
-    const addBillBtn = document.getElementById('addBillBtn');
-    const paymentBtn = document.getElementById('paymentBtn');
-    const paymentModal = document.getElementById('paymentModal');
-    const manageModal = document.getElementById('manageModal');
+    const toast = document.getElementById('toast');
+    const logsBtn = document.getElementById('logsBtn');
+    const logsOverlay = document.getElementById('logsOverlay');
+    const logsPanel = document.getElementById('logsPanel');
+    const logsContainer = document.getElementById('logsContainer');
 
-    const currentDate = new Date();
-    const monthNames = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
-    const monthDisplay = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    document.getElementById('monthName').textContent = monthDisplay[currentDate.getMonth()];
+    const logEntries = [];
 
-    let userId = null;
+    // Toast display
+    function showToast(message, color = 'var(--gold)') {
+      toast.style.borderColor = color;
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
 
-    authBtn.addEventListener('click', () => {
-      if (auth.currentUser) signOut(auth);
-      else signInWithPopup(auth, provider);
-    });
+    // Override console
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+    function pushLog(type, msg, color) {
+      const time = new Date().toLocaleTimeString();
+      logEntries.unshift({ time, msg, type, color });
+      const div = document.createElement('div');
+      div.className = `log-entry log-${type}`;
+      div.textContent = `[${time}] ${msg}`;
+      logsContainer.prepend(div);
+      showToast(msg, color);
+    }
+    console.log = (...args) => { originalLog(...args); pushLog('normal', args.join(' '), 'var(--gold)'); };
+    console.warn = (...args) => { originalWarn(...args); pushLog('warn', args.join(' '), '#facc15'); };
+    console.error = (...args) => { originalError(...args); pushLog('error', args.join(' '), '#ef4444'); };
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        userId = user.uid;
-        authBtn.textContent = 'Sign Out';
-        loadBills();
+    // Logs toggle
+    logsBtn.addEventListener('click', () => {
+      const isOpen = logsOverlay.style.display === 'flex';
+      if (isOpen) {
+        logsOverlay.style.display = 'none';
+        logsPanel.classList.remove('show');
+        logsBtn.textContent = 'Logs';
       } else {
-        userId = null;
-        authBtn.textContent = 'Sign In';
-        billsContainer.innerHTML = '';
+        logsOverlay.style.display = 'flex';
+        setTimeout(() => logsPanel.classList.add('show'), 10);
+        logsBtn.textContent = 'Hide Logs';
+      }
+    });
+    logsOverlay.addEventListener('click', e => {
+      if (e.target === logsOverlay) {
+        logsOverlay.style.display = 'none';
+        logsPanel.classList.remove('show');
+        logsBtn.textContent = 'Logs';
       }
     });
 
-    function loadBills() {
-      const billsRef = collection(db, "users", userId, "bills");
-      onSnapshot(billsRef, (snapshot) => {
-        billsContainer.innerHTML = '';
-        snapshot.forEach(docSnap => renderBill(docSnap.id, docSnap.data()));
+    /* --- existing app logic --- */
+    const authBtn=document.getElementById('authBtn');
+    const billsContainer=document.getElementById('billsContainer');
+    const addBillBtn=document.getElementById('addBillBtn');
+    const paymentBtn=document.getElementById('paymentBtn');
+    const paymentModal=document.getElementById('paymentModal');
+    const manageModal=document.getElementById('manageModal');
+    const currentDate=new Date();
+    const monthNames=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+    const monthDisplay=["January","February","March","April","May","June","July","August","September","October","November","December"];
+    document.getElementById('monthName').textContent=monthDisplay[currentDate.getMonth()];
+    let userId=null;
+
+    authBtn.addEventListener('click',()=>{ if(auth.currentUser)signOut(auth); else signInWithPopup(auth,provider); });
+    onAuthStateChanged(auth,(user)=>{
+      if(user){userId=user.uid;authBtn.textContent='Sign Out';console.log(`Signed in as ${user.email}`);loadBills();}
+      else{userId=null;authBtn.textContent='Sign In';billsContainer.innerHTML='';console.log('Signed out');}
+    });
+
+    function loadBills(){
+      const billsRef=collection(db,"users",userId,"bills");
+      import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").then(({onSnapshot})=>{
+        onSnapshot(billsRef,(snapshot)=>{
+          billsContainer.innerHTML='';
+          snapshot.forEach(docSnap=>renderBill(docSnap.id,docSnap.data()));
+        });
       });
     }
 
-    function renderBill(id, bill) {
-      const card = document.createElement('div');
-      card.className = "glass p-4";
-      card.id = `bill-${id}`;
-      card.innerHTML = `
+    function renderBill(id,bill){
+      const card=document.createElement('div');
+      card.className="glass p-4";
+      card.id=`bill-${id}`;
+      card.innerHTML=`
         <div class="flex justify-between items-center mb-2">
           <h3 class="text-lg font-semibold gold">${bill.name}</h3>
           <div class="text-sm opacity-80">$${bill.amount}</div>
         </div>
-        <div class="text-xs mb-2">Due: ${bill.dueDay} | Last Paid: ${bill.lastPaid ? new Date(bill.lastPaid.seconds*1000).toLocaleDateString() : 'Never'}</div>
+        <div class="text-xs mb-2">Due: ${bill.dueDay} | Last Paid: ${bill.lastPaid?new Date(bill.lastPaid.seconds*1000).toLocaleDateString():'Never'}</div>
         <div class="flex flex-wrap mb-2">
           ${monthNames.map(m=>{
             const s=bill.months?.[m]||'unpaid';
@@ -185,36 +293,35 @@
           }).join('')}
         </div>
         <div class="text-sm border-t border-[var(--border)] pt-2">
-          ${(bill.transactions||[]).slice().reverse().map(t=>`
-            <div>💳 $${t.amountPaid} — ${new Date(t.date.seconds*1000).toLocaleDateString()} (${t.status})</div>
-          `).join('')}
-        </div>
-      `;
+          ${(bill.transactions||[]).slice().reverse().map(t=>
+            `<div>💳 $${t.amountPaid} — ${new Date(t.date.seconds*1000).toLocaleDateString()} (${t.status})</div>`
+          ).join('')}
+        </div>`;
       billsContainer.appendChild(card);
     }
 
-    paymentBtn.onclick = ()=>{ paymentModal.classList.remove('hidden'); populateBillSelect(); };
-    addBillBtn.onclick = ()=>{ manageModal.classList.remove('hidden'); };
-    [paymentModal, manageModal].forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hidden');}));
+    paymentBtn.onclick=()=>{paymentModal.classList.remove('hidden');populateBillSelect();};
+    addBillBtn.onclick=()=>{manageModal.classList.remove('hidden');};
+    [paymentModal,manageModal].forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hidden');}));
 
-    document.getElementById('addBill').onclick = async ()=>{
+    document.getElementById('addBill').onclick=async()=>{
       if(!userId)return;
       const name=document.getElementById('billName').value;
       const amount=parseFloat(document.getElementById('billAmount').value);
       const dueDay=parseInt(document.getElementById('billDueDay').value);
-      if(!name||!amount||!dueDay)return alert('Fill all fields');
-      await addDoc(collection(db,"users",userId,"bills"),{
-        name,amount,dueDay,lastPaid:null,months:{},transactions:[]
-      });
+      if(!name||!amount||!dueDay)return showToast('Fill all fields','#facc15');
+      await addDoc(collection(db,"users",userId,"bills"),{name,amount,dueDay,lastPaid:null,months:{},transactions:[]});
+      showToast('Bill added','var(--gold)');
       manageModal.classList.add('hidden');
     };
 
-    document.getElementById('deleteBill').onclick = async ()=>{
+    document.getElementById('deleteBill').onclick=async()=>{
       const name=document.getElementById('billName').value;
       if(!name)return;
       const billsRef=collection(db,"users",userId,"bills");
       const snap=await getDocs(billsRef);
-      snap.forEach(async d=>{if(d.data().name===name)await deleteDoc(d.ref);});
+      snap.forEach(async d=>{if(d.data().name===name){await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").then(({deleteDoc})=>deleteDoc(d.ref));}});
+      showToast('Bill deleted','#ef4444');
       manageModal.classList.add('hidden');
     };
 
@@ -230,11 +337,11 @@
       document.getElementById('paymentDate').valueAsDate=new Date();
     }
 
-    document.getElementById('submitPayment').onclick = async ()=>{
+    document.getElementById('submitPayment').onclick=async()=>{
       const billId=document.getElementById('paymentBillSelect').value;
       const amountPaid=parseFloat(document.getElementById('paymentAmount').value);
       const datePaid=new Date(document.getElementById('paymentDate').value);
-      if(!billId||isNaN(amountPaid))return;
+      if(!billId||isNaN(amountPaid))return showToast('Enter valid payment','#facc15');
       const billRef=doc(db,"users",userId,"bills",billId);
       const billSnap=await getDoc(billRef);
       if(!billSnap.exists())return;
@@ -247,9 +354,11 @@
       const newTransactions=bill.transactions||[];
       newTransactions.push({date:{seconds:datePaid.getTime()/1000},amountPaid,status});
       await updateDoc(billRef,{months:newMonths,lastPaid:datePaid,transactions:newTransactions});
+      showToast('Payment submitted','var(--gold)');
       paymentModal.classList.add('hidden');
       const card=document.getElementById(`bill-${billId}`);
       if(card){card.classList.add('glow');setTimeout(()=>card.classList.remove('glow'),1000);}
+      console.log(`Payment added for ${bill.name} (${status})`);
     };
   </script>
 </body>
