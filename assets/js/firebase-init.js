@@ -15,6 +15,7 @@ import {
   addDoc,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
   query,
@@ -70,5 +71,6 @@ export {
   ref,
   uploadBytes,
   getDownloadURL,
+  getDocs,
   deleteObject // ✅ These are optional but useful in other files
 };
