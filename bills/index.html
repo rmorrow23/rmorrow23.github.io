@@ -354,7 +354,7 @@
     function populateBillSelect() {
       const select = document.getElementById('paymentBillSelect');
       select.innerHTML = '';
-      getDocs(collection(db, "users", userId, "bills")).then(snap => {
+      getDocs(collection(db, "users", userId, "Bills")).then(snap => {
         snap.forEach(d => {
           const o = document.createElement('option');
           o.value = d.id;
