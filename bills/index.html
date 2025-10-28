@@ -165,71 +165,84 @@ function openDrawer(key){
 }
 
 /* ===== 🧲 Attach Touch & Pointer Events ===== */
-function attachEvents(drawer,key){
-  const bottomTabs=document.getElementById("bottomTabs");
-  const closeBtn=drawer.querySelector(".drawer-close");
-  closeBtn.onclick=closeAll;
-  overlay.onclick=e=>{if(e.target===overlay)closeAll();};
+/* ===== 📱 Global Gesture System ===== */
+let dragDrawer = null;
+let dragStartY = 0;
+let dragDelta = 0;
+let dragKey = null;
+const bottomTabs = document.getElementById("bottomTabs");
 
-  const handle=drawer.querySelector(".drawer-handle");
-  const tab=document.querySelector(`.tab[data-target="${key}"]`);
-  const dragTargets=[handle,tab];
-  let dragStartY=0;
-
-  const startDrag=e=>{
-    isDragging=true;
-    dragStartY=(e.touches?e.touches[0].clientY:e.clientY);
-    drawer.style.transition="none";
-    bottomTabs.style.opacity="0.5";
-  };
-
-  const onDrag=e=>{
-    if(!isDragging)return;
-    const currentY=(e.touches?e.touches[0].clientY:e.clientY);
-    const delta=(currentY-dragStartY)*1.5; // ✅ more sensitive drag
-    const percent=Math.min(100,Math.max(0,(delta/window.innerHeight)*100));
-    drawer.style.transform=`translateY(${percent}%)`;
-    e.preventDefault();
-  };
-
-  const endDrag=()=>{
-    if(!isDragging)return;
-    isDragging=false;
-    const cur=parseFloat(drawer.style.transform.replace(/[^\d.]/g,""))||0;
-    let snapTo=snapPoints.full;
-    if(cur>25)snapTo=snapPoints.closed;
-    drawer.style.transition="transform .3s ease";
-    drawer.style.transform=`translateY(${snapTo}%)`;
-    if(snapTo===snapPoints.closed)setTimeout(closeAll,300);
-    drawer.dataset.open=snapTo===snapPoints.full?"true":"false";
-    bottomTabs.style.opacity="1";
-  };
-
-  dragTargets.forEach(t=>{
-    t.addEventListener("touchstart",startDrag);
-    t.addEventListener("touchmove",onDrag,{passive:false});
-    t.addEventListener("touchend",endDrag);
-    t.addEventListener("pointerdown",startDrag);
-  });
-  window.addEventListener("pointermove",onDrag);
-  window.addEventListener("pointerup",endDrag);
-}
-
-/* ===== 🧠 Smart Swipe-Up from Tab Area ===== */
+// 🔹 Detect start
 window.addEventListener("touchstart",(e)=>{
-  const touchY=e.touches[0].clientY;
-  const screenHeight=window.innerHeight;
-  if(touchY>screenHeight*0.8 && !activeDrawer){
-    // detect which tab area was touched
-    const touchX=e.touches[0].clientX;
-    const tabs=document.querySelectorAll(".tab");
+  const touchY = e.touches[0].clientY;
+  const touchX = e.touches[0].clientX;
+  const screenH = window.innerHeight;
+
+  // If drawer is open → we can drag it down
+  if(activeDrawer){
+    dragDrawer = activeDrawer;
+    dragKey = currentKey;
+    dragStartY = touchY;
+    dragDelta = 0;
+    dragDrawer.style.transition = "none";
+    return;
+  }
+
+  // If touching in bottom 20 % → open drawer from that tab
+  if(touchY > screenH * 0.8){
     tabs.forEach(tab=>{
-      const rect=tab.getBoundingClientRect();
-      if(touchX>=rect.left && touchX<=rect.right){
-        openDrawer(tab.dataset.target);
+      const rect = tab.getBoundingClientRect();
+      if(touchX >= rect.left && touchX <= rect.right){
+        dragKey = tab.dataset.target;
+        // Prepare drawer before any move
+        if(!drawers[dragKey]){
+          const drawer = document.createElement("div");
+          drawer.className = "drawer";
+          drawer.innerHTML = generateDrawerHTML(dragKey);
+          overlay.appendChild(drawer);
+          drawers[dragKey] = drawer;
+          overlay.classList.add("visible");
+          activeDrawer = drawer;
+          currentKey = dragKey;
+          bottomTabs.style.opacity = "0.5";
+          drawer.style.transition = "none";
+        }
+        dragDrawer = drawers[dragKey];
+        dragStartY = touchY;
       }
     });
   }
+});
+
+// 🔹 Move
+window.addEventListener("touchmove",(e)=>{
+  if(!dragDrawer) return;
+  const currentY = e.touches[0].clientY;
+  dragDelta = (currentY - dragStartY) * 1.5; // more sensitive
+  const percent = Math.min(100, Math.max(0, (dragDelta / window.innerHeight) * 100));
+  dragDrawer.style.transform = `translateY(${percent}%)`;
+  e.preventDefault();
+});
+
+// 🔹 End
+window.addEventListener("touchend",()=>{
+  if(!dragDrawer) return;
+  const cur = parseFloat(dragDrawer.style.transform.replace(/[^\d.]/g,"")) || 0;
+  let snapTo = snapPoints.full;
+  if(cur > 25) snapTo = snapPoints.closed;
+
+  dragDrawer.style.transition = "transform .3s ease";
+  dragDrawer.style.transform = `translateY(${snapTo}%)`;
+
+  if(snapTo === snapPoints.closed){
+    setTimeout(closeAll,300);
+  } else {
+    dragDrawer.dataset.open = "true";
+    bottomTabs.style.opacity = "1";
+  }
+
+  dragDrawer = null;
+  dragKey = null;
 });
 
 /* ===== Drawer Content Builder ===== */
