@@ -475,8 +475,23 @@ async function submitPayment(){
 }
 
 /* =============== 🧩 Drawer Observer =============== */
-const observer=new MutationObserver(()=>{if(currentKey)handleDrawerActions(currentKey);});
-observer.observe(overlay,{childList:true,subtree:true});
+const observer = new MutationObserver(() => {
+  if (currentKey) {
+    handleDrawerActions(currentKey);
+  }
+
+  // ✅ Reattach close button handler after dynamic drawer re-render
+  if (activeDrawer) {
+    const closeBtn = activeDrawer.querySelector(".drawer-close");
+    if (closeBtn && !closeBtn.dataset.bound) {
+      closeBtn.dataset.bound = "true";
+      closeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeAll();
+      });
+    }
+  }
+});
 </script>
 </body>
 </html>
