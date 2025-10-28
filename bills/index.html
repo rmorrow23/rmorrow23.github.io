@@ -188,6 +188,7 @@ function openDrawer(key){
   tabs.forEach(t=>t.dataset.target===key?t.classList.add("active"):t.classList.remove("active"));
   activeDrawer=drawer;
   currentKey=key;
+handleDrawerActions(key); // ✅ Ensure dropdowns populate immediately
 }
 /* ===== 🧲 Attach Touch & Pointer Events ===== */
 /* ===== 📱 Global Gesture System ===== */
