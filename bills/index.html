@@ -192,16 +192,25 @@ function openDrawer(key){
   tabs.forEach(t=>t.dataset.target===key?t.classList.add("active"):t.classList.remove("active"));
   activeDrawer=drawer;
   currentKey=key;
-  // 🕒 Wait for the drawer's content to actually be in the DOM before running logic
+ // 🕒 Wait until drawer content actually exists before applying logic
+console.log(`🔍 Waiting for drawer "${key}" to render...`);
 const waitForDrawer = setInterval(() => {
-  const ready =
-    document.querySelector(".drawer") &&
-    document.querySelector(".drawer #paymentBillSelect");
-  if (ready) {
+  const drawerReady = document.querySelector(".drawer");
+  const selectorMap = {
+    bills: "#addBill",
+    payments: "#submitPayment",
+    logs: ".log-entry, .drawer-header" // fallback for logs
+  };
+  const keySelector = selectorMap[key] || ".drawer";
+  const foundElement = drawerReady?.querySelector(keySelector);
+
+  if (foundElement) {
+    console.log(`✅ Drawer "${key}" content detected, initializing actions...`);
     clearInterval(waitForDrawer);
     handleDrawerActions(key);
   }
 }, 100);
+
 }
 /* ===== 🧲 Attach Touch & Pointer Events ===== */
 /* ===== 📱 Global Gesture System ===== */
@@ -434,26 +443,60 @@ async function handleDrawerActions(key){
     };
   }
 
-  if(key==="payments"){
-    const select=document.getElementById("paymentBillSelect");
-    select.innerHTML="";
-    const snap=await getDocs(collection(db,"users",userId,"bills"));
-    const seen=new Set(); // ✅ prevent duplicates
-    snap.forEach(d=>{
-      if(d.id!=="checklist"){
-        const billName=d.data().name.trim();
-        if(!seen.has(billName)){
-          seen.add(billName);
-          const o=document.createElement("option");
-          o.value=d.id;
-          o.textContent=billName;
+ if (key === "payments") {
+  console.log("🟡 handleDrawerActions('payments') started");
+  const select = document.getElementById("paymentBillSelect");
+  const dateInput = document.getElementById("paymentDate");
+  const submitBtn = document.getElementById("submitPayment");
+
+  if (!userId) {
+    console.warn("⚠️ No userId yet, cannot load bills for payments.");
+    return;
+  }
+
+  try {
+    console.log(`📡 Fetching bills for userId=${userId}...`);
+    const billsCol = collection(db, "users", userId, "bills");
+    const snap = await getDocs(billsCol);
+
+    console.log(`📋 Fetched ${snap.size} documents from Firestore.`);
+    select.innerHTML = "";
+
+    const seen = new Set();
+    snap.forEach((d) => {
+      if (d.id !== "checklist") {
+        const bill = d.data();
+        console.log(`➡️ Bill found: ${bill.name} ($${bill.amount})`);
+        const name = bill.name.trim();
+        if (!seen.has(name)) {
+          seen.add(name);
+          const o = document.createElement("option");
+          o.value = d.id;
+          o.textContent = name;
           select.appendChild(o);
         }
       }
     });
-    document.getElementById("paymentDate").valueAsDate=new Date();
-    document.getElementById("submitPayment").onclick=submitPayment;
+
+    if (snap.size === 0) {
+      console.warn("⚠️ No bills found to populate dropdown.");
+    }
+
+    if (select.options.length > 0) {
+      console.log(`✅ Dropdown populated with ${select.options.length} bills.`);
+    } else {
+      console.warn("⚠️ Dropdown remains empty after population.");
+    }
+
+    dateInput.valueAsDate = new Date();
+    console.log(`📅 Date input set to: ${dateInput.value}`);
+    submitBtn.onclick = submitPayment;
+    console.log("🟢 Payment submit handler attached.");
+  } catch (err) {
+    console.error("❌ Error loading bills:", err);
   }
+}
+
 }
 
 /* =============== 💰 Submit Payment =============== */
@@ -489,24 +532,39 @@ async function submitPayment(){
 }
 
 /* =============== 🧩 Drawer Observer =============== */
-const observer = new MutationObserver(() => {
-  if (currentKey) {
-    handleDrawerActions(currentKey);
-  }
+/* =============== 🧩 Drawer Observer (loop-safe) =============== */
+let lastHandledKey = null;
+const observer = new MutationObserver((mutations) => {
+  if (!currentKey || !activeDrawer) return;
 
-  // ✅ Reattach close button handler after dynamic drawer re-render
-  if (activeDrawer) {
-    const closeBtn = activeDrawer.querySelector(".drawer-close");
-    if (closeBtn && !closeBtn.dataset.bound) {
-      closeBtn.dataset.bound = "true";
-      closeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        closeAll();
-      });
-    }
+  // Only run once per drawer open — not every DOM change
+  if (lastHandledKey === currentKey) return;
+  lastHandledKey = currentKey;
+
+  console.log(`👀 Drawer mutation detected for "${currentKey}", running setup once.`);
+  handleDrawerActions(currentKey);
+
+  // Rebind close button safely
+  const closeBtn = activeDrawer.querySelector(".drawer-close");
+  if (closeBtn && !closeBtn.dataset.bound) {
+    closeBtn.dataset.bound = "true";
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeAll();
+    });
   }
 });
+
+// Observe once globally
 observer.observe(overlay, { childList: true, subtree: true });
+
+// Reset the tracker when closing all drawers
+const originalCloseAll = closeAll;
+closeAll = function () {
+  lastHandledKey = null; // allow re-trigger for next open
+  originalCloseAll();
+};
+
 </script>
 </body>
 </html>
