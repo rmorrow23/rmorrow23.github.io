@@ -492,6 +492,7 @@ const observer = new MutationObserver(() => {
     }
   }
 });
+observer.observe(overlay, { childList: true, subtree: true });
 </script>
 </body>
 </html>
