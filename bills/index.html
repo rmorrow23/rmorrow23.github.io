@@ -295,7 +295,7 @@
     });
 
     function loadBills() {
-      const billsRef = collection(db, "users", userId, "bills");
+      const billsRef = collection(db, "users", userId, "Bills");
       import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").then(({ onSnapshot }) => {
         onSnapshot(billsRef, (snapshot) => {
           billsContainer.innerHTML = '';
@@ -336,7 +336,7 @@
       const amount = parseFloat(document.getElementById('billAmount').value);
       const dueDay = parseInt(document.getElementById('billDueDay').value);
       if (!name || !amount || !dueDay) return showToast('Fill all fields', '#facc15');
-      await addDoc(collection(db, "users", userId, "bills"), { name, amount, dueDay, lastPaid: null, months: {}, transactions: [] });
+      await addDoc(collection(db, "users", userId, "Bills"), { name, amount, dueDay, lastPaid: null, months: {}, transactions: [] });
       showToast('Bill added', 'var(--gold)');
       closeDrawer();
     };
@@ -344,7 +344,7 @@
     document.getElementById('deleteBill').onclick = async () => {
       const name = document.getElementById('billName').value;
       if (!name) return;
-      const billsRef = collection(db, "users", userId, "bills");
+      const billsRef = collection(db, "users", userId, "Bills");
       const snap = await getDocs(billsRef);
       snap.forEach(async d => { if (d.data().name === name) { await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").then(({ deleteDoc }) => deleteDoc(d.ref)); } });
       showToast('Bill deleted', '#ef4444');
@@ -370,7 +370,7 @@
       const amountPaid = parseFloat(document.getElementById('paymentAmount').value);
       const datePaid = new Date(document.getElementById('paymentDate').value);
       if (!billId || isNaN(amountPaid)) return showToast('Enter valid payment', '#facc15');
-      const billRef = doc(db, "users", userId, "bills", billId);
+      const billRef = doc(db, "users", userId, "Bills", billId);
       const billSnap = await getDoc(billRef);
       if (!billSnap.exists()) return;
       const bill = billSnap.data();
