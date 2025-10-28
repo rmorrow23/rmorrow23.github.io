@@ -142,12 +142,26 @@ let activeDrawer=null,currentKey=null,isDragging=false,startY=0;
 const snapPoints={closed:100,full:0};
 const drawers={};
 
+
 function closeAll(){
-  Object.values(drawers).forEach(d=>{if(d)d.remove();});
-  overlay.classList.remove("visible");
-  document.getElementById("bottomTabs").style.opacity="1";
-  tabs.forEach(t=>t.classList.remove("active"));
-  activeDrawer=null;currentKey=null;
+  if(activeDrawer){
+    activeDrawer.style.transition="transform .3s ease";
+    activeDrawer.style.transform="translateY(100%)";
+    setTimeout(()=>{
+      if(activeDrawer && activeDrawer.parentNode===overlay){
+        overlay.removeChild(activeDrawer);
+      }
+      // ✅ clear all references
+      for(const key in drawers){
+        drawers[key]=null;
+      }
+      activeDrawer=null;
+      currentKey=null;
+      overlay.classList.remove("visible");
+      document.getElementById("bottomTabs").style.opacity="1";
+      tabs.forEach(t=>t.classList.remove("active"));
+    },300);
+  }
 }
 
 function openDrawer(key){
@@ -155,19 +169,26 @@ function openDrawer(key){
   const drawer=document.createElement("div");
   drawer.className="drawer";
   drawer.innerHTML=generateDrawerHTML(key);
-// ✅ Bind close button
-setTimeout(()=>{
-  const closeBtn=drawer.querySelector(".drawer-close");
-  if(closeBtn) closeBtn.onclick=()=>closeAll();
-},10);
   overlay.appendChild(drawer);
   drawers[key]=drawer;
   overlay.classList.add("visible");
+
+  // ✅ Bind close button (works every time)
+  setTimeout(()=>{
+    const closeBtn=drawer.querySelector(".drawer-close");
+    if(closeBtn){
+      closeBtn.addEventListener("click",(e)=>{
+        e.stopPropagation();
+        closeAll();
+      });
+    }
+  },50);
+
   requestAnimationFrame(()=>drawer.style.transform="translateY(0%)");
   tabs.forEach(t=>t.dataset.target===key?t.classList.add("active"):t.classList.remove("active"));
-  activeDrawer=drawer;currentKey=key;
+  activeDrawer=drawer;
+  currentKey=key;
 }
-
 /* ===== 🧲 Attach Touch & Pointer Events ===== */
 /* ===== 📱 Global Gesture System ===== */
 let dragDrawer = null;
@@ -204,6 +225,16 @@ window.addEventListener("touchstart",(e)=>{
           drawer.className = "drawer";
           drawer.innerHTML = generateDrawerHTML(dragKey);
           overlay.appendChild(drawer);
+// ✅ Ensure close button works on gesture-created drawers too
+setTimeout(()=>{
+  const closeBtn=drawer.querySelector(".drawer-close");
+  if(closeBtn){
+    closeBtn.addEventListener("click",(e)=>{
+      e.stopPropagation();
+      closeAll();
+    });
+  }
+},50);
           drawers[dragKey] = drawer;
           overlay.classList.add("visible");
           activeDrawer = drawer;
