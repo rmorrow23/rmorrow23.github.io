@@ -155,6 +155,11 @@ function openDrawer(key){
   const drawer=document.createElement("div");
   drawer.className="drawer";
   drawer.innerHTML=generateDrawerHTML(key);
+// ✅ Bind close button
+setTimeout(()=>{
+  const closeBtn=drawer.querySelector(".drawer-close");
+  if(closeBtn) closeBtn.onclick=()=>closeAll();
+},10);
   overlay.appendChild(drawer);
   drawers[key]=drawer;
   overlay.classList.add("visible");
