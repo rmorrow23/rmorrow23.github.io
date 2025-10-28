@@ -192,7 +192,16 @@ function openDrawer(key){
   tabs.forEach(t=>t.dataset.target===key?t.classList.add("active"):t.classList.remove("active"));
   activeDrawer=drawer;
   currentKey=key;
-  setTimeout(() => handleDrawerActions(key), 150); // ⏳ wait for drawer to render before populating
+  // 🕒 Wait for the drawer's content to actually be in the DOM before running logic
+const waitForDrawer = setInterval(() => {
+  const ready =
+    document.querySelector(".drawer") &&
+    document.querySelector(".drawer #paymentBillSelect");
+  if (ready) {
+    clearInterval(waitForDrawer);
+    handleDrawerActions(key);
+  }
+}, 100);
 }
 /* ===== 🧲 Attach Touch & Pointer Events ===== */
 /* ===== 📱 Global Gesture System ===== */
