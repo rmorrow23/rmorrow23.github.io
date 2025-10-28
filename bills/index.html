@@ -41,7 +41,7 @@ html,body{
 
 /* Overlay */
 #drawerOverlay{position:fixed;inset:0;background:rgba(0,0,0,.4);
-  backdrop-filter:blur(8px);display:none;z-index:60;transition:opacity .3s ease;}
+  backdrop-filter:blur(8px);display:none;opacity:0;z-index:75;transition:opacity .3s ease;}
 #drawerOverlay.visible{display:flex;opacity:1;}
 
 /* Drawer */
@@ -49,11 +49,11 @@ html,body{
   background:rgba(18,20,27,.96);border-top:1px solid var(--border);
   border-radius:1rem 1rem 0 0;box-shadow:0 -8px 24px rgba(0,0,0,.5);
   transform:translateY(100%);transition:transform .35s cubic-bezier(.25,.8,.25,1);
-  max-height:90vh;overflow-y:auto;touch-action:none;}
-.drawer.show{transform:translateY(0);}
+  max-height:100vh;padding-bottom:env(safe-area-inset-bottom,80px);
+  overflow-y:auto;touch-action:none;z-index:80;}
 .drawer-handle{width:48px;height:5px;background:var(--gold);border-radius:3px;
   margin:10px auto;opacity:.9;}
-.drawer-header{text-align:center;font-weight:600;margin-bottom:.5rem;}
+.drawer-header{text-align:center;font-weight:600;margin-bottom:.5rem;position:relative;}
 .drawer-close{position:absolute;right:1rem;top:.5rem;color:var(--text);
   opacity:.7;font-size:1.2rem;cursor:pointer;}
 .drawer-close:hover{opacity:1;}
@@ -62,7 +62,7 @@ html,body{
 #bottomTabs{position:fixed;bottom:0;left:0;width:100%;height:64px;
   background:rgba(18,20,27,.85);backdrop-filter:blur(10px);
   display:flex;justify-content:space-around;align-items:center;
-  border-top:1px solid var(--border);z-index:70;}
+  border-top:1px solid var(--border);z-index:70;transition:opacity .3s ease;}
 .tab{flex:1;text-align:center;color:var(--text);
   padding-top:4px;transition:all .2s ease;font-size:.85rem;}
 .tab.active{color:var(--gold);transform:translateY(-3px);}
@@ -109,14 +109,15 @@ input:focus,select:focus{border-color:var(--gold);
   <div class="tab" data-target="bills"><span class="tab-icon">🏷️</span>Bills</div>
   <div class="tab" data-target="payments"><span class="tab-icon">💰</span>Payments</div>
   <div class="tab" data-target="logs"><span class="tab-icon">📋</span>Logs</div>
-</nav><script type="module">
+</nav>
+<script type="module">
 import {
   app, db, auth, provider,
   signInWithPopup, onAuthStateChanged, signOut,
   collection, addDoc, getDocs, getDoc, updateDoc, doc
 } from "/assets/js/firebase-init.js";
 
-/* ========= 🔔 Toast + Log System ========= */
+/* ========= 🔔 Toast + Logs ========= */
 const toast=document.getElementById("toast");
 const logEntries=[];
 function showToast(msg,color="var(--gold)"){
@@ -126,31 +127,26 @@ function showToast(msg,color="var(--gold)"){
   setTimeout(()=>toast.classList.remove("show"),3000);
 }
 const _log=console.log,_warn=console.warn,_err=console.error;
+function pushLog(type,msg,color){const t=new Date().toLocaleTimeString();logEntries.unshift({t,msg,type,color});showToast(msg,color);}
 console.log=(...a)=>{_log(...a);pushLog("normal",a.join(" "),"var(--gold)");};
 console.warn=(...a)=>{_warn(...a);pushLog("warn",a.join(" "),"#facc15");};
 console.error=(...a)=>{_err(...a);pushLog("error",a.join(" "),"#ef4444");};
-function pushLog(type,msg,color){
-  const t=new Date().toLocaleTimeString();
-  logEntries.unshift({t,msg,type,color});
-  showToast(msg,color);
-}
 
-/* ========= 📱 Drawer + Gesture System ========= */
+/* ========= 📱 Drawer + Gesture ========= */
 const overlay=document.getElementById("drawerOverlay");
 const tabs=document.querySelectorAll(".tab");
 let activeDrawer=null,currentKey=null,isDragging=false,startY=0,currentY=0;
-const snap={closed:100,half:50,full:0};
+const snapPoints={closed:100,half:45,full:0};
 const drawers={};
 
-/* Helper to close all drawers */
 function closeAll(){
   Object.values(drawers).forEach(d=>{if(d)d.remove();});
   overlay.classList.remove("visible");
+  document.getElementById("bottomTabs").style.opacity="1";
   tabs.forEach(t=>t.classList.remove("active"));
   activeDrawer=null;currentKey=null;
 }
 
-/* Create & show drawer */
 function openDrawer(key){
   closeAll();
   const drawer=document.createElement("div");
@@ -159,53 +155,68 @@ function openDrawer(key){
   overlay.appendChild(drawer);
   drawers[key]=drawer;
   overlay.classList.add("visible");
-  requestAnimationFrame(()=>drawer.style.transform="translateY(50%)"); // peek half
+  requestAnimationFrame(()=>drawer.style.transform="translateY(50%)");
   tabs.forEach(t=>t.dataset.target===key?t.classList.add("active"):t.classList.remove("active"));
   attachEvents(drawer,key);
   activeDrawer=drawer;currentKey=key;
 }
 
-/* Handle drag gestures */
 function attachEvents(drawer,key){
+  const bottomTabs=document.getElementById("bottomTabs");
   const closeBtn=drawer.querySelector(".drawer-close");
   closeBtn.onclick=closeAll;
   overlay.onclick=e=>{if(e.target===overlay)closeAll();};
 
   const handle=drawer.querySelector(".drawer-handle");
-  const start=e=>{
+  const tab=document.querySelector(`.tab[data-target="${key}"]`);
+  const dragTargets=[handle,tab];
+  let dragStartY=0,currentY=0;
+
+  const startDrag=e=>{
     isDragging=true;
-    startY=(e.touches?e.touches[0].clientY:e.clientY);
+    dragStartY=(e.touches?e.touches[0].clientY:e.clientY);
     drawer.style.transition="none";
+    if(!overlay.classList.contains("visible")){
+      overlay.classList.add("visible");
+      overlay.appendChild(drawer);
+    }
+    bottomTabs.style.opacity="0.5";
   };
-  const move=e=>{
+
+  const onDrag=e=>{
     if(!isDragging)return;
     currentY=(e.touches?e.touches[0].clientY:e.clientY);
-    const delta=currentY-startY;
-    const percent=Math.min(100,Math.max(0,(delta/window.innerHeight)*100+(drawer.dataset.open==="true"?0:50)));
+    const delta=currentY-dragStartY;
+    const percent=Math.min(100,Math.max(0,(delta/window.innerHeight)*100+(drawer.dataset.open==="true"?0:45)));
     drawer.style.transform=`translateY(${percent}%)`;
     e.preventDefault();
   };
-  const end=()=>{
+
+  const endDrag=()=>{
     if(!isDragging)return;
     isDragging=false;
     const cur=parseFloat(drawer.style.transform.replace(/[^\d.]/g,""))||50;
-    let snapTo=snap.full;
-    if(cur>75)snapTo=snap.closed;
-    else if(cur>25&&cur<75)snapTo=snap.half;
+    let snapTo=snapPoints.full;
+    if(cur>80)snapTo=snapPoints.closed;
+    else if(cur>30)snapTo=snapPoints.half;
     drawer.style.transition="transform .3s ease";
     drawer.style.transform=`translateY(${snapTo}%)`;
-    if(snapTo===snap.closed){setTimeout(closeAll,300);}
-    drawer.dataset.open=snapTo===snap.full?"true":"false";
+    if(snapTo===snapPoints.closed){setTimeout(closeAll,300);}
+    drawer.dataset.open=snapTo===snapPoints.full?"true":"false";
+    bottomTabs.style.opacity="1";
   };
-  handle.addEventListener("touchstart",start);
-  handle.addEventListener("touchmove",move,{passive:false});
-  handle.addEventListener("touchend",end);
-  handle.addEventListener("pointerdown",start);
-  window.addEventListener("pointermove",move);
-  window.addEventListener("pointerup",end);
+
+  dragTargets.forEach(t=>{
+    t.addEventListener("touchstart",startDrag);
+    t.addEventListener("touchmove",onDrag,{passive:false});
+    t.addEventListener("touchend",endDrag);
+    t.addEventListener("pointerdown",startDrag);
+  });
+  window.addEventListener("pointermove",onDrag);
+  window.addEventListener("pointerup",endDrag);
 }
 
-/* ========= 🧱 Drawer Content Generator ========= */
+/* ========= Drawer Content ========= */
 function generateDrawerHTML(key){
   let html=`<div class="drawer-handle"></div><div class="drawer-header gold text-lg">${key[0].toUpperCase()+key.slice(1)}<span class="drawer-close">✕</span></div>`;
   if(key==="bills"){
@@ -234,7 +245,7 @@ function generateDrawerHTML(key){
   return html;
 }
 
-/* ========= ⚙️ Tabs Behaviour ========= */
+/* ========= Tabs Behaviour ========= */
 tabs.forEach(tab=>{
   tab.addEventListener("click",()=>{
     const key=tab.dataset.target;
@@ -261,16 +272,16 @@ onAuthStateChanged(auth,(user)=>{
 function loadBills(){
   const billsRef=collection(db,"users",userId,"bills");
   import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
-    .then(({onSnapshot})=>{
-      onSnapshot(billsRef,(snapshot)=>{
-        billsContainer.innerHTML="";
-        snapshot.forEach(docSnap=>{
-          if(docSnap.id!=="checklist"){ // 🚫 filter out checklist
-            renderBill(docSnap.id,docSnap.data());
-          }
-        });
+  .then(({onSnapshot})=>{
+    onSnapshot(billsRef,(snapshot)=>{
+      billsContainer.innerHTML="";
+      snapshot.forEach(docSnap=>{
+        if(docSnap.id!=="checklist"){  // 🚫 skip checklist
+          renderBill(docSnap.id,docSnap.data());
+        }
       });
     });
+  });
 }
 
 function renderBill(id,bill){
@@ -295,23 +306,27 @@ function renderBill(id,bill){
         `<div>💳 $${t.amountPaid} — ${new Date(t.date.seconds*1000).toLocaleDateString()} (${t.status})</div>`).join("")}
     </div>`;
   billsContainer.appendChild(card);
-}/* ========= 🧾 Drawer Action Bindings ========= */
+}
+/* ========= 🧾 Drawer Action Bindings ========= */
 async function handleDrawerActions(key){
   if(key==="bills"){
     const addBtn=document.getElementById("addBill");
     const delBtn=document.getElementById("deleteBill");
+
     addBtn.onclick=async()=>{
       if(!userId)return;
       const name=document.getElementById("billName").value.trim();
       const amount=parseFloat(document.getElementById("billAmount").value);
       const dueDay=parseInt(document.getElementById("billDueDay").value);
       if(!name||!amount||!dueDay)return showToast("Fill all fields","#facc15");
+
       await addDoc(collection(db,"users",userId,"bills"),{
         name,amount,dueDay,lastPaid:null,months:{},transactions:[]
       });
       showToast("Bill added","var(--gold)");
       closeAll();
     };
+
     delBtn.onclick=async()=>{
       if(!userId)return;
       const name=document.getElementById("billName").value.trim();
@@ -355,6 +370,7 @@ async function submitPayment(){
   const billRef=doc(db,"users",userId,"bills",billId);
   const billSnap=await getDoc(billRef);
   if(!billSnap.exists())return;
+
   const bill=billSnap.data();
   const monthKey=monthNames[datePaid.getMonth()];
   let status="paid";
@@ -365,10 +381,13 @@ async function submitPayment(){
   const newTransactions=[...(bill.transactions||[]),{
     amountPaid,date:{seconds:datePaid.getTime()/1000},status
   }];
+
   await updateDoc(billRef,{
-    months:newMonths,transactions:newTransactions,
+    months:newMonths,
+    transactions:newTransactions,
     lastPaid:{seconds:datePaid.getTime()/1000}
   });
+
   showToast("Payment recorded","var(--gold)");
   closeAll();
 }
