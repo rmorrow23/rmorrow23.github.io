@@ -1,391 +1,383 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Morrow Industries — Bills Paid Tracker</title>
-  <link rel="icon" href="/assets/morIcon.png">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    :root {
-      --gold:#d4af37;
-      --bg:#0a0b0f;
-      --surface:rgba(18,20,27,0.7);
-      --text:#e9eef8;
-      --border:rgba(255,255,255,0.08);
-    }
-    html,body{margin:0;padding:0;background:radial-gradient(circle at center,var(--bg)0%,#000 100%);color:var(--text);font-family:'Inter',sans-serif;height:100%;overflow-x:hidden;}
-    .gold{color:var(--gold);}
-    .glass{background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:1rem;box-shadow:0 4px 16px rgba(0,0,0,0.4);}
-    .btn{border:1px solid var(--border);padding:.6rem 1rem;border-radius:.75rem;transition:all .2s ease;}
-    .btn:hover{background:rgba(212,175,55,0.1);border-color:var(--gold);}
-    .month-circle{width:1.3rem;height:1.3rem;border-radius:50%;margin:.15rem;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#000;}
-    .status-paid{background:#22c55e;}
-    .status-partial{background:#facc15;}
-    .status-late{background:#ef4444;}
-    .status-unpaid{background:#6b7280;}
-    .glow{box-shadow:0 0 20px 4px rgba(212,175,55,0.25);transition:box-shadow .8s ease-out;}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Morrow Industries — Bills Paid Tracker</title>
+<link rel="icon" href="/assets/morIcon.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{
+  --gold:#d4af37;
+  --bg:#0a0b0f;
+  --surface:rgba(18,20,27,.75);
+  --text:#e9eef8;
+  --border:rgba(255,255,255,.08);
+}
+html,body{
+  margin:0;padding:0;
+  background:radial-gradient(circle at center,var(--bg)0%,#000 100%);
+  color:var(--text);font-family:'Inter',sans-serif;
+  height:100%;overflow-x:hidden;
+}
+.gold{color:var(--gold);}
+.glass{background:var(--surface);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:1rem;box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.btn{border:1px solid var(--border);padding:.6rem 1rem;border-radius:.75rem;transition:.2s;}
+.btn:hover{background:rgba(212,175,55,.1);border-color:var(--gold);}
+.month-circle{width:1.3rem;height:1.3rem;border-radius:50%;margin:.15rem;
+  display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#000;}
+.status-paid{background:#22c55e;} .status-partial{background:#facc15;}
+.status-late{background:#ef4444;} .status-unpaid{background:#6b7280;}
 
-    /* Toast */
-    #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%)scale(.9);background:rgba(18,20,27,.85);border:1px solid var(--gold);color:var(--text);padding:.6rem 1.2rem;border-radius:.75rem;box-shadow:0 0 15px rgba(212,175,55,.25);opacity:0;pointer-events:none;transition:all .2s ease;z-index:1000;font-size:.9rem;}
-    #toast.show{opacity:1;transform:translateX(-50%)scale(1);}
+/* Toast */
+#toast{position:fixed;bottom:90px;left:50%;
+  transform:translateX(-50%)scale(.9);
+  background:rgba(18,20,27,.85);border:1px solid var(--gold);
+  color:var(--text);padding:.6rem 1.2rem;border-radius:.75rem;
+  box-shadow:0 0 15px rgba(212,175,55,.25);
+  opacity:0;pointer-events:none;transition:all .25s ease;z-index:1000;font-size:.9rem;}
+#toast.show{opacity:1;transform:translateX(-50%)scale(1);}
 
-    /* Drawer overlay shared */
-    #drawerOverlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);display:none;z-index:60;justify-content:flex-end;flex-direction:column;}
+/* Overlay */
+#drawerOverlay{position:fixed;inset:0;background:rgba(0,0,0,.4);
+  backdrop-filter:blur(8px);display:none;z-index:60;transition:opacity .3s ease;}
+#drawerOverlay.visible{display:flex;opacity:1;}
 
-    /* Drawers */
-    .drawer{background:rgba(18,20,27,.95);border-top:1px solid var(--border);border-radius:1rem 1rem 0 0;overflow-y:auto;transform:translateY(100%);transition:transform .35s cubic-bezier(.25,.8,.25,1);max-height:90vh;}
-    .drawer.show{transform:translateY(0);}
-    .drawer-handle{width:40px;height:4px;background:var(--gold);border-radius:2px;margin:10px auto 15px;opacity:0;transform:translateY(10px);transition:opacity .3s ease,transform .3s ease;}
-    .drawer.show .drawer-handle{opacity:1;transform:translateY(0);}
-    .drawer-header{display:flex;justify-content:flex-end;padding:0 1rem;}
-    .drawer-close{color:var(--text);font-size:1.2rem;cursor:pointer;opacity:.7;transition:opacity .2s ease;}
-    .drawer-close:hover{opacity:1;}
+/* Drawer */
+.drawer{position:fixed;bottom:0;left:0;width:100%;
+  background:rgba(18,20,27,.96);border-top:1px solid var(--border);
+  border-radius:1rem 1rem 0 0;box-shadow:0 -8px 24px rgba(0,0,0,.5);
+  transform:translateY(100%);transition:transform .35s cubic-bezier(.25,.8,.25,1);
+  max-height:90vh;overflow-y:auto;touch-action:none;}
+.drawer.show{transform:translateY(0);}
+.drawer-handle{width:48px;height:5px;background:var(--gold);border-radius:3px;
+  margin:10px auto;opacity:.9;}
+.drawer-header{text-align:center;font-weight:600;margin-bottom:.5rem;}
+.drawer-close{position:absolute;right:1rem;top:.5rem;color:var(--text);
+  opacity:.7;font-size:1.2rem;cursor:pointer;}
+.drawer-close:hover{opacity:1;}
 
-    /* Bottom tab bar */
-    #bottomTabs{position:fixed;bottom:0;left:0;width:100%;height:64px;background:rgba(18,20,27,.8);backdrop-filter:blur(12px);display:flex;justify-content:space-around;align-items:center;border-top:1px solid var(--border);z-index:70;}
-    .tab{flex:1;text-align:center;color:var(--text);padding-top:4px;transition:all .2s ease;font-size:.85rem;}
-    .tab.active{color:var(--gold);transform:translateY(-3px);}
-    .tab-icon{font-size:1.2rem;display:block;margin-bottom:2px;}
+/* Bottom bar */
+#bottomTabs{position:fixed;bottom:0;left:0;width:100%;height:64px;
+  background:rgba(18,20,27,.85);backdrop-filter:blur(10px);
+  display:flex;justify-content:space-around;align-items:center;
+  border-top:1px solid var(--border);z-index:70;}
+.tab{flex:1;text-align:center;color:var(--text);
+  padding-top:4px;transition:all .2s ease;font-size:.85rem;}
+.tab.active{color:var(--gold);transform:translateY(-3px);}
+.tab-icon{font-size:1.2rem;display:block;margin-bottom:2px;}
 
-    /* Logs Drawer Colors */
-    .log-entry{padding:.6rem 1rem;border-bottom:1px solid var(--border);font-size:.85rem;}
-    .log-normal{color:var(--gold);}
-    .log-warn{color:#facc15;}
-    .log-error{color:#ef4444;}
-
-    input,select{border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:var(--text);transition:border .2s,box-shadow .2s;width:100%;}
-    input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 6px rgba(212,175,55,.3);outline:none;}
-  </style>
+input,select{
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(0,0,0,.3);
+  color:var(--text);border-radius:.5rem;padding:.5rem;
+  width:100%;transition:.2s;
+}
+input:focus,select:focus{border-color:var(--gold);
+  box-shadow:0 0 6px rgba(212,175,55,.3);outline:none;}
+</style>
 </head>
 <body class="pb-20">
-  <!-- Header -->
-  <header class="flex items-center justify-between p-4 sticky top-0 bg-black/70 backdrop-blur-md z-50">
-    <div class="flex items-center space-x-2">
-      <img src="/assets/morIcon.png" alt="Morrow Icon" class="w-8 h-8">
-      <h1 class="text-lg font-semibold gold">Bills Paid Tracker</h1>
-    </div>
-    <button id="authBtn" class="btn">Sign In</button>
-  </header>
-
-  <!-- Summary -->
-  <section id="summary" class="glass m-4 p-4 grid grid-cols-2 gap-2 text-center">
-    <div>✅ Paid: <span id="paidCount" class="gold">0</span></div>
-    <div>⚠️ Partial: <span id="partialCount" class="gold">0</span></div>
-    <div>❌ Unpaid: <span id="unpaidCount" class="gold">0</span></div>
-    <div>💰 Total: <span id="totalSummary" class="gold">$0 / $0</span></div>
-  </section>
-
-  <!-- Bills List -->
-  <main id="billsContainer" class="space-y-4 px-4"></main>
-
-  <!-- Totals -->
-  <section id="totals" class="glass m-4 p-4 text-center">
-    <div class="mb-2">📆 <span id="monthName" class="gold"></span></div>
-    <div>This Month — Paid: <span id="monthPaid" class="gold">$0</span> | Remaining: <span id="monthRemain" class="gold">$0</span></div>
-    <div class="mt-2">This Year — Paid: <span id="yearPaid" class="gold">$0</span> | Remaining: <span id="yearRemain" class="gold">$0</span></div>
-  </section>
-
-  <!-- Toast -->
-  <div id="toast"></div>
-
-  <!-- Drawer overlay -->
-  <div id="drawerOverlay" class="hidden flex">
-    <div id="drawerBills" class="drawer w-full"></div>
-    <div id="drawerPayments" class="drawer w-full"></div>
-    <div id="drawerLogs" class="drawer w-full"></div>
+<header class="flex items-center justify-between p-4 sticky top-0 bg-black/70 backdrop-blur-md z-50">
+  <div class="flex items-center space-x-2">
+    <img src="/assets/morIcon.png" alt="Morrow Icon" class="w-8 h-8">
+    <h1 class="text-lg font-semibold gold">Bills Paid Tracker</h1>
   </div>
+  <button id="authBtn" class="btn">Sign In</button>
+</header>
 
-  <!-- Bottom tab bar -->
-  <nav id="bottomTabs">
-    <div class="tab" data-target="bills"><span class="tab-icon">🏷️</span>Bills</div>
-    <div class="tab" data-target="payments"><span class="tab-icon">💰</span>Payments</div>
-    <div class="tab" data-target="logs"><span class="tab-icon">📋</span>Logs</div>
-  </nav>
+<section id="summary" class="glass m-4 p-4 grid grid-cols-2 gap-2 text-center">
+  <div>✅ Paid: <span id="paidCount" class="gold">0</span></div>
+  <div>⚠️ Partial: <span id="partialCount" class="gold">0</span></div>
+  <div>❌ Unpaid: <span id="unpaidCount" class="gold">0</span></div>
+  <div>💰 Total: <span id="totalSummary" class="gold">$0 / $0</span></div>
+</section>
 
-  <!-- Firebase + main logic will be inserted below -->
-<script type="module">
-  import {
-    app, db, auth, provider,
-    signInWithPopup, onAuthStateChanged, signOut,
-    collection, addDoc, getDocs, getDoc, updateDoc, doc
-  } from "/assets/js/firebase-init.js";
+<main id="billsContainer" class="space-y-4 px-4"></main>
 
-  /* =======================
-     🔔 Toast + Logs System
-  ======================= */
-  const toast = document.getElementById("toast");
-  const logEntries = [];
+<section id="totals" class="glass m-4 p-4 text-center">
+  <div class="mb-2">📆 <span id="monthName" class="gold"></span></div>
+  <div>This Month — Paid: <span id="monthPaid" class="gold">$0</span> | Remaining: <span id="monthRemain" class="gold">$0</span></div>
+  <div class="mt-2">This Year — Paid: <span id="yearPaid" class="gold">$0</span> | Remaining: <span id="yearRemain" class="gold">$0</span></div>
+</section>
 
-  function showToast(message, color = "var(--gold)") {
-    toast.style.borderColor = color;
-    toast.textContent = message;
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 3000);
-  }
+<div id="toast"></div>
+<div id="drawerOverlay"></div>
 
-  const originalLog = console.log;
-  const originalWarn = console.warn;
-  const originalError = console.error;
-  function pushLog(type, msg, color) {
-    const time = new Date().toLocaleTimeString();
-    logEntries.unshift({ time, msg, type, color });
-    showToast(msg, color);
-  }
-  console.log = (...args) => { originalLog(...args); pushLog("normal", args.join(" "), "var(--gold)"); };
-  console.warn = (...args) => { originalWarn(...args); pushLog("warn", args.join(" "), "#facc15"); };
-  console.error = (...args) => { originalError(...args); pushLog("error", args.join(" "), "#ef4444"); };
+<nav id="bottomTabs">
+  <div class="tab" data-target="bills"><span class="tab-icon">🏷️</span>Bills</div>
+  <div class="tab" data-target="payments"><span class="tab-icon">💰</span>Payments</div>
+  <div class="tab" data-target="logs"><span class="tab-icon">📋</span>Logs</div>
+</nav><script type="module">
+import {
+  app, db, auth, provider,
+  signInWithPopup, onAuthStateChanged, signOut,
+  collection, addDoc, getDocs, getDoc, updateDoc, doc
+} from "/assets/js/firebase-init.js";
 
-  /* =======================
-     📱 Drawer + Tab System
-  ======================= */
-  const drawerOverlay = document.getElementById("drawerOverlay");
-  const drawers = {
-    bills: document.getElementById("drawerBills"),
-    payments: document.getElementById("drawerPayments"),
-    logs: document.getElementById("drawerLogs"),
+/* ========= 🔔 Toast + Log System ========= */
+const toast=document.getElementById("toast");
+const logEntries=[];
+function showToast(msg,color="var(--gold)"){
+  toast.style.borderColor=color;
+  toast.textContent=msg;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"),3000);
+}
+const _log=console.log,_warn=console.warn,_err=console.error;
+console.log=(...a)=>{_log(...a);pushLog("normal",a.join(" "),"var(--gold)");};
+console.warn=(...a)=>{_warn(...a);pushLog("warn",a.join(" "),"#facc15");};
+console.error=(...a)=>{_err(...a);pushLog("error",a.join(" "),"#ef4444");};
+function pushLog(type,msg,color){
+  const t=new Date().toLocaleTimeString();
+  logEntries.unshift({t,msg,type,color});
+  showToast(msg,color);
+}
+
+/* ========= 📱 Drawer + Gesture System ========= */
+const overlay=document.getElementById("drawerOverlay");
+const tabs=document.querySelectorAll(".tab");
+let activeDrawer=null,currentKey=null,isDragging=false,startY=0,currentY=0;
+const snap={closed:100,half:50,full:0};
+const drawers={};
+
+/* Helper to close all drawers */
+function closeAll(){
+  Object.values(drawers).forEach(d=>{if(d)d.remove();});
+  overlay.classList.remove("visible");
+  tabs.forEach(t=>t.classList.remove("active"));
+  activeDrawer=null;currentKey=null;
+}
+
+/* Create & show drawer */
+function openDrawer(key){
+  closeAll();
+  const drawer=document.createElement("div");
+  drawer.className="drawer";
+  drawer.innerHTML=generateDrawerHTML(key);
+  overlay.appendChild(drawer);
+  drawers[key]=drawer;
+  overlay.classList.add("visible");
+  requestAnimationFrame(()=>drawer.style.transform="translateY(50%)"); // peek half
+  tabs.forEach(t=>t.dataset.target===key?t.classList.add("active"):t.classList.remove("active"));
+  attachEvents(drawer,key);
+  activeDrawer=drawer;currentKey=key;
+}
+
+/* Handle drag gestures */
+function attachEvents(drawer,key){
+  const closeBtn=drawer.querySelector(".drawer-close");
+  closeBtn.onclick=closeAll;
+  overlay.onclick=e=>{if(e.target===overlay)closeAll();};
+
+  const handle=drawer.querySelector(".drawer-handle");
+  const start=e=>{
+    isDragging=true;
+    startY=(e.touches?e.touches[0].clientY:e.clientY);
+    drawer.style.transition="none";
   };
-  const tabs = document.querySelectorAll(".tab");
-  let activeDrawer = null;
-  let startY = 0, currentY = 0, isDragging = false;
-  let currentDrawerKey = null;
-  const snapPoints = { closed: 100, half: 50, full: 0 }; // translateY in %
+  const move=e=>{
+    if(!isDragging)return;
+    currentY=(e.touches?e.touches[0].clientY:e.clientY);
+    const delta=currentY-startY;
+    const percent=Math.min(100,Math.max(0,(delta/window.innerHeight)*100+(drawer.dataset.open==="true"?0:50)));
+    drawer.style.transform=`translateY(${percent}%)`;
+    e.preventDefault();
+  };
+  const end=()=>{
+    if(!isDragging)return;
+    isDragging=false;
+    const cur=parseFloat(drawer.style.transform.replace(/[^\d.]/g,""))||50;
+    let snapTo=snap.full;
+    if(cur>75)snapTo=snap.closed;
+    else if(cur>25&&cur<75)snapTo=snap.half;
+    drawer.style.transition="transform .3s ease";
+    drawer.style.transform=`translateY(${snapTo}%)`;
+    if(snapTo===snap.closed){setTimeout(closeAll,300);}
+    drawer.dataset.open=snapTo===snap.full?"true":"false";
+  };
+  handle.addEventListener("touchstart",start);
+  handle.addEventListener("touchmove",move,{passive:false});
+  handle.addEventListener("touchend",end);
+  handle.addEventListener("pointerdown",start);
+  window.addEventListener("pointermove",move);
+  window.addEventListener("pointerup",end);
+}
 
-  function closeAllDrawers() {
-    Object.values(drawers).forEach(d => d.classList.remove("show"));
-    drawerOverlay.style.display = "none";
-    tabs.forEach(t => t.classList.remove("active"));
-    activeDrawer = null;
-  }
-
-  function openDrawer(key) {
-    closeAllDrawers();
-    const drawer = drawers[key];
-    if (!drawer) return;
-    drawerOverlay.style.display = "flex";
-    drawer.innerHTML = generateDrawerHTML(key);
-    requestAnimationFrame(() => drawer.classList.add("show"));
-    tabs.forEach(t => t.dataset.target === key ? t.classList.add("active") : t.classList.remove("active"));
-    activeDrawer = drawer;
-    currentDrawerKey = key;
-    attachDrawerEvents(drawer, key);
-  }
-
-  function attachDrawerEvents(drawer, key) {
-    const closeBtn = drawer.querySelector(".drawer-close");
-    closeBtn.addEventListener("click", closeAllDrawers);
-    drawerOverlay.onclick = (e) => { if (e.target === drawerOverlay) closeAllDrawers(); };
-
-    if (/Mobi|Android/i.test(navigator.userAgent)) {
-      drawer.addEventListener("touchstart", startDrag);
-      drawer.addEventListener("touchmove", onDrag);
-      drawer.addEventListener("touchend", endDrag);
-    }
-  }
-
-  function startDrag(e) {
-    isDragging = true;
-    startY = e.touches[0].clientY;
-  }
-  function onDrag(e) {
-    if (!isDragging || !activeDrawer) return;
-    currentY = e.touches[0].clientY;
-    const delta = currentY - startY;
-    const percent = Math.min(100, Math.max(0, delta / window.innerHeight * 100));
-    activeDrawer.style.transform = `translateY(${percent}%)`;
-  }
-  function endDrag() {
-    if (!activeDrawer) return;
-    isDragging = false;
-    const currentTransform = parseFloat(activeDrawer.style.transform.replace("translateY(", "").replace("%)", "")) || 0;
-    let snapTo = snapPoints.full;
-    if (currentTransform > 75) snapTo = snapPoints.closed;
-    else if (currentTransform > 25) snapTo = snapPoints.half;
-    activeDrawer.style.transition = "transform .3s ease";
-    activeDrawer.style.transform = `translateY(${snapTo}%)`;
-    if (snapTo === snapPoints.closed) {
-      setTimeout(closeAllDrawers, 300);
-    } else {
-      setTimeout(() => activeDrawer.style.transition = "", 300);
-    }
-  }
-
-  tabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      const key = tab.dataset.target;
-      if (activeDrawer && currentDrawerKey === key) closeAllDrawers();
-      else openDrawer(key);
-    });
-  });
-
-  /* =======================
-     🧱 Drawer Contents
-  ======================= */
-  function generateDrawerHTML(key) {
-    let html = `<div class="drawer-handle"></div><div class="drawer-header"><span class="drawer-close">✕</span></div>`;
-    if (key === "logs") {
-      html += `<h2 class="text-xl gold text-center mb-2">Logs</h2>
-        ${logEntries.length ? logEntries.map(l =>
-          `<div class="log-entry log-${l.type}">[${l.time}] ${l.msg}</div>`).join("") :
-          `<div class="p-4 opacity-50">No logs yet.</div>`}`;
-    }
-    if (key === "bills") {
-      html += `<h2 class="text-xl gold text-center mb-4">Manage Bills</h2>
-      <input id="billName" placeholder="Bill Name" class="mb-3 p-2 rounded">
-      <input id="billAmount" type="number" placeholder="Amount" class="mb-3 p-2 rounded">
-      <input id="billDueDay" type="number" placeholder="Due Day (1–31)" min="1" max="31" class="mb-3 p-2 rounded">
+/* ========= 🧱 Drawer Content Generator ========= */
+function generateDrawerHTML(key){
+  let html=`<div class="drawer-handle"></div><div class="drawer-header gold text-lg">${key[0].toUpperCase()+key.slice(1)}<span class="drawer-close">✕</span></div>`;
+  if(key==="bills"){
+    html+=`<div class="p-4">
+      <input id="billName" placeholder="Bill Name" class="mb-3">
+      <input id="billAmount" type="number" placeholder="Amount" class="mb-3">
+      <input id="billDueDay" type="number" placeholder="Due Day (1–31)" class="mb-3" min="1" max="31">
       <div class="flex space-x-2">
         <button id="addBill" class="btn flex-1 border-[var(--gold)] gold font-semibold">Add</button>
         <button id="deleteBill" class="btn flex-1 border-red-500 text-red-400">Delete</button>
-      </div>`;
-    }
-    if (key === "payments") {
-      html += `<h2 class="text-xl gold text-center mb-4">Submit Payment</h2>
-      <select id="paymentBillSelect" class="mb-3 p-2 rounded bg-black/30 border border-[var(--border)]"></select>
-      <input id="paymentAmount" type="number" placeholder="Amount Paid" class="mb-3 p-2 rounded">
-      <input id="paymentDate" type="date" class="mb-3 p-2 rounded">
-      <button id="submitPayment" class="btn w-full border-[var(--gold)] gold font-semibold">Submit</button>`;
-    }
-    return html;
+      </div></div>`;
   }
+  if(key==="payments"){
+    html+=`<div class="p-4">
+      <select id="paymentBillSelect" class="mb-3"></select>
+      <input id="paymentAmount" type="number" placeholder="Amount Paid" class="mb-3">
+      <input id="paymentDate" type="date" class="mb-3">
+      <button id="submitPayment" class="btn w-full border-[var(--gold)] gold font-semibold">Submit</button>
+    </div>`;
+  }
+  if(key==="logs"){
+    html+=`<div class="p-4">
+      ${logEntries.length?logEntries.map(l=>`<div class="log-entry log-${l.type}">[${l.t}] ${l.msg}</div>`).join(""):'<div class="opacity-50">No logs yet.</div>'}
+    </div>`;
+  }
+  return html;
+}
 
-  /* =======================
-     🔥 Firebase Logic
-  ======================= */
-  const authBtn = document.getElementById("authBtn");
-  const billsContainer = document.getElementById("billsContainer");
-  const currentDate = new Date();
-  const monthNames = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
-  const monthDisplay = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  document.getElementById("monthName").textContent = monthDisplay[currentDate.getMonth()];
-  let userId = null;
-
-  authBtn.onclick = () => { auth.currentUser ? signOut(auth) : signInWithPopup(auth, provider); };
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      userId = user.uid;
-      authBtn.textContent = "Sign Out";
-      console.log(`Signed in as ${user.email}`);
-      loadBills();
-    } else {
-      userId = null;
-      authBtn.textContent = "Sign In";
-      billsContainer.innerHTML = "";
-      console.log("Signed out");
-    }
+/* ========= ⚙️ Tabs Behaviour ========= */
+tabs.forEach(tab=>{
+  tab.addEventListener("click",()=>{
+    const key=tab.dataset.target;
+    if(activeDrawer&&currentKey===key){closeAll();}
+    else openDrawer(key);
   });
+});
 
-  function loadBills() {
-    const billsRef = collection(db, "users", userId, "bills");
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").then(({ onSnapshot }) => {
-      onSnapshot(billsRef, (snapshot) => {
-        billsContainer.innerHTML = "";
-        snapshot.forEach((docSnap) => renderBill(docSnap.id, docSnap.data()));
-      });
-    });
-  }
+/* ========= 🔥 Firebase Logic ========= */
+const authBtn=document.getElementById("authBtn");
+const billsContainer=document.getElementById("billsContainer");
+const currentDate=new Date();
+const monthNames=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+const monthDisplay=["January","February","March","April","May","June","July","August","September","October","November","December"];
+document.getElementById("monthName").textContent=monthDisplay[currentDate.getMonth()];
+let userId=null;
 
-  function renderBill(id, bill) {
-    const card = document.createElement("div");
-    card.className = "glass p-4";
-    card.id = `bill-${id}`;
-    card.innerHTML = `
-      <div class="flex justify-between items-center mb-2">
-        <h3 class="text-lg font-semibold gold">${bill.name}</h3>
-        <div class="text-sm opacity-80">$${bill.amount}</div>
-      </div>
-      <div class="text-xs mb-2">Due: ${bill.dueDay} | Last Paid: ${
-      bill.lastPaid ? new Date(bill.lastPaid.seconds * 1000).toLocaleDateString() : "Never"
-    }</div>
-      <div class="flex flex-wrap mb-2">
-        ${monthNames.map((m) => {
-          const s = bill.months?.[m] || "unpaid";
-          const i = s === "paid" ? "✓" : s === "partial" ? "✓" : s === "late" ? "✕" : "";
-          const c = s === "paid" ? "status-paid" : s === "partial" ? "status-partial" : s === "late" ? "status-late" : "status-unpaid";
-          return `<div class="month-circle ${c}">${i}</div>`;
-        }).join("")}
-      </div>
-      <div class="text-sm border-t border-[var(--border)] pt-2">
-        ${(bill.transactions || [])
-          .slice()
-          .reverse()
-          .map((t) => `<div>💳 $${t.amountPaid} — ${new Date(t.date.seconds * 1000).toLocaleDateString()} (${t.status})</div>`)
-          .join("")}
-      </div>`;
-    billsContainer.appendChild(card);
-  }
+authBtn.onclick=()=>{auth.currentUser?signOut(auth):signInWithPopup(auth,provider);};
+onAuthStateChanged(auth,(user)=>{
+  if(user){userId=user.uid;authBtn.textContent="Sign Out";console.log(`Signed in as ${user.email}`);loadBills();}
+  else{userId=null;authBtn.textContent="Sign In";billsContainer.innerHTML="";console.log("Signed out");}
+});
 
-  // Drawer actions for Bills / Payments
-  function handleDrawerActions(key) {
-    if (key === "bills") {
-      const addBtn = document.getElementById("addBill");
-      const delBtn = document.getElementById("deleteBill");
-      addBtn.onclick = async () => {
-        if (!userId) return;
-        const name = document.getElementById("billName").value;
-        const amount = parseFloat(document.getElementById("billAmount").value);
-        const dueDay = parseInt(document.getElementById("billDueDay").value);
-        if (!name || !amount || !dueDay) return showToast("Fill all fields", "#facc15");
-        await addDoc(collection(db, "users", userId, "bills"), { name, amount, dueDay, lastPaid: null, months: {}, transactions: [] });
-        showToast("Bill added", "var(--gold)");
-        closeAllDrawers();
-      };
-      delBtn.onclick = async () => {
-        const name = document.getElementById("billName").value;
-        if (!name) return;
-        const billsRef = collection(db, "users", userId, "bills");
-        const snap = await getDocs(billsRef);
-        snap.forEach(async (d) => {
-          if (d.data().name === name) {
-            await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").then(({ deleteDoc }) => deleteDoc(d.ref));
+function loadBills(){
+  const billsRef=collection(db,"users",userId,"bills");
+  import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
+    .then(({onSnapshot})=>{
+      onSnapshot(billsRef,(snapshot)=>{
+        billsContainer.innerHTML="";
+        snapshot.forEach(docSnap=>{
+          if(docSnap.id!=="checklist"){ // 🚫 filter out checklist
+            renderBill(docSnap.id,docSnap.data());
           }
         });
-        showToast("Bill deleted", "#ef4444");
-        closeAllDrawers();
-      };
-    }
-    if (key === "payments") {
-      getDocs(collection(db, "users", userId, "bills")).then((snap) => {
-        const select = document.getElementById("paymentBillSelect");
-        select.innerHTML = "";
-        snap.forEach((d) => {
-          const o = document.createElement("option");
-          o.value = d.id;
-          o.textContent = d.data().name;
-          select.appendChild(o);
-        });
       });
-      document.getElementById("paymentDate").valueAsDate = new Date();
-      document.getElementById("submitPayment").onclick = submitPayment;
-    }
+    });
+}
+
+function renderBill(id,bill){
+  const card=document.createElement("div");
+  card.className="glass p-4";
+  card.innerHTML=`
+    <div class="flex justify-between items-center mb-2">
+      <h3 class="text-lg font-semibold gold">${bill.name}</h3>
+      <div class="text-sm opacity-80">$${bill.amount}</div>
+    </div>
+    <div class="text-xs mb-2">Due: ${bill.dueDay} | Last Paid: ${bill.lastPaid?new Date(bill.lastPaid.seconds*1000).toLocaleDateString():"Never"}</div>
+    <div class="flex flex-wrap mb-2">
+      ${monthNames.map(m=>{
+        const s=bill.months?.[m]||"unpaid";
+        const i=s==="paid"?"✓":s==="partial"?"✓":s==="late"?"✕":"";
+        const c=s==="paid"?"status-paid":s==="partial"?"status-partial":s==="late"?"status-late":"status-unpaid";
+        return `<div class="month-circle ${c}">${i}</div>`;
+      }).join("")}
+    </div>
+    <div class="text-sm border-t border-[var(--border)] pt-2">
+      ${(bill.transactions||[]).slice().reverse().map(t=>
+        `<div>💳 $${t.amountPaid} — ${new Date(t.date.seconds*1000).toLocaleDateString()} (${t.status})</div>`).join("")}
+    </div>`;
+  billsContainer.appendChild(card);
+}/* ========= 🧾 Drawer Action Bindings ========= */
+async function handleDrawerActions(key){
+  if(key==="bills"){
+    const addBtn=document.getElementById("addBill");
+    const delBtn=document.getElementById("deleteBill");
+    addBtn.onclick=async()=>{
+      if(!userId)return;
+      const name=document.getElementById("billName").value.trim();
+      const amount=parseFloat(document.getElementById("billAmount").value);
+      const dueDay=parseInt(document.getElementById("billDueDay").value);
+      if(!name||!amount||!dueDay)return showToast("Fill all fields","#facc15");
+      await addDoc(collection(db,"users",userId,"bills"),{
+        name,amount,dueDay,lastPaid:null,months:{},transactions:[]
+      });
+      showToast("Bill added","var(--gold)");
+      closeAll();
+    };
+    delBtn.onclick=async()=>{
+      if(!userId)return;
+      const name=document.getElementById("billName").value.trim();
+      if(!name)return showToast("Enter name to delete","#facc15");
+      const billsRef=collection(db,"users",userId,"bills");
+      const snap=await getDocs(billsRef);
+      snap.forEach(async d=>{
+        if(d.id!=="checklist" && d.data().name===name){
+          const {deleteDoc}=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+          await deleteDoc(d.ref);
+        }
+      });
+      showToast("Bill deleted","#ef4444");
+      closeAll();
+    };
   }
 
-  async function submitPayment() {
-    const billId = document.getElementById("paymentBillSelect").value;
-    const amountPaid = parseFloat(document.getElementById("paymentAmount").value);
-    const datePaid = new Date(document.getElementById("paymentDate").value);
-    if (!billId || isNaN(amountPaid)) return showToast("Enter valid payment", "#facc15");
-    const billRef = doc(db, "users", userId, "bills", billId);
-    const billSnap = await getDoc(billRef);
-    if (!billSnap.exists()) return;
-    const bill = billSnap.data();
-    const monthKey = monthNames[datePaid.getMonth()];
-    let status = "paid";
-    if (amountPaid < bill.amount) status = "partial";
-    if (datePaid.getDate() > bill.dueDay) status = "late";
-    const newMonths = { ...bill.months, [monthKey]: status };
-    const newTransactions = [...(bill.transactions || []), { amountPaid, date: { seconds: datePaid.getTime() / 1000 }, status }];
-    await updateDoc(billRef, { months: newMonths, transactions: newTransactions, lastPaid: { seconds: datePaid.getTime() / 1000 } });
-    showToast("Payment recorded", "var(--gold)");
-    closeAllDrawers();
+  if(key==="payments"){
+    const select=document.getElementById("paymentBillSelect");
+    select.innerHTML="";
+    const snap=await getDocs(collection(db,"users",userId,"bills"));
+    snap.forEach(d=>{
+      if(d.id!=="checklist"){   // 🚫 skip checklist again here
+        const o=document.createElement("option");
+        o.value=d.id;o.textContent=d.data().name;
+        select.appendChild(o);
+      }
+    });
+    document.getElementById("paymentDate").valueAsDate=new Date();
+    document.getElementById("submitPayment").onclick=submitPayment;
   }
+}
 
-  // Whenever a drawer opens, wait a tick then bind its buttons
-  const observer = new MutationObserver(() => {
-    if (currentDrawerKey) handleDrawerActions(currentDrawerKey);
+/* ========= 💰 Submit Payment ========= */
+async function submitPayment(){
+  const billId=document.getElementById("paymentBillSelect").value;
+  const amountPaid=parseFloat(document.getElementById("paymentAmount").value);
+  const datePaid=new Date(document.getElementById("paymentDate").value);
+  if(!billId||isNaN(amountPaid))return showToast("Enter valid payment","#facc15");
+
+  const billRef=doc(db,"users",userId,"bills",billId);
+  const billSnap=await getDoc(billRef);
+  if(!billSnap.exists())return;
+  const bill=billSnap.data();
+  const monthKey=monthNames[datePaid.getMonth()];
+  let status="paid";
+  if(amountPaid<bill.amount)status="partial";
+  if(datePaid.getDate()>bill.dueDay)status="late";
+
+  const newMonths={...bill.months,[monthKey]:status};
+  const newTransactions=[...(bill.transactions||[]),{
+    amountPaid,date:{seconds:datePaid.getTime()/1000},status
+  }];
+  await updateDoc(billRef,{
+    months:newMonths,transactions:newTransactions,
+    lastPaid:{seconds:datePaid.getTime()/1000}
   });
-  observer.observe(drawerOverlay, { childList: true, subtree: true });
+  showToast("Payment recorded","var(--gold)");
+  closeAll();
+}
+
+/* ========= 🧩 Observe Drawer Insertions ========= */
+const observer=new MutationObserver(()=>{
+  if(currentKey)handleDrawerActions(currentKey);
+});
+observer.observe(overlay,{childList:true,subtree:true});
 </script>
 </body>
 </html>
