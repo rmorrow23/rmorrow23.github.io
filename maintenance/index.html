@@ -98,8 +98,47 @@
     <h2 id="headMaint">Under Maintenance</h2>
     <p>We’re enhancing our systems to serve you better.<br>
        Please check back soon — thank you for your patience.</p>
+<h1 id="status">🔧 Performing scheduled maintenance...</h1>
+<p id="redirect"></p>
   </div>
+<script type="module">
+  import { db, doc, onSnapshot } from "/assets/js/firebase-init.js";
 
+  const messageEl = document.getElementById("status");
+  const redirectEl = document.getElementById("redirect");
+
+  // Reference to maintenance flag in Firestore
+  const maintenanceRef = doc(db, "config", "maintenance");
+
+  // Watch for live updates
+  onSnapshot(maintenanceRef, (docSnap) => {
+    if (!docSnap.exists()) return;
+    const data = docSnap.data();
+
+    if (data.active) {
+      // 🔧 Still under maintenance
+      messageEl.textContent = data.message || "We're currently performing scheduled updates...";
+      redirectEl.textContent = "";
+    } else {
+      // ✅ Site is back online
+      let countdown = 5;
+      messageEl.textContent = "✅ Morrow Industries is back online!";
+      redirectEl.textContent = `Redirecting to homepage in ${countdown} seconds...`;
+
+      const timer = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+          redirectEl.textContent = `Redirecting to homepage in ${countdown} seconds...`;
+        } else {
+          clearInterval(timer);
+          document.body.style.transition = "opacity 0.4s ease";
+          document.body.style.opacity = "0";
+          setTimeout(() => (window.location.href = "/"), 400);
+        }
+      }, 1000);
+    }
+  });
+</script>
   <script>
     // ===== Floating gold particles =====
     const canvas = document.getElementById("particles");
