@@ -160,7 +160,6 @@ function openDrawer(key){
   overlay.classList.add("visible");
   requestAnimationFrame(()=>drawer.style.transform="translateY(0%)");
   tabs.forEach(t=>t.dataset.target===key?t.classList.add("active"):t.classList.remove("active"));
-  attachEvents(drawer,key);
   activeDrawer=drawer;currentKey=key;
 }
 
