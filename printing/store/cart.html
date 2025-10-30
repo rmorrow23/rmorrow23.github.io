@@ -1,285 +1,364 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Morrow Industries — Cart</title>
-  <link rel="icon" href="/assets/favicon.ico"/>
+  <link rel="icon" href="/assets/favicon.ico" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="/assets/js/maintenance-listener.js"></script>
   <style>
     :root {
-      --bg:#000;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;
-      --gold:#d4af37;--border:rgba(255,255,255,0.08);
+      --bg: #000;
+      --surface: #12141b;
+      --muted: #a9b0be;
+      --text: #e9eef8;
+      --gold: #d4af37;
+      --border: rgba(255, 255, 255, 0.08);
     }
-    body {background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;}
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, sans-serif;
+    }
+
     .glass {
-      background:rgba(18,20,27,.6);
-      backdrop-filter:saturate(140%) blur(14px);
-      border:1px solid var(--border);
+      background: rgba(18, 20, 27, .6);
+      backdrop-filter: saturate(140%) blur(14px);
+      border: 1px solid var(--border);
     }
+
     .btn {
-      border:1px solid var(--border);
-      color:var(--text);
-      padding:.6rem .9rem;
-      border-radius:.6rem;
-      transition:transform .15s,box-shadow .2s,background .2s;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: .6rem .9rem;
+      border-radius: .6rem;
+      transition: transform .15s, box-shadow .2s, background .2s;
     }
-    .btn-primary {border-color:var(--gold);color:var(--gold);}
-    .btn:hover {transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35);}
+
+    .btn-primary {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+    }
+
     .toast {
-      position:fixed;right:1.25rem;top:1.25rem;
-      background:rgba(18,20,27,.85);color:#e9eef8;
-      border:1px solid var(--gold);border-radius:.75rem;
-      padding:.6rem .9rem;font-size:.9rem;
-      backdrop-filter:blur(14px);box-shadow:0 4px 16px rgba(0,0,0,.4);
-      z-index:9999;animation:fadeIn .2s ease;
+      position: fixed;
+      right: 1.25rem;
+      top: 1.25rem;
+      background: rgba(18, 20, 27, .85);
+      color: #e9eef8;
+      border: 1px solid var(--gold);
+      border-radius: .75rem;
+      padding: .6rem .9rem;
+      font-size: .9rem;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .4);
+      z-index: 9999;
+      animation: fadeIn .2s ease;
     }
-    @keyframes fadeIn {from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-    .item {border:1px solid var(--border);border-radius:.75rem;padding:1rem;display:flex;gap:1rem;align-items:center}
-    .item img {width:80px;height:80px;object-fit:cover;border-radius:.5rem}
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .item {
+      border: 1px solid var(--border);
+      border-radius: .75rem;
+      padding: 1rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center
+    }
+
+    .item img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: .5rem
+    }
+
     #loadingOverlay {
-      position:fixed;inset:0;z-index:200;background:rgba(10,11,15,.85);
-      backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(10, 11, 15, .85);
+      backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
     }
+
     .spinner {
-      width:56px;height:56px;border-radius:50%;
-      border:3px solid rgba(212,175,55,.25);
-      border-top-color:var(--gold);
-      animation:spin .8s linear infinite;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 3px solid rgba(212, 175, 55, .25);
+      border-top-color: var(--gold);
+      animation: spin .8s linear infinite;
     }
-    @keyframes spin {to{transform:rotate(360deg)}}
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
     input[type="text"] {
-      background:transparent;border:1px solid var(--border);
-      border-radius:.5rem;padding:.5rem;color:var(--gold);
-      width:100%;text-align:center;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: .5rem;
+      padding: .5rem;
+      color: var(--gold);
+      width: 100%;
+      text-align: center;
     }
-    input[type="text"]:focus {outline:none;border-color:var(--gold);}
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
   </style>
 </head>
 
 <body class="min-h-screen selection:bg-[var(--gold)]/20">
 
-<!-- Navbar container -->
-<div id="navbar-container"></div>
+  <!-- Navbar container -->
+  <div id="navbar-container"></div>
 
-<!-- Loading overlay -->
-<div id="loadingOverlay" class="flex">
-  <div class="glass p-6 rounded-2xl flex items-center gap-4">
-    <div class="spinner"></div>
-    <div class="text-sm text-[var(--muted)]">Placing your order…</div>
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="flex">
+    <div class="glass p-6 rounded-2xl flex items-center gap-4">
+      <div class="spinner"></div>
+      <div class="text-sm text-[var(--muted)]">Placing your order…</div>
+    </div>
   </div>
-</div>
 
-<main class="mx-auto max-w-4xl px-4 py-10">
-  <h1 class="font-serif text-3xl mb-6">Your Cart</h1>
-  <div id="cartList" class="space-y-4"></div>
+  <main class="mx-auto max-w-4xl px-4 py-10">
+    <h1 class="font-serif text-3xl mb-6">Your Cart</h1>
+    <div id="cartList" class="space-y-4"></div>
 
-  <div id="cartSummary" class="mt-6 text-right hidden">
-    <div class="text-lg font-semibold mb-2">Total: $<span id="total"></span></div>
+    <div id="cartSummary" class="mt-6 text-right hidden">
+      <div class="text-lg font-semibold mb-2">Total: $<span id="total"></span></div>
 
-    <!-- Promo Section -->
-    <div id="promoSection" class="glass p-4 rounded-xl inline-block text-left mb-3">
-      <label class="block mb-1 text-[var(--gold)] font-medium">Promo Code</label>
-      <div class="flex gap-2">
-        <input id="promoInput" type="text" placeholder="Enter promo code"/>
-        <button id="applyPromoBtn" class="btn btn-primary">Apply</button>
+      <!-- Promo Section -->
+      <div id="promoSection" class="glass p-4 rounded-xl inline-block text-left mb-3">
+        <label class="block mb-1 text-[var(--gold)] font-medium">Promo Code</label>
+        <div class="flex gap-2">
+          <input id="promoInput" type="text" placeholder="Enter promo code" />
+          <button id="applyPromoBtn" class="btn btn-primary">Apply</button>
+        </div>
+        <div id="promoFeedback" class="mt-2 text-sm text-[var(--muted)]"></div>
       </div>
-      <div id="promoFeedback" class="mt-2 text-sm text-[var(--muted)]"></div>
+
+      <div id="discountLine" class="hidden text-sm text-[var(--gold)] mb-1">
+        Discount: -$<span id="discountAmount">0.00</span>
+      </div>
+      <div class="text-lg font-bold">Final Total: $<span id="finalTotal"></span></div>
+      <button id="placeOrderBtn" class="btn btn-primary mt-3">Place Order</button>
     </div>
+  </main>
 
-    <div id="discountLine" class="hidden text-sm text-[var(--gold)] mb-1">
-      Discount: -$<span id="discountAmount">0.00</span>
-    </div>
-    <div class="text-lg font-bold">Final Total: $<span id="finalTotal"></span></div>
-    <button id="placeOrderBtn" class="btn btn-primary mt-3">Place Order</button>
-  </div>
-</main>
-
-<script>
-  function showToast(m){
-    const t=document.createElement('div');t.className='toast';t.textContent=m;
-    document.body.appendChild(t);setTimeout(()=>t.remove(),4000);
-  }
-  function setLoading(v){
-    document.getElementById('loadingOverlay').style.display=v?'flex':'none';
-  }
-
-  // === Universal module loader (executes scripts) ===
-  async function loadModule(targetSelector, url){
-    const target=document.querySelector(targetSelector);
-    if(!target)return console.error("Target not found:",targetSelector);
-    const html=await(await fetch(url,{cache:"no-store"})).text();
-    target.innerHTML=html;
-    const scripts=Array.from(target.querySelectorAll("script"));
-    for(const oldS of scripts){
-      const s=document.createElement("script");
-      if(oldS.type)s.type=oldS.type;
-      if(oldS.getAttribute("type")==="module")s.type="module";
-      if(oldS.src)s.src=oldS.src;else s.textContent=oldS.textContent;
-      document.body.appendChild(s);
+  <script>
+    function showToast(m) {
+      const t = document.createElement('div'); t.className = 'toast'; t.textContent = m;
+      document.body.appendChild(t); setTimeout(() => t.remove(), 4000);
     }
-  }
-
-  // Load Navbar
-  loadModule("#navbar-container","/assets/modules/navbar.html")
-    .catch(err=>console.error("Navbar load failed:",err));
-</script>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc, getDocs, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig={
-  apiKey:"AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
-  authDomain:"morrow-industries.firebaseapp.com",
-  databaseURL:"https://morrow-industries-default-rtdb.firebaseio.com",
-  projectId:"morrow-industries",
-  storageBucket:"morrow-industries.appspot.com",
-  messagingSenderId:"75190213345",
-  appId:"1:75190213345:web:a521b54a1c8e00b68d75a0"
-};
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
-const auth=getAuth(app);
-const provider=new GoogleAuthProvider();
-
-const cartList=document.getElementById('cartList');
-const totalEl=document.getElementById('total');
-const finalTotalEl=document.getElementById('finalTotal');
-const discountLine=document.getElementById('discountLine');
-const discountAmountEl=document.getElementById('discountAmount');
-const cartSummary=document.getElementById('cartSummary');
-const promoInput=document.getElementById('promoInput');
-const applyPromoBtn=document.getElementById('applyPromoBtn');
-const promoFeedback=document.getElementById('promoFeedback');
-const placeOrderBtn=document.getElementById('placeOrderBtn');
-
-let cartTotal=0, appliedPromo=null, discountValue=0;
-
-// === Auth ===
-onAuthStateChanged(auth,u=>{
-  if(u){loadCart(u);}else{
-    cartList.innerHTML="<p class='text-[var(--muted)]'>Please sign in to view your cart.</p>";
-    cartSummary.classList.add('hidden');
-  }
-});
-
-async function loadCart(user){
-  const cRef=collection(db,"users",user.uid,"cart");
-  onSnapshot(cRef,snap=>{
-    if(snap.empty){
-      cartList.innerHTML="<p class='text-[var(--muted)]'>Your cart is empty.</p>";
-      cartSummary.classList.add('hidden');
-      return;
+    function setLoading(v) {
+      document.getElementById('loadingOverlay').style.display = v ? 'flex' : 'none';
     }
-    let html="";cartTotal=0;
-    snap.forEach(docSnap=>{
-      const d=docSnap.data();
-      cartTotal+=Number(d.price||0)*(d.qty||1);
-      html+=`
+
+    // === Universal module loader (executes scripts) ===
+    async function loadModule(targetSelector, url) {
+      const target = document.querySelector(targetSelector);
+      if (!target) return console.error("Target not found:", targetSelector);
+      const html = await (await fetch(url, { cache: "no-store" })).text();
+      target.innerHTML = html;
+      const scripts = Array.from(target.querySelectorAll("script"));
+      for (const oldS of scripts) {
+        const s = document.createElement("script");
+        if (oldS.type) s.type = oldS.type;
+        if (oldS.getAttribute("type") === "module") s.type = "module";
+        if (oldS.src) s.src = oldS.src; else s.textContent = oldS.textContent;
+        document.body.appendChild(s);
+      }
+    }
+
+    // Load Navbar
+    loadModule("#navbar-container", "/assets/modules/navbar.html")
+      .catch(err => console.error("Navbar load failed:", err));
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc, getDocs, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
+      authDomain: "morrow-industries.firebaseapp.com",
+      databaseURL: "https://morrow-industries-default-rtdb.firebaseio.com",
+      projectId: "morrow-industries",
+      storageBucket: "morrow-industries.appspot.com",
+      messagingSenderId: "75190213345",
+      appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    const cartList = document.getElementById('cartList');
+    const totalEl = document.getElementById('total');
+    const finalTotalEl = document.getElementById('finalTotal');
+    const discountLine = document.getElementById('discountLine');
+    const discountAmountEl = document.getElementById('discountAmount');
+    const cartSummary = document.getElementById('cartSummary');
+    const promoInput = document.getElementById('promoInput');
+    const applyPromoBtn = document.getElementById('applyPromoBtn');
+    const promoFeedback = document.getElementById('promoFeedback');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+
+    let cartTotal = 0, appliedPromo = null, discountValue = 0;
+
+    // === Auth ===
+    onAuthStateChanged(auth, u => {
+      if (u) { loadCart(u); } else {
+        cartList.innerHTML = "<p class='text-[var(--muted)]'>Please sign in to view your cart.</p>";
+        cartSummary.classList.add('hidden');
+      }
+    });
+
+    async function loadCart(user) {
+      const cRef = collection(db, "users", user.uid, "cart");
+      onSnapshot(cRef, snap => {
+        if (snap.empty) {
+          cartList.innerHTML = "<p class='text-[var(--muted)]'>Your cart is empty.</p>";
+          cartSummary.classList.add('hidden');
+          return;
+        }
+        let html = ""; cartTotal = 0;
+        snap.forEach(docSnap => {
+          const d = docSnap.data();
+          cartTotal += Number(d.price || 0) * (d.qty || 1);
+          html += `
         <div class="item">
-          <img src="${d.image||''}" alt="img"/>
+          <img src="${d.image || ''}" alt="img"/>
           <div class="flex-1">
             <div class="font-semibold">${d.title}</div>
-            <div class="text-sm text-[var(--muted)]">${d.color||''}</div>
+            <div class="text-sm text-[var(--muted)]">${d.color || ''}</div>
             <div class="text-sm mt-1">
               $${(Number(d.price)).toFixed(2)} × 
-              <input type='number' min='1' value='${d.qty||1}' data-id='${docSnap.id}' class='qty w-16 text-center bg-transparent border border-[var(--border)] rounded p-1'/>
-              = $${(d.qty*Number(d.price||0)).toFixed(2)}
+              <input type='number' min='1' value='${d.qty || 1}' data-id='${docSnap.id}' class='qty w-16 text-center bg-transparent border border-[var(--border)] rounded p-1'/>
+              = $${(d.qty * Number(d.price || 0)).toFixed(2)}
             </div>
           </div>
           <button class="remove btn text-sm" data-id='${docSnap.id}'>Remove</button>
         </div>`;
-    });
-    cartList.innerHTML=html;
-    updateTotals();
-    cartSummary.classList.remove('hidden');
-    document.querySelectorAll('.qty').forEach(i=>i.addEventListener('change',()=>updateQty(user.uid,i.dataset.id,i.value)));
-    document.querySelectorAll('.remove').forEach(b=>b.addEventListener('click',()=>removeItem(user.uid,b.dataset.id)));
-  });
-}
-
-// === Promo ===
-applyPromoBtn.addEventListener('click',()=>applyPromo());
-async function applyPromo(){
-  const code=promoInput.value.trim().toUpperCase();
-  const user=auth.currentUser;
-  if(!user)return showFeedback("Please sign in first.",false);
-  if(!code)return showFeedback("Enter a promo code.",false);
-
-  try{
-    const promoSnap=await getDocs(collection(db,"promos"));
-    let found=null;
-    promoSnap.forEach(d=>{
-      const data=d.data();
-      if(data.code.toUpperCase()===code)found={id:d.id,...data};
-    });
-    if(!found)return showFeedback("Invalid promo code.",false);
-    if(found.expires && new Date(found.expires)<new Date())return showFeedback("This promo has expired.",false);
-    const usesSnap=await getDocs(collection(db,"promos",found.id,"uses"));
-    if(found.maxUses && usesSnap.size>=found.maxUses)return showFeedback("This promo has reached its usage limit.",false);
-    if(found.access==="custom"){
-      const allowed=(found.allowedUsers||[]).map(u=>u.uid);
-      if(!allowed.includes(user.uid))return showFeedback("You are not eligible for this promo.",false);
+        });
+        cartList.innerHTML = html;
+        updateTotals();
+        cartSummary.classList.remove('hidden');
+        document.querySelectorAll('.qty').forEach(i => i.addEventListener('change', () => updateQty(user.uid, i.dataset.id, i.value)));
+        document.querySelectorAll('.remove').forEach(b => b.addEventListener('click', () => removeItem(user.uid, b.dataset.id)));
+      });
     }
 
-    let discount=0;
-    if(found.type==="percent")discount=cartTotal*(found.value/100);
-    else if(found.type==="amount")discount=found.value;
+    // === Promo ===
+    applyPromoBtn.addEventListener('click', () => applyPromo());
+    async function applyPromo() {
+      const code = promoInput.value.trim().toUpperCase();
+      const user = auth.currentUser;
+      if (!user) return showFeedback("Please sign in first.", false);
+      if (!code) return showFeedback("Enter a promo code.", false);
 
-    appliedPromo=found;discountValue=Math.min(discount,cartTotal);
-    updateTotals();
-    showFeedback(`Promo applied! -${found.type==="percent"?found.value+"%":"$"+found.value}`,true);
-    await setDoc(doc(db,"promos",found.id,"uses",user.uid),{
-      usedAt:new Date(),userId:user.uid,email:user.email
+      try {
+        const promoSnap = await getDocs(collection(db, "promos"));
+        let found = null;
+        promoSnap.forEach(d => {
+          const data = d.data();
+          if (data.code.toUpperCase() === code) found = { id: d.id, ...data };
+        });
+        if (!found) return showFeedback("Invalid promo code.", false);
+        if (found.expires && new Date(found.expires) < new Date()) return showFeedback("This promo has expired.", false);
+        const usesSnap = await getDocs(collection(db, "promos", found.id, "uses"));
+        if (found.maxUses && usesSnap.size >= found.maxUses) return showFeedback("This promo has reached its usage limit.", false);
+        if (found.access === "custom") {
+          const allowed = (found.allowedUsers || []).map(u => u.uid);
+          if (!allowed.includes(user.uid)) return showFeedback("You are not eligible for this promo.", false);
+        }
+
+        let discount = 0;
+        if (found.type === "percent") discount = cartTotal * (found.value / 100);
+        else if (found.type === "amount") discount = found.value;
+
+        appliedPromo = found; discountValue = Math.min(discount, cartTotal);
+        updateTotals();
+        showFeedback(`Promo applied! -${found.type === "percent" ? found.value + "%" : "$" + found.value}`, true);
+        await setDoc(doc(db, "promos", found.id, "uses", user.uid), {
+          usedAt: new Date(), userId: user.uid, email: user.email
+        });
+      } catch (e) { console.error(e); showFeedback("Error validating promo.", false); }
+    }
+    function showFeedback(msg, success) {
+      promoFeedback.textContent = msg;
+      promoFeedback.style.color = success ? "#16c784" : "#ff5555";
+    }
+    function updateTotals() {
+      const final = cartTotal - discountValue;
+      totalEl.textContent = cartTotal.toFixed(2);
+      finalTotalEl.textContent = Math.max(0, final).toFixed(2);
+      discountAmountEl.textContent = discountValue.toFixed(2);
+      discountLine.classList.toggle('hidden', discountValue <= 0);
+    }
+
+    // === Cart Ops ===
+    async function updateQty(uid, id, val) { await updateDoc(doc(db, "users", uid, "cart", id), { qty: Number(val) }); }
+    async function removeItem(uid, id) { await deleteDoc(doc(db, "users", uid, "cart", id)); }
+
+    // === Place Order ===
+    placeOrderBtn.addEventListener('click', async () => {
+      const user = auth.currentUser; if (!user) return showToast("Sign in first");
+      try {
+        setLoading(true);
+        const cRef = collection(db, "users", user.uid, "cart");
+        const cartSnap = await getDocs(cRef);
+        if (cartSnap.empty) { setLoading(false); return showToast("Your cart is empty"); }
+        const items = []; cartSnap.forEach(d => items.push(d.data()));
+        await addDoc(collection(db, "orders"), {
+          userId: user.uid, items, status: "Pending", total: cartTotal,
+          discount: discountValue, promo: appliedPromo?.code || null, createdAt: new Date()
+        });
+        for (const d of cartSnap.docs) { await deleteDoc(d.ref); }
+        showToast("Order placed successfully!");
+        // Show confirmation animation
+        if (window.showOrderSuccess) window.showOrderSuccess();
+      } catch (e) { console.error(e); showToast("Error placing order"); }
+      finally { setLoading(false); }
     });
-  }catch(e){console.error(e);showFeedback("Error validating promo.",false);}
-}
-function showFeedback(msg,success){
-  promoFeedback.textContent=msg;
-  promoFeedback.style.color=success?"#16c784":"#ff5555";
-}
-function updateTotals(){
-  const final=cartTotal-discountValue;
-  totalEl.textContent=cartTotal.toFixed(2);
-  finalTotalEl.textContent=Math.max(0,final).toFixed(2);
-  discountAmountEl.textContent=discountValue.toFixed(2);
-  discountLine.classList.toggle('hidden',discountValue<=0);
-}
+  </script>
 
-// === Cart Ops ===
-async function updateQty(uid,id,val){await updateDoc(doc(db,"users",uid,"cart",id),{qty:Number(val)});}
-async function removeItem(uid,id){await deleteDoc(doc(db,"users",uid,"cart",id));}
-
-// === Place Order ===
-placeOrderBtn.addEventListener('click',async()=>{
-  const user=auth.currentUser;if(!user)return showToast("Sign in first");
-  try{
-    setLoading(true);
-    const cRef=collection(db,"users",user.uid,"cart");
-    const cartSnap=await getDocs(cRef);
-    if(cartSnap.empty){setLoading(false);return showToast("Your cart is empty");}
-    const items=[];cartSnap.forEach(d=>items.push(d.data()));
-    await addDoc(collection(db,"orders"),{
-      userId:user.uid,items,status:"Pending",total:cartTotal,
-      discount:discountValue,promo:appliedPromo?.code||null,createdAt:new Date()
-    });
-    for(const d of cartSnap.docs){await deleteDoc(d.ref);}
-    showToast("Order placed successfully!");
-    // Show confirmation animation
-    if(window.showOrderSuccess) window.showOrderSuccess();
-  }catch(e){console.error(e);showToast("Error placing order");}
-  finally{setLoading(false);}
-});
-</script>
-
-<!-- Order Confirmation Module -->
-<div id="order-success-module"></div>
-<script>
-  loadModule("#order-success-module","/assets/modules/order-success.html")
-    .catch(err=>console.error("Order success animation failed:",err));
-</script>
+  <!-- Order Confirmation Module -->
+  <div id="order-success-module"></div>
+  <script>
+    loadModule("#order-success-module", "/assets/modules/order-success.html")
+      .catch(err => console.error("Order success animation failed:", err));
+  </script>
 
 </body>
+
 </html>

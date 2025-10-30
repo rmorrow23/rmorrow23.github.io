@@ -1,9 +1,12 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Element-Based Image Editor</title>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script type="module" src="/assets/js/maintenance-listener.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,6 +17,7 @@
       margin: 0;
       box-sizing: border-box;
     }
+
     #editor {
       position: relative;
       width: 95vw;
@@ -22,24 +26,30 @@
       border: 2px solid #ccc;
       background: white;
     }
+
     #editor::before {
       content: "";
       display: block;
       padding-top: calc(100% * (var(--height, 3840) / var(--width, 3840)));
     }
-    #editor img, .overlay {
+
+    #editor img,
+    .overlay {
       position: absolute;
       object-fit: contain;
       touch-action: none;
     }
+
     .controls {
       margin-top: 20px;
     }
+
     .overlay {
       cursor: move;
       z-index: 2;
       transform-origin: center;
     }
+
     #overlayForm {
       display: none;
       position: fixed;
@@ -50,22 +60,26 @@
       padding: 20px;
       border: 1px solid #ccc;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
       z-index: 999;
     }
+
     #overlayForm label {
       display: block;
       margin: 10px 0 5px;
     }
+
     #overlayForm input {
       width: 100%;
       padding: 5px;
     }
+
     #overlayForm button {
       margin-top: 15px;
     }
   </style>
 </head>
+
 <body>
   <h1>Element-Based Image Editor</h1>
   <label for="resolutionSelect">Canvas Resolution:</label>
@@ -81,7 +95,8 @@
   </div>
   <div id="editor">
     <img id="baseImage" src="" alt="" style="display:none;">
-  </div>  <div id="overlayForm">
+  </div>
+  <div id="overlayForm">
     <label>Image URL: <input type="text" id="formUrl"></label>
     <label>Width (px): <input type="number" id="formWidth"></label>
     <label>Height (px): <input type="number" id="formHeight"></label>
@@ -89,7 +104,8 @@
     <label>Blur (px): <input type="number" id="formBlur"></label>
     <label>Corner Radius (px): <input type="number" id="formRadius"></label>
     <button onclick="applyOverlayChanges()">Apply</button>
-  </div>  <script>
+  </div>
+  <script>
     const upload = document.getElementById('upload');
     const baseImage = document.getElementById('baseImage');
     const editor = document.getElementById('editor');
@@ -115,7 +131,7 @@
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = function (event) {
           baseImage.src = event.target.result;
           baseImage.style.display = 'block';
           baseImage.style.top = '0';
@@ -262,5 +278,7 @@
         link.click();
       });
     }
-  </script></body>
+  </script>
+</body>
+
 </html>

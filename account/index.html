@@ -1,27 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>My Account — Morrow Industries</title>
-  <link rel="icon" href="/assets/favicon.ico"/>
+  <link rel="icon" href="/assets/favicon.ico" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="/assets/js/maintenance-listener.js"></script>
 
   <style>
     :root {
-      --bg:#0a0b0f;--surface:#12141b;--muted:#a9b0be;
-      --text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08);
+      --bg: #0a0b0f;
+      --surface: #12141b;
+      --muted: #a9b0be;
+      --text: #e9eef8;
+      --gold: #d4af37;
+      --border: rgba(255, 255, 255, 0.08);
     }
+
     body {
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, sans-serif;
     }
+
     .glass {
-      background: rgba(18,20,27,.6);
+      background: rgba(18, 20, 27, .6);
       backdrop-filter: saturate(140%) blur(14px);
       border: 1px solid var(--border);
     }
+
     .btn {
       border: 1px solid var(--border);
       color: var(--text);
@@ -30,17 +39,44 @@
       transition: all .2s;
       font-size: .9rem;
     }
-    .btn-primary { border-color: var(--gold); color: var(--gold); }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.35); }
-    .toast {
-      position: fixed; right: 1rem; top: 1rem;
-      background: rgba(18,20,27,.92);
-      color: #e9eef8; border: 1px solid var(--gold);
-      border-radius: .75rem; padding: .6rem .9rem;
-      font-size: .9rem; backdrop-filter: blur(14px);
-      z-index: 9999; animation: fadeIn .2s ease;
+
+    .btn-primary {
+      border-color: var(--gold);
+      color: var(--gold);
     }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none} }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+    }
+
+    .toast {
+      position: fixed;
+      right: 1rem;
+      top: 1rem;
+      background: rgba(18, 20, 27, .92);
+      color: #e9eef8;
+      border: 1px solid var(--gold);
+      border-radius: .75rem;
+      padding: .6rem .9rem;
+      font-size: .9rem;
+      backdrop-filter: blur(14px);
+      z-index: 9999;
+      animation: fadeIn .2s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
     input {
       background: transparent;
       border: 1px solid var(--border);
@@ -49,104 +85,107 @@
       padding: .4rem .6rem;
       outline: none;
     }
+
     input:focus {
       border-color: var(--gold);
-      box-shadow: 0 0 0 2px rgba(212,175,55,.25);
+      box-shadow: 0 0 0 2px rgba(212, 175, 55, .25);
     }
   </style>
 </head>
+
 <body class="min-h-screen">
 
-<!-- Navbar container -->
-<div id="navbar-container"></div>
+  <!-- Navbar container -->
+  <div id="navbar-container"></div>
 
-<main class="max-w-5xl mx-auto px-4 py-12 space-y-10">
-  <h1 class="text-3xl font-serif text-[var(--gold)] mb-6">My Account</h1>
+  <main class="max-w-5xl mx-auto px-4 py-12 space-y-10">
+    <h1 class="text-3xl font-serif text-[var(--gold)] mb-6">My Account</h1>
 
-  <!-- Profile Section -->
-  <section id="profileSection" class="glass rounded-2xl p-6">
-    <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Account Details</h2>
-    <div id="profileInfo" class="space-y-2 text-[var(--muted)] text-sm"></div>
-  </section>
+    <!-- Profile Section -->
+    <section id="profileSection" class="glass rounded-2xl p-6">
+      <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Account Details</h2>
+      <div id="profileInfo" class="space-y-2 text-[var(--muted)] text-sm"></div>
+    </section>
 
-  <!-- Orders Section -->
-  <section id="ordersSection" class="glass rounded-2xl p-6">
-    <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Order History</h2>
-    <div id="ordersList" class="space-y-3 text-sm"></div>
-  </section>
+    <!-- Orders Section -->
+    <section id="ordersSection" class="glass rounded-2xl p-6">
+      <h2 class="text-2xl font-serif text-[var(--gold)] mb-4">Order History</h2>
+      <div id="ordersList" class="space-y-3 text-sm"></div>
+    </section>
 
-  <div class="flex justify-end">
-    <button id="signOutBtn" class="btn">Sign Out</button>
+    <div class="flex justify-end">
+      <button id="signOutBtn" class="btn">Sign Out</button>
+    </div>
+  </main>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay"
+    class="fixed inset-0 bg-[rgba(10,11,15,.85)] backdrop-blur-md hidden items-center justify-center z-50">
+    <div class="text-[var(--gold)] text-sm">Loading your account…</div>
   </div>
-</main>
 
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="fixed inset-0 bg-[rgba(10,11,15,.85)] backdrop-blur-md hidden items-center justify-center z-50">
-  <div class="text-[var(--gold)] text-sm">Loading your account…</div>
-</div>
-
-<script>
-  // Toasts + Overlay
-  function showToast(msg){
-    const t=document.createElement('div');
-    t.className='toast';t.textContent=msg;
-    document.body.appendChild(t);
-    setTimeout(()=>t.remove(),3000);
-  }
-  function setLoading(v){
-    document.getElementById("loadingOverlay").style.display=v?"flex":"none";
-  }
-
-  // Reusable dynamic HTML module loader (ensures <script> executes)
-  async function loadModule(targetSelector, url){
-    const target=document.querySelector(targetSelector);
-    if(!target) throw new Error(`Target ${targetSelector} not found`);
-    const html = await (await fetch(url, {cache:"no-store"})).text();
-    target.innerHTML = html;
-
-    // Execute all <script> tags properly
-    const scripts = Array.from(target.querySelectorAll("script"));
-    for(const oldS of scripts){
-      const s=document.createElement("script");
-      if(oldS.type) s.type=oldS.type;
-      if(oldS.getAttribute("type")==="module") s.type="module";
-      if(oldS.src) s.src=oldS.src;
-      else s.textContent=oldS.textContent;
-      document.body.appendChild(s);
+  <script>
+    // Toasts + Overlay
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.className = 'toast'; t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
     }
-  }
+    function setLoading(v) {
+      document.getElementById("loadingOverlay").style.display = v ? "flex" : "none";
+    }
 
-  // Load Navbar
-  loadModule("#navbar-container","/assets/modules/navbar.html")
-    .catch(err=>console.error("Navbar load failed:",err));
-</script>
+    // Reusable dynamic HTML module loader (ensures <script> executes)
+    async function loadModule(targetSelector, url) {
+      const target = document.querySelector(targetSelector);
+      if (!target) throw new Error(`Target ${targetSelector} not found`);
+      const html = await (await fetch(url, { cache: "no-store" })).text();
+      target.innerHTML = html;
 
-<script type="module">
-  import { auth, db } from "/assets/js/firebase-init.js";
-  import { onAuthStateChanged, signOut, updateProfile } 
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { doc, getDoc, updateDoc, collection, query, where, orderBy, onSnapshot }
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+      // Execute all <script> tags properly
+      const scripts = Array.from(target.querySelectorAll("script"));
+      for (const oldS of scripts) {
+        const s = document.createElement("script");
+        if (oldS.type) s.type = oldS.type;
+        if (oldS.getAttribute("type") === "module") s.type = "module";
+        if (oldS.src) s.src = oldS.src;
+        else s.textContent = oldS.textContent;
+        document.body.appendChild(s);
+      }
+    }
 
-  const signOutBtn=document.getElementById("signOutBtn");
-  const profileInfo=document.getElementById("profileInfo");
-  const ordersList=document.getElementById("ordersList");
+    // Load Navbar
+    loadModule("#navbar-container", "/assets/modules/navbar.html")
+      .catch(err => console.error("Navbar load failed:", err));
+  </script>
 
-  signOutBtn.addEventListener("click",()=>signOut(auth));
+  <script type="module">
+    import { auth, db } from "/assets/js/firebase-init.js";
+    import { onAuthStateChanged, signOut, updateProfile }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, getDoc, updateDoc, collection, query, where, orderBy, onSnapshot }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  onAuthStateChanged(auth,async(user)=>{
-    setLoading(true);
-    if(!user){location.href="/";return;}
+    const signOutBtn = document.getElementById("signOutBtn");
+    const profileInfo = document.getElementById("profileInfo");
+    const ordersList = document.getElementById("ordersList");
 
-    // === Profile Info ===
-    try{
-      const uSnap=await getDoc(doc(db,"users",user.uid));
-      const d=uSnap.exists()?uSnap.data():{};
-      const displayName=d.displayName||user.displayName||"—";
-      const email=d.email||user.email||"—";
-      const joined=d.createdAt?.seconds?new Date(d.createdAt.seconds*1000).toLocaleString():"—";
+    signOutBtn.addEventListener("click", () => signOut(auth));
 
-      profileInfo.innerHTML=`
+    onAuthStateChanged(auth, async (user) => {
+      setLoading(true);
+      if (!user) { location.href = "/"; return; }
+
+      // === Profile Info ===
+      try {
+        const uSnap = await getDoc(doc(db, "users", user.uid));
+        const d = uSnap.exists() ? uSnap.data() : {};
+        const displayName = d.displayName || user.displayName || "—";
+        const email = d.email || user.email || "—";
+        const joined = d.createdAt?.seconds ? new Date(d.createdAt.seconds * 1000).toLocaleString() : "—";
+
+        profileInfo.innerHTML = `
         <div class="flex items-center justify-between">
           <p><strong>Name:</strong> <span id="displayNameText">${displayName}</span></p>
           <button id="editNameBtn" class="btn btn-primary text-xs">Edit</button>
@@ -154,10 +193,10 @@
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Member Since:</strong> ${joined}</p>
       `;
-      const editBtn=document.getElementById("editNameBtn");
-      editBtn.addEventListener("click",()=>{
-        const current=document.getElementById("displayNameText").textContent;
-        profileInfo.innerHTML=`
+        const editBtn = document.getElementById("editNameBtn");
+        editBtn.addEventListener("click", () => {
+          const current = document.getElementById("displayNameText").textContent;
+          profileInfo.innerHTML = `
           <form id="nameForm" class="space-y-2">
             <label class="block text-[var(--muted)]">New Display Name</label>
             <input id="newDisplayName" value="${current}" required/>
@@ -166,43 +205,43 @@
               <button type="button" id="cancelEdit" class="btn">Cancel</button>
             </div>
           </form>`;
-        document.getElementById("cancelEdit").onclick=()=>onAuthStateChanged(auth,()=>{});
-        document.getElementById("nameForm").onsubmit=async(e)=>{
-          e.preventDefault();
-          const newName=document.getElementById("newDisplayName").value.trim();
-          if(!newName){showToast("Name cannot be empty");return;}
-          try{
-            await updateProfile(user,{displayName:newName});
-            await updateDoc(doc(db,"users",user.uid),{displayName:newName});
-            showToast("Name updated!");onAuthStateChanged(auth,()=>{});
-          }catch(err){console.error(err);showToast("Error updating name");}
-        };
-      });
-    }catch(e){console.error(e);showToast("Error loading profile");}
+          document.getElementById("cancelEdit").onclick = () => onAuthStateChanged(auth, () => { });
+          document.getElementById("nameForm").onsubmit = async (e) => {
+            e.preventDefault();
+            const newName = document.getElementById("newDisplayName").value.trim();
+            if (!newName) { showToast("Name cannot be empty"); return; }
+            try {
+              await updateProfile(user, { displayName: newName });
+              await updateDoc(doc(db, "users", user.uid), { displayName: newName });
+              showToast("Name updated!"); onAuthStateChanged(auth, () => { });
+            } catch (err) { console.error(err); showToast("Error updating name"); }
+          };
+        });
+      } catch (e) { console.error(e); showToast("Error loading profile"); }
 
-    // === Orders ===
-    try{
-      const q=query(collection(db,"orders"),where("userId","==",user.uid),orderBy("createdAt","desc"));
-      onSnapshot(q,snap=>{
-        if(snap.empty){
-          ordersList.innerHTML=`<p class="text-[var(--muted)] italic">You haven’t placed any orders yet.</p>`;
-          return;
-        }
-        const html=[];
-        snap.forEach(docSnap=>{
-          const d=docSnap.data();
-          const date=d.createdAt?.seconds?new Date(d.createdAt.seconds*1000).toLocaleString():"—";
-          const total=(d.total-(d.discount||0)).toFixed(2);
-          const statusColor=d.status==="Delivered"?"text-green-400":
-                            d.status==="Shipped"?"text-blue-400":"text-[var(--gold)]";
-          html.push(`
+      // === Orders ===
+      try {
+        const q = query(collection(db, "orders"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+        onSnapshot(q, snap => {
+          if (snap.empty) {
+            ordersList.innerHTML = `<p class="text-[var(--muted)] italic">You haven’t placed any orders yet.</p>`;
+            return;
+          }
+          const html = [];
+          snap.forEach(docSnap => {
+            const d = docSnap.data();
+            const date = d.createdAt?.seconds ? new Date(d.createdAt.seconds * 1000).toLocaleString() : "—";
+            const total = (d.total - (d.discount || 0)).toFixed(2);
+            const statusColor = d.status === "Delivered" ? "text-green-400" :
+              d.status === "Shipped" ? "text-blue-400" : "text-[var(--gold)]";
+            html.push(`
             <article class="border border-[var(--border)] rounded-xl p-4">
               <div class="flex justify-between items-center">
                 <h3 class="font-semibold text-[var(--gold)]">Order #${docSnap.id.slice(-6)}</h3>
                 <span class="text-xs text-[var(--muted)]">${date}</span>
               </div>
               <div class="mt-2 flex justify-between text-sm text-[var(--muted)]">
-                <span>Status: <span class="${statusColor}">${d.status||"Pending"}</span></span>
+                <span>Status: <span class="${statusColor}">${d.status || "Pending"}</span></span>
                 <span>Total: <span class="text-[var(--gold)]">$${total}</span></span>
               </div>
               <button class="mt-3 btn btn-primary text-xs" onclick="showReceipt('${docSnap.id}')">
@@ -210,20 +249,21 @@
               </button>
             </article>
           `);
+          });
+          ordersList.innerHTML = html.join("");
         });
-        ordersList.innerHTML=html.join("");
-      });
-    }catch(e){console.error(e);showToast("Error loading orders");}
-    setLoading(false);
-  });
-</script>
+      } catch (e) { console.error(e); showToast("Error loading orders"); }
+      setLoading(false);
+    });
+  </script>
 
-<!-- Receipt Viewer -->
-<div id="receipt-viewer-module"></div>
-<script>
-  loadModule("#receipt-viewer-module","/assets/modules/receipt-viewer.html")
-    .catch(err=>console.error("Receipt viewer load failed:",err));
-</script>
+  <!-- Receipt Viewer -->
+  <div id="receipt-viewer-module"></div>
+  <script>
+    loadModule("#receipt-viewer-module", "/assets/modules/receipt-viewer.html")
+      .catch(err => console.error("Receipt viewer load failed:", err));
+  </script>
 
 </body>
+
 </html>

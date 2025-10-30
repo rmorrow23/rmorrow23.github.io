@@ -1,81 +1,402 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ReelRequests – Movie Requests</title>
+  <script type="module" src="/assets/js/maintenance-listener.js"></script>
   <style>
     :root {
-      --bg:#0a0b0f; --surface:#12141b; --muted:#a9b0be; --text:#e9eef8;
-      --primary:#5b8aff; --accent:#7cf8d2; --green:#16c784; --border:rgba(255,255,255,0.08);
+      --bg: #0a0b0f;
+      --surface: #12141b;
+      --muted: #a9b0be;
+      --text: #e9eef8;
+      --primary: #5b8aff;
+      --accent: #7cf8d2;
+      --green: #16c784;
+      --border: rgba(255, 255, 255, 0.08);
     }
-    body{margin:0;font:14px system-ui;background:var(--bg);color:var(--text);}
-    .container{max-width:520px;margin:0 auto;padding:16px;}
-    header{position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);background:rgba(0,0,0,.45);border-bottom:1px solid var(--border);}
-    header .bar{display:flex;align-items:center;gap:10px;padding:14px 16px;}
-    .logo{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.08);}
-    h1{font-size:18px;margin:0;} .sub{color:var(--muted);font-size:11px;}
 
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;margin:16px 0;}
-    .section h2{margin:16px 0 8px;font-size:16px;}
-    .grid{display:grid;gap:8px;margin-top:8px;}
-    .row{display:flex;align-items:center;gap:10px;background:#0d1117;border:1px solid var(--border);border-radius:12px;padding:10px;opacity:0;animation:fadeSlideIn .4s ease forwards;}
-    .title{flex:1;font-weight:500;}
-    .dot{width:10px;height:10px;border-radius:50%;background:#666;}
-    .dot.pending{background:#f5c84c;}
-    .dot.comingsoon{background:#5b8aff;}
-    .dot.completed{background:#16c784;}
-    .badge{font-size:12px;padding:5px 10px;border-radius:999px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--primary));color:#00152d;animation:pulseGlow 2s infinite;}
-    .empty{color:var(--muted);font-size:13px;text-align:center;padding:12px;}
-    .date-label{font-size:12px;color:var(--muted);margin-top:2px;}
+    body {
+      margin: 0;
+      font: 14px system-ui;
+      background: var(--bg);
+      color: var(--text);
+    }
 
-    #requestForm{display:flex;gap:8px;flex-wrap:wrap;}
-    .input{flex:1;min-width:0;padding:12px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text);}
-    .btn{padding:12px 16px;border:0;border-radius:12px;background:var(--primary);color:#fff;font-weight:600;cursor:pointer;transition:background .2s, transform .15s;}
-    .btn:hover{transform:translateY(-1px);}
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, .45);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header .bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, .08);
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      margin: 16px 0;
+    }
+
+    .section h2 {
+      margin: 16px 0 8px;
+      font-size: 16px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      opacity: 0;
+      animation: fadeSlideIn .4s ease forwards;
+    }
+
+    .title {
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #666;
+    }
+
+    .dot.pending {
+      background: #f5c84c;
+    }
+
+    .dot.comingsoon {
+      background: #5b8aff;
+    }
+
+    .dot.completed {
+      background: #16c784;
+    }
+
+    .badge {
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      color: #00152d;
+      animation: pulseGlow 2s infinite;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 12px;
+    }
+
+    .date-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    #requestForm {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .input {
+      flex: 1;
+      min-width: 0;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn {
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
 
     /* Admin panel */
-    .admin{background:#1a1e2a;border:1px solid var(--border);border-radius:18px;margin-top:20px;overflow:hidden;}
-    .admin-header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-weight:600;font-size:15px;}
-    .admin-header:hover{background:rgba(255,255,255,0.05);}
-    .admin-header span{font-size:18px;transition:transform .3s;}
-    .admin.collapsed .admin-header span{transform:rotate(-90deg);}
-    .admin-content{max-height:1000px;overflow:hidden;transition:max-height .4s ease,padding .3s ease;padding:14px 16px;}
-    .admin.collapsed .admin-content{max-height:0;padding:0 16px;}
+    .admin {
+      background: #1a1e2a;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
 
-    .admin-list-wrapper{max-height:300px;overflow-y:auto;padding-right:6px;}
-    .admin-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:10px;}
-    .admin-title{display:flex;align-items:center;gap:8px;font-weight:500;}
-    .action-group{display:flex;gap:6px;}
-    .action-btn{font-size:12px;padding:6px 10px;border-radius:8px;border:0;font-weight:600;cursor:pointer;transition:transform .15s, box-shadow .15s;}
-    .action-btn:hover{transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,0.4);}
-    .action-btn.next{background:var(--accent);color:#001;}
-    .action-btn.soon{background:var(--primary);color:#fff;}
-    .action-btn.done{background:var(--green);color:#001;}
+    .admin-header {
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .admin-header:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .admin-header span {
+      font-size: 18px;
+      transition: transform .3s;
+    }
+
+    .admin.collapsed .admin-header span {
+      transform: rotate(-90deg);
+    }
+
+    .admin-content {
+      max-height: 1000px;
+      overflow: hidden;
+      transition: max-height .4s ease, padding .3s ease;
+      padding: 14px 16px;
+    }
+
+    .admin.collapsed .admin-content {
+      max-height: 0;
+      padding: 0 16px;
+    }
+
+    .admin-list-wrapper {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .admin-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      margin-bottom: 10px;
+    }
+
+    .admin-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .action-btn {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 0;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .action-btn.next {
+      background: var(--accent);
+      color: #001;
+    }
+
+    .action-btn.soon {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .action-btn.done {
+      background: var(--green);
+      color: #001;
+    }
+
     /* Highlight border for active state */
     .action-btn.active {
       border: 2px solid var(--text);
-      box-shadow: 0 0 6px rgba(255,255,255,0.4);
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
     }
 
     /* Toggle */
-    .toggle-wrapper{margin:10px 0;display:flex;align-items:center;gap:8px;}
-    .toggle-wrapper span{font-size:13px;color:var(--muted);}
-    .toggle-checkbox{width:40px;height:20px;background:#444;border-radius:20px;position:relative;cursor:pointer;flex-shrink:0;display:inline-block;}
-    .toggle-checkbox input{opacity:0;width:100%;height:100%;margin:0;position:absolute;top:0;left:0;cursor:pointer;}
-    .toggle-slider{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:.3s;}
-    .toggle-checkbox input:checked + .toggle-slider{transform:translateX(20px);background:var(--accent);}
+    .toggle-wrapper {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toggle-wrapper span {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .toggle-checkbox {
+      width: 40px;
+      height: 20px;
+      background: #444;
+      border-radius: 20px;
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+
+    .toggle-checkbox input {
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: pointer;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .3s;
+    }
+
+    .toggle-checkbox input:checked+.toggle-slider {
+      transform: translateX(20px);
+      background: var(--accent);
+    }
 
     /* Batch */
-    .batch-section{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
-    .textarea{width:100%;min-height:100px;max-height:250px;padding:12px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:14px;resize:none;overflow-y:auto;word-wrap:break-word;line-height:1.4;}
-    .btn.batch{align-self:flex-end;padding:10px 18px;border:0;border-radius:12px;background:var(--primary);color:#fff;font-weight:600;cursor:pointer;}
+    .batch-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .textarea {
+      width: 100%;
+      min-height: 100px;
+      max-height: 250px;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 14px;
+      resize: none;
+      overflow-y: auto;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+
+    .btn.batch {
+      align-self: flex-end;
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
 
     /* Animations */
-    @keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-    @keyframes pulseGlow{0%,100%{box-shadow:0 0 6px rgba(124,248,210,0.6);}50%{box-shadow:0 0 14px rgba(124,248,210,1);}}
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulseGlow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 6px rgba(124, 248, 210, 0.6);
+      }
+
+      50% {
+        box-shadow: 0 0 14px rgba(124, 248, 210, 1);
+      }
+    }
   </style>
 </head>
+
 <body>
   <header>
     <div class="bar">
@@ -119,7 +440,7 @@
         <!-- Toggle -->
         <div class="toggle-wrapper">
           <label class="toggle-checkbox">
-            <input type="checkbox" id="toggleCompleted"/>
+            <input type="checkbox" id="toggleCompleted" />
             <span class="toggle-slider"></span>
           </label>
           <span>Show Completed</span>
@@ -153,78 +474,79 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const form=document.getElementById("requestForm");
-    const titleInput=document.getElementById("title");
-    const elPending=document.getElementById("pending");
-    const elSoon=document.getElementById("comingSoon");
-    const elDone=document.getElementById("completed");
-    const adminPanel=document.getElementById("adminPanel");
-    const adminList=document.getElementById("adminList");
-    const toggleCompleted=document.getElementById("toggleCompleted");
+    const form = document.getElementById("requestForm");
+    const titleInput = document.getElementById("title");
+    const elPending = document.getElementById("pending");
+    const elSoon = document.getElementById("comingSoon");
+    const elDone = document.getElementById("completed");
+    const adminPanel = document.getElementById("adminPanel");
+    const adminList = document.getElementById("adminList");
+    const toggleCompleted = document.getElementById("toggleCompleted");
 
-    const showAdmin=new URLSearchParams(location.search).get("admin")==="1";
-    if(showAdmin) adminPanel.style.display="block";
+    const showAdmin = new URLSearchParams(location.search).get("admin") === "1";
+    if (showAdmin) adminPanel.style.display = "block";
 
-    adminPanel.querySelector(".admin-header").addEventListener("click",()=>adminPanel.classList.toggle("collapsed"));
+    adminPanel.querySelector(".admin-header").addEventListener("click", () => adminPanel.classList.toggle("collapsed"));
 
-    function escapeHtml(s=""){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
-    function rowHTML(d){
-      let dateLine="";
-      if(d.status==="completed" && d.completedAt?.seconds){
-        const date=new Date(d.completedAt.seconds*1000);
-        dateLine=`<div class="date-label">Completed on: ${date.toLocaleDateString()}</div>`;
+    function escapeHtml(s = "") { return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c])); }
+    function rowHTML(d) {
+      let dateLine = "";
+      if (d.status === "completed" && d.completedAt?.seconds) {
+        const date = new Date(d.completedAt.seconds * 1000);
+        dateLine = `<div class="date-label">Completed on: ${date.toLocaleDateString()}</div>`;
       }
-      return `<div class="row"><span class="dot ${d.status}"></span><div class="title">${escapeHtml(d.title)}${dateLine}</div>${d.nextUp?'<span class="badge">Next Up</span>':''}</div>`;
+      return `<div class="row"><span class="dot ${d.status}"></span><div class="title">${escapeHtml(d.title)}${dateLine}</div>${d.nextUp ? '<span class="badge">Next Up</span>' : ''}</div>`;
     }
-    function render(el,docs,empty){el.innerHTML=docs.length?docs.map(rowHTML).join(""):`<div class="empty">${empty}</div>`;}
+    function render(el, docs, empty) { el.innerHTML = docs.length ? docs.map(rowHTML).join("") : `<div class="empty">${empty}</div>`; }
 
     // Requests listener
-    onSnapshot(collection(db,"requests"),s=>{
-      const arr=s.docs.map(d=>({id:d.id,...d.data()}));
-      render(elPending,arr.filter(d=>d.status==="pending"),"No pending");
-      render(elSoon,arr.filter(d=>d.status==="comingsoon"),"No upcoming");
-      render(elDone,arr.filter(d=>d.status==="completed"),"No completed");
-      if(showAdmin) renderAdmin(arr);
+    onSnapshot(collection(db, "requests"), s => {
+      const arr = s.docs.map(d => ({ id: d.id, ...d.data() }));
+      render(elPending, arr.filter(d => d.status === "pending"), "No pending");
+      render(elSoon, arr.filter(d => d.status === "comingsoon"), "No upcoming");
+      render(elDone, arr.filter(d => d.status === "completed"), "No completed");
+      if (showAdmin) renderAdmin(arr);
     });
 
-    function renderAdmin(docs){
-      let filtered=docs;
-      if(!toggleCompleted.checked){ filtered=docs.filter(d=>d.status!=="completed"); }
-      adminList.innerHTML=filtered.map(d=>`
+    function renderAdmin(docs) {
+      let filtered = docs;
+      if (!toggleCompleted.checked) { filtered = docs.filter(d => d.status !== "completed"); }
+      adminList.innerHTML = filtered.map(d => `
         <div class="admin-row">
-          <div class="admin-title"><span class="dot ${d.status}"></span>${escapeHtml(d.title)} ${d.nextUp?'<span class="badge">Next Up</span>':''}</div>
+          <div class="admin-title"><span class="dot ${d.status}"></span>${escapeHtml(d.title)} ${d.nextUp ? '<span class="badge">Next Up</span>' : ''}</div>
           <div class="action-group">
             <button class="action-btn next ${d.nextUp ? 'active' : ''}" onclick="toggleNextUp('${d.id}',${!d.nextUp})">Next</button>
-            <button class="action-btn soon ${d.status==='comingsoon' ? 'active' : ''}" onclick="setStatus('${d.id}','comingsoon')">Soon</button>
-            <button class="action-btn done ${d.status==='completed' ? 'active' : ''}" onclick="setStatus('${d.id}','completed')">Done</button>
+            <button class="action-btn soon ${d.status === 'comingsoon' ? 'active' : ''}" onclick="setStatus('${d.id}','comingsoon')">Soon</button>
+            <button class="action-btn done ${d.status === 'completed' ? 'active' : ''}" onclick="setStatus('${d.id}','completed')">Done</button>
           </div>
         </div>`).join("");
     }
 
-    toggleCompleted.addEventListener("change",()=>onSnapshot(collection(db,"requests"),s=>{
-      const arr=s.docs.map(d=>({id:d.id,...d.data()}));
+    toggleCompleted.addEventListener("change", () => onSnapshot(collection(db, "requests"), s => {
+      const arr = s.docs.map(d => ({ id: d.id, ...d.data() }));
       renderAdmin(arr);
     }));
 
-    window.toggleNextUp=async(id,val)=>{await updateDoc(doc(db,"requests",id),{nextUp:val});};
-    window.setStatus=async(id,status)=>{
-      const updateData={status:status,nextUp:false};
-      if(status==="completed"){updateData.completedAt=serverTimestamp();}
-      await updateDoc(doc(db,"requests",id),updateData);
+    window.toggleNextUp = async (id, val) => { await updateDoc(doc(db, "requests", id), { nextUp: val }); };
+    window.setStatus = async (id, status) => {
+      const updateData = { status: status, nextUp: false };
+      if (status === "completed") { updateData.completedAt = serverTimestamp(); }
+      await updateDoc(doc(db, "requests", id), updateData);
     };
 
-    form.addEventListener("submit",async e=>{
+    form.addEventListener("submit", async e => {
       e.preventDefault();
-      const t=titleInput.value.trim(); if(!t) return;
-      await addDoc(collection(db,"requests"),{title:t,status:"pending",nextUp:false,createdAt:serverTimestamp()});
-      titleInput.value="";
+      const t = titleInput.value.trim(); if (!t) return;
+      await addDoc(collection(db, "requests"), { title: t, status: "pending", nextUp: false, createdAt: serverTimestamp() });
+      titleInput.value = "";
     });
 
-    document.getElementById("batchBtn").addEventListener("click",async()=>{
-      const lines=document.getElementById("batchTitles").value.split(/\n/).map(l=>l.trim()).filter(Boolean);
-      for(const t of lines){await addDoc(collection(db,"requests"),{title:t,status:"comingsoon",nextUp:false,createdAt:serverTimestamp()});}
-      document.getElementById("batchTitles").value="";
+    document.getElementById("batchBtn").addEventListener("click", async () => {
+      const lines = document.getElementById("batchTitles").value.split(/\n/).map(l => l.trim()).filter(Boolean);
+      for (const t of lines) { await addDoc(collection(db, "requests"), { title: t, status: "comingsoon", nextUp: false, createdAt: serverTimestamp() }); }
+      document.getElementById("batchTitles").value = "";
     });
   </script>
 </body>
+
 </html>

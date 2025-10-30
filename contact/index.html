@@ -1,169 +1,273 @@
-<!DOCTYPE html><html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Contact — Morrow Industries</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-:root{--bg:#000;--surface:#12141b;--muted:#a9b0be;--text:#e9eef8;--gold:#d4af37;--border:rgba(255,255,255,0.08)}
-/* background + overlay to match 404/index */
-body{
-  margin:0;min-height:100vh;color:var(--text);
-  background:var(--bg);
-  font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  position:relative;overflow-x:hidden;
-}
-.page-overlay{
-  position:fixed;inset:0;height:100vh;width:100vw;z-index:0;
-  background:rgba(0,0,20,0);backdrop-filter:blur(3px);
-}
-input, textarea{
-    background:rgba(0,0,0,0);
-}
-/* particles */
-.particles{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
-.particles span{
-  position:absolute;display:block;width:5px;height:5px;border-radius:9999px;background:var(--gold);opacity:.15;
-  filter:blur(.5px);animation:float var(--dur) linear infinite;left:var(--x);top:var(--y)
-}
-@keyframes float{to{transform:translateY(-300vh) translateX(var(--drift, 0px));opacity:0}}
-/* glass + brand */
-.glass{background:rgba(18,20,27,.2);backdrop-filter:saturate(10%) blur(15px);border:1px solid var(--border)}
-.gold{color:var(--gold)}
-.btn{border:1px solid var(--border);color:var(--text);padding:.6rem .9rem;border-radius:.6rem;transition:transform .15s ease,box-shadow .2s ease,background .2s ease;position:relative;z-index:2}
-.btn-primary{border-color:#d4af37}
-.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
-.navbar a{opacity:.9}
-.navbar a:hover{opacity:1}
-/* fade-in */
-.fade-in{opacity:0;transform:translateY(6px);animation:fadeIn .6s ease forwards}
-.delay-1{animation-delay:.08s}
-@keyframes fadeIn{to{opacity:1;transform:none}}
-/* keep header above overlay/particles */
-header{position:sticky;top:0;z-index:3}
-</style>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact — Morrow Industries</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="/assets/js/maintenance-listener.js"></script>
+  <style>
+    :root {
+      --bg: #000;
+      --surface: #12141b;
+      --muted: #a9b0be;
+      --text: #e9eef8;
+      --gold: #d4af37;
+      --border: rgba(255, 255, 255, 0.08)
+    }
+
+    /* background + overlay to match 404/index */
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .page-overlay {
+      position: fixed;
+      inset: 0;
+      height: 100vh;
+      width: 100vw;
+      z-index: 0;
+      background: rgba(0, 0, 20, 0);
+      backdrop-filter: blur(3px);
+    }
+
+    input,
+    textarea {
+      background: rgba(0, 0, 0, 0);
+    }
+
+    /* particles */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden
+    }
+
+    .particles span {
+      position: absolute;
+      display: block;
+      width: 5px;
+      height: 5px;
+      border-radius: 9999px;
+      background: var(--gold);
+      opacity: .15;
+      filter: blur(.5px);
+      animation: float var(--dur) linear infinite;
+      left: var(--x);
+      top: var(--y)
+    }
+
+    @keyframes float {
+      to {
+        transform: translateY(-300vh) translateX(var(--drift, 0px));
+        opacity: 0
+      }
+    }
+
+    /* glass + brand */
+    .glass {
+      background: rgba(18, 20, 27, .2);
+      backdrop-filter: saturate(10%) blur(15px);
+      border: 1px solid var(--border)
+    }
+
+    .gold {
+      color: var(--gold)
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: .6rem .9rem;
+      border-radius: .6rem;
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+      position: relative;
+      z-index: 2
+    }
+
+    .btn-primary {
+      border-color: #d4af37
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
+    }
+
+    .navbar a {
+      opacity: .9
+    }
+
+    .navbar a:hover {
+      opacity: 1
+    }
+
+    /* fade-in */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(6px);
+      animation: fadeIn .6s ease forwards
+    }
+
+    .delay-1 {
+      animation-delay: .08s
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    /* keep header above overlay/particles */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 3
+    }
+  </style>
 </head>
 
 <body class="min-h-screen text-[var(--text)] selection:bg-[var(--gold)]/20">
   <!-- overlay + particles -->
   <div class="page-overlay"></div>
   <div class="particles" id="particles"></div>
-<div id="navbar-container"></div>
-    <script>
-      fetch("/assets/modules/navbar.html")
-        .then(res => res.text())
-        .then(html => {
-          const container = document.getElementById("navbar-container");
-          const temp = document.createElement("div");
-          temp.innerHTML = html;
+  <div id="navbar-container"></div>
+  <script>
+    fetch("/assets/modules/navbar.html")
+      .then(res => res.text())
+      .then(html => {
+        const container = document.getElementById("navbar-container");
+        const temp = document.createElement("div");
+        temp.innerHTML = html;
 
-          // Append styles properly
-          temp.querySelectorAll("style").forEach(style => {
-            const newStyle = document.createElement("style");
-            newStyle.textContent = style.textContent;
-            document.head.appendChild(newStyle);
-            style.remove();
-          });
+        // Append styles properly
+        temp.querySelectorAll("style").forEach(style => {
+          const newStyle = document.createElement("style");
+          newStyle.textContent = style.textContent;
+          document.head.appendChild(newStyle);
+          style.remove();
+        });
 
-          // Insert main HTML (without script/style)
-          container.innerHTML = temp.innerHTML;
+        // Insert main HTML (without script/style)
+        container.innerHTML = temp.innerHTML;
 
-          // Execute scripts safely
-          container.querySelectorAll("script").forEach(oldScript => {
-            const s = document.createElement("script");
-            s.type = oldScript.type || "text/javascript";
-            if (oldScript.src) s.src = oldScript.src;
-            else s.textContent = oldScript.textContent;
-            document.body.appendChild(s);
-          });
-        })
-        .catch(err => console.error("Navbar load failed:", err));
-    </script>
-<header class="border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
-  
-</header>
+        // Execute scripts safely
+        container.querySelectorAll("script").forEach(oldScript => {
+          const s = document.createElement("script");
+          s.type = oldScript.type || "text/javascript";
+          if (oldScript.src) s.src = oldScript.src;
+          else s.textContent = oldScript.textContent;
+          document.body.appendChild(s);
+        });
+      })
+      .catch(err => console.error("Navbar load failed:", err));
+  </script>
+  <header class="border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
 
-<main class="mx-auto max-w-3xl px-4 py-10 relative my-10" style="z-index:2">
-  <h1 class="font-serif text-4xl fade-in">Contact / Support</h1>
-  <p class="mt-2 text-[var(--muted)] fade-in">Have a question or custom request? Send a message below.</p>
+  </header>
 
-  <form id="contactForm" class="mt-6 grid sm:grid-cols-2 gap-4 glass rounded-xl p-6 fade-in delay-1">
-    <input id="name" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3" placeholder="Name" required/>
-    <input id="email" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3" placeholder="Email" type="email" required/>
-    <input id="subject" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3 sm:col-span-2" placeholder="Subject" required/>
-    <textarea id="message" rows="5" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3 sm:col-span-2" placeholder="Message" required></textarea>
-    <button class="btn btn-primary sm:w-max" type="submit">Send</button>
-    <span id="status" class="text-sm text-[var(--muted)]"></span>
-  </form>
-</main>
+  <main class="mx-auto max-w-3xl px-4 py-10 relative my-10" style="z-index:2">
+    <h1 class="font-serif text-4xl fade-in">Contact / Support</h1>
+    <p class="mt-2 text-[var(--muted)] fade-in">Have a question or custom request? Send a message below.</p>
 
-<footer class="mt-10 border-t border-[var(--border)] relative" style="z-index:2">
-  <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-    <div>© <span id="year"></span> Morrow Industries</div>
-    <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
-  </div>
-</footer>
+    <form id="contactForm" class="mt-6 grid sm:grid-cols-2 gap-4 glass rounded-xl p-6 fade-in delay-1">
+      <input id="name" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3" placeholder="Name"
+        required />
+      <input id="email" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3" placeholder="Email"
+        type="email" required />
+      <input id="subject" class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3 sm:col-span-2"
+        placeholder="Subject" required />
+      <textarea id="message" rows="5"
+        class="rounded-lg border border-[var(--border)] bg-[var(--surface)]/60 p-3 sm:col-span-2" placeholder="Message"
+        required></textarea>
+      <button class="btn btn-primary sm:w-max" type="submit">Send</button>
+      <span id="status" class="text-sm text-[var(--muted)]"></span>
+    </form>
+  </main>
 
-<script>
-document.getElementById('year').textContent=new Date().getFullYear();
+  <footer class="mt-10 border-t border-[var(--border)] relative" style="z-index:2">
+    <div
+      class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+      <div>© <span id="year"></span> Morrow Industries</div>
+      <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+    </div>
+  </footer>
 
-/* Gold dust particles — two passes to vary speeds, matching your 404/index */
-(function makeParticles() {
-  const wrap = document.getElementById('particles');
-  const count = 28;
-  for (let i = 0; i < count; i++) {
-    const s = document.createElement('span');
-    s.style.setProperty('--x', Math.random()*100 + 'vw');
-    s.style.setProperty('--y', (100 + Math.random()*40) + 'vh');
-    s.style.setProperty('--drift', (Math.random()*20-10) + 'px');
-    s.style.setProperty('--dur', (1 + Math.random()*14) + 's');
-    s.style.opacity = (0.08 + Math.random()*0.15).toFixed(2);
-    wrap.appendChild(s);
-  }
-})();
-(function makeParticles2() {
-  const wrap = document.getElementById('particles');
-  const count = 28;
-  for (let i = 0; i < count; i++) {
-    const s = document.createElement('span');
-    s.style.setProperty('--x', Math.random()*100 + 'vw');
-    s.style.setProperty('--y', (100 + Math.random()*40) + 'vh');
-    s.style.setProperty('--drift', (Math.random()*20-10) + 'px');
-    s.style.setProperty('--dur', (5 + Math.random()*14) + 's');
-    s.style.opacity = (0.08 + Math.random()*0.15).toFixed(2);
-    wrap.appendChild(s);
-  }
-})();
-</script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
 
-<script type="module">
-import { db, auth } from "/assets/js/firebase-init.js";
-import { addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    /* Gold dust particles — two passes to vary speeds, matching your 404/index */
+    (function makeParticles() {
+      const wrap = document.getElementById('particles');
+      const count = 28;
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('span');
+        s.style.setProperty('--x', Math.random() * 100 + 'vw');
+        s.style.setProperty('--y', (100 + Math.random() * 40) + 'vh');
+        s.style.setProperty('--drift', (Math.random() * 20 - 10) + 'px');
+        s.style.setProperty('--dur', (1 + Math.random() * 14) + 's');
+        s.style.opacity = (0.08 + Math.random() * 0.15).toFixed(2);
+        wrap.appendChild(s);
+      }
+    })();
+    (function makeParticles2() {
+      const wrap = document.getElementById('particles');
+      const count = 28;
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('span');
+        s.style.setProperty('--x', Math.random() * 100 + 'vw');
+        s.style.setProperty('--y', (100 + Math.random() * 40) + 'vh');
+        s.style.setProperty('--drift', (Math.random() * 20 - 10) + 'px');
+        s.style.setProperty('--dur', (5 + Math.random() * 14) + 's');
+        s.style.opacity = (0.08 + Math.random() * 0.15).toFixed(2);
+        wrap.appendChild(s);
+      }
+    })();
+  </script>
 
-const form = document.getElementById('contactForm');
-const statusEl = document.getElementById('status');
+  <script type="module">
+    import { db, auth } from "/assets/js/firebase-init.js";
+    import { addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-form.addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  try {
-    statusEl.textContent = "Sending…";
-    const payload = {
-      name: document.getElementById('name').value.trim(),
-      email: document.getElementById('email').value.trim(),
-      subject: document.getElementById('subject').value.trim(),
-      message: document.getElementById('message').value.trim(),
-      userId: auth.currentUser?.uid || null,
-      createdAt: serverTimestamp()
-    };
-    await addDoc(collection(db,'support'), payload);
-    statusEl.textContent = "Sent! I’ll reply soon.";
-    form.reset();
-  } catch (e) {
-    console.error(e);
-    statusEl.textContent = "Error: " + (e?.message||e);
-  }
-});
-</script>
+    const form = document.getElementById('contactForm');
+    const statusEl = document.getElementById('status');
 
-<script type="module" src="/assets/js/debug-listener.js"></script>
-<script src="/assets/js/firebase-auth.js" type="module"></script>
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        statusEl.textContent = "Sending…";
+        const payload = {
+          name: document.getElementById('name').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          subject: document.getElementById('subject').value.trim(),
+          message: document.getElementById('message').value.trim(),
+          userId: auth.currentUser?.uid || null,
+          createdAt: serverTimestamp()
+        };
+        await addDoc(collection(db, 'support'), payload);
+        statusEl.textContent = "Sent! I’ll reply soon.";
+        form.reset();
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = "Error: " + (e?.message || e);
+      }
+    });
+  </script>
 
-</body></html>
+  <script type="module" src="/assets/js/debug-listener.js"></script>
+  <script src="/assets/js/firebase-auth.js" type="module"></script>
+
+</body>
+
+</html>
