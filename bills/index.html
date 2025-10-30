@@ -1,316 +1,654 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Morrow Industries — Bills Paid Tracker</title>
-<link rel="icon" href="/assets/morIcon.png">
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-:root{
-  --gold:#d4af37;
-  --bg:#0a0b0f;
-  --surface:rgba(18,20,27,.75);
-  --text:#e9eef8;
-  --border:rgba(255,255,255,.08);
-}
-html,body{
-  margin:0;padding:0;
-  background:radial-gradient(circle at center,var(--bg)0%,#000 100%);
-  color:var(--text);font-family:'Inter',sans-serif;
-  height:100%;overflow-x:hidden;
-}
-.gold{color:var(--gold);}
-.glass{background:var(--surface);backdrop-filter:blur(16px);
-  border:1px solid var(--border);border-radius:1rem;
-  box-shadow:0 4px 16px rgba(0,0,0,.4);}
-.btn{border:1px solid var(--border);padding:.6rem 1rem;border-radius:.75rem;transition:.2s;}
-.btn:hover{background:rgba(212,175,55,.1);border-color:var(--gold);}
-.month-circle{width:1.3rem;height:1.3rem;border-radius:50%;margin:.15rem;
-  display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#000;}
-.status-paid{background:#22c55e;} .status-partial{background:#facc15;}
-.status-late{background:#ef4444;} .status-unpaid{background:#6b7280;}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Morrow Industries — Bills Paid Tracker</title>
+  <link rel="icon" href="/assets/morIcon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --gold: #d4af37;
+      --bg: #0a0b0f;
+      --surface: rgba(18, 20, 27, .75);
+      --text: #e9eef8;
+      --border: rgba(255, 255, 255, .08);
+    }
 
-/* Toast */
-#toast{position:fixed;bottom:90px;left:50%;
-  transform:translateX(-50%)scale(.9);
-  background:rgba(18,20,27,.85);border:1px solid var(--gold);
-  color:var(--text);padding:.6rem 1.2rem;border-radius:.75rem;
-  box-shadow:0 0 15px rgba(212,175,55,.25);
-  opacity:0;pointer-events:none;transition:all .25s ease;z-index:1000;font-size:.9rem;}
-#toast.show{opacity:1;transform:translateX(-50%)scale(1);}
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at center, var(--bg)0%, #000 100%);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      height: 100%;
+      overflow-x: hidden;
+    }
 
-/* Overlay & Drawer */
-#drawerOverlay{position:fixed;inset:0;background:rgba(0,0,0,.4);
-  backdrop-filter:blur(8px);display:none;opacity:0;z-index:75;transition:opacity .3s ease;}
-#drawerOverlay.visible{display:flex;opacity:1;}
-.drawer{position:fixed;bottom:0;left:0;width:100%;
-display:flex;
-flex-direction:column;
-background:rgba(18,20,27,.96);border-top:1px solid var(--border);
-  border-radius:1rem 1rem 0 0;box-shadow:0 -8px 24px rgba(0,0,0,.5);
-  transform:translateY(100%);transition:transform .35s cubic-bezier(.25,.8,.25,1);
-  max-height:100vh;padding-bottom:env(safe-area-inset-bottom,80px);
-  overflow-y:auto;touch-action:none;z-index:80;}
-.drawer-handle{width:48px;height:5px;background:var(--gold);
-  border-radius:3px;margin:10px auto;opacity:.9;}
-.drawer-header{text-align:center;font-weight:600;margin-bottom:.5rem;position:relative;}
-.drawer-close{position:absolute;right:1rem;top:.5rem;color:var(--text);
-  opacity:.7;font-size:1.2rem;cursor:pointer;}
-.drawer-close:hover{opacity:1;}
+    .gold {
+      color: var(--gold);
+    }
 
-/* Bottom Bar */
-#bottomTabs{position:fixed;bottom:0;left:0;width:100%;height:64px;
-  background:rgba(18,20,27,.85);backdrop-filter:blur(10px);
-  display:flex;justify-content:space-around;align-items:center;
-  border-top:1px solid var(--border);z-index:70;transition:opacity .3s ease;}
-.tab{flex:1;text-align:center;color:var(--text);
-  padding-top:4px;transition:all .2s ease;font-size:.85rem;}
-.tab.active{color:var(--gold);transform:translateY(-3px);}
-.tab-icon{font-size:1.2rem;display:block;margin-bottom:2px;}
+    .glass {
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-top-left-radius: 0rem;
+      border-top-right-radius: 0rem;
+      border-bottom-left-radius: 2rem;
+      border-bottom-right-radius: 2rem;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .4);
+      align-content: center;
+    }
 
-input,select{
-  border:1px solid rgba(255,255,255,.1);
-  background:rgba(0,0,0,.3);
-  color:var(--text);border-radius:.5rem;padding:.5rem;
-  width:90%;transition:.2s;
-justify-self:center;
-height:2rem;
-}
-input:focus,select:focus{border-color:var(--gold);
-  box-shadow:0 0 6px rgba(212,175,55,.3);outline:none;}
-</style>
+    /* Ensure the bill card is centered vertically within the glass container */
+    .glass {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      /* centers child vertically */
+      padding: 0.5rem 1rem;
+      z-index: 1;
+      /* tighter vertical spacing */
+    }
+
+
+    /* Main wrapper for bill section */
+    .bill-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    /* Pill header stays constant */
+    .bill-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(18, 20, 27, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 20rem;
+      padding: 0.5rem 1rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      z-index: 2;
+    }
+
+    .bill-card:hover {
+      border-color: var(--gold);
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.25);
+    }
+
+    /* Subtle lift for open state */
+    .bill-card.expanded {
+      transform: translateY(-2px);
+      box-shadow: 0 0 16px rgba(212, 175, 55, 0);
+    }
+
+    /* Icon & scaling */
+    .icon-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 7.5rem;
+      height: 5.5rem;
+      min-width: 2.4rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.0);
+      overflow: hidden;
+      margin-right: 0.6rem;
+      transition: transform 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .icon-wrapper {
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    }
+
+    .icon-wrapper::after {
+      content: "📷";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      opacity: 0;
+      background: rgba(0, 0, 0, 0.6);
+      color: var(--gold);
+      border-radius: 50%;
+      transition: opacity 0.25s ease;
+    }
+
+    .icon-wrapper:hover::after {
+      opacity: 1;
+    }
+
+    .bill-card .icon-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: 0%;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0);
+    }
+
+    .bill-card img.bill-icon {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      /* keeps car/card proportions */
+      display: block;
+    }
+
+
+    .bill-card.expanded .icon-wrapper {
+      transform: scale(2.5) translateX(2rem);
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0);
+    }
+
+    .bill-icon {
+      width: 80%;
+      height: 80%;
+      object-fit: cover;
+      display: block;
+      margin: auto;
+    }
+
+    /* Details container */
+    .bill-details {
+      overflow: hidden;
+      max-height: 0;
+      padding: 0 1rem;
+      border-radius: 1rem;
+      background: rgba(18, 20, 27, 0.6);
+      border: 1px solid var(--border);
+      transition: max-height 0.35s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .bill-details.expanded {
+      padding: 1rem;
+      opacity: 1;
+      max-height: 800px;
+      /* expands dynamically */
+    }
+
+
+    .btn {
+      border: 1px solid var(--border);
+      padding: .6rem 1rem;
+      border-radius: .75rem;
+      transition: .2s;
+    }
+
+    .btn:hover {
+      background: rgba(212, 175, 55, .1);
+      border-color: var(--gold);
+    }
+
+    /* Layout wrapper for each month */
+    .month-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      width: 3.2rem;
+      margin: 0.2rem;
+    }
+
+    /* Circle itself */
+    .month-circle {
+      width: 3.2rem;
+      height: 3.2rem;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      color: var(--text);
+      margin-bottom: 0.3rem;
+      transition: all 0.25s ease;
+      box-shadow: 0 0 6px rgba(212, 175, 55, 0.1);
+    }
+
+    /* Label below circle */
+    .month {
+      font-size: 0.8rem;
+      text-align: center;
+      color: var(--text);
+      opacity: 0.7;
+      line-height: 1;
+    }
+
+    /* Grid layout */
+    .months-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      justify-items: center;
+      row-gap: 0.75rem;
+      column-gap: 0.25rem;
+    }
+
+    /* Colors */
+    .status-paid {
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    .status-partial {
+      border-color: #facc15;
+      color: #facc15;
+    }
+
+    .status-late {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    .status-unpaid {
+      border-color: #6b7280;
+      color: #6b7280;
+    }
+
+    /* Hover / Glow */
+    .month-circle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.25);
+    }
+
+
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%)scale(.9);
+      background: rgba(18, 20, 27, .85);
+      border: 1px solid var(--gold);
+      color: var(--text);
+      padding: .6rem 1.2rem;
+      border-radius: .75rem;
+      box-shadow: 0 0 15px rgba(212, 175, 55, .25);
+      opacity: 0;
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 1000;
+      font-size: .9rem;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%)scale(1);
+    }
+
+    /* Overlay & Drawer */
+    #drawerOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .4);
+      backdrop-filter: blur(8px);
+      display: none;
+      opacity: 0;
+      z-index: 75;
+      transition: opacity .3s ease;
+    }
+
+    #drawerOverlay.visible {
+      display: flex;
+      opacity: 1;
+    }
+
+    .drawer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      background: rgba(18, 20, 27, .96);
+      border-top: 1px solid var(--border);
+      border-radius: 1rem 1rem 0 0;
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, .5);
+      transform: translateY(100%);
+      transition: transform .35s cubic-bezier(.25, .8, .25, 1);
+      max-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom, 80px);
+      overflow-y: auto;
+      touch-action: none;
+      z-index: 80;
+    }
+
+    .drawer-handle {
+      width: 48px;
+      height: 5px;
+      background: var(--gold);
+      border-radius: 3px;
+      margin: 10px auto;
+      opacity: .9;
+    }
+
+    .drawer-header {
+      text-align: center;
+      font-weight: 600;
+      margin-bottom: .5rem;
+      position: relative;
+    }
+
+    .drawer-close {
+      position: absolute;
+      right: 1rem;
+      top: .5rem;
+      color: var(--text);
+      opacity: .7;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .drawer-close:hover {
+      opacity: 1;
+    }
+
+    /* Bottom Bar */
+    #bottomTabs {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 64px;
+      background: rgba(18, 20, 27, .85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      z-index: 70;
+      transition: opacity .3s ease;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      color: var(--text);
+      padding-top: 4px;
+      transition: all .2s ease;
+      font-size: .85rem;
+    }
+
+    .tab.active {
+      color: var(--gold);
+      transform: translateY(-3px);
+    }
+
+    .tab-icon {
+      font-size: 1.2rem;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    input,
+    select {
+      border: 1px solid rgba(255, 255, 255, .1);
+      background: rgba(0, 0, 0, .3);
+      color: var(--text);
+      border-radius: .5rem;
+      padding: .5rem;
+      width: 90%;
+      transition: .2s;
+      justify-self: center;
+      height: 2rem;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 6px rgba(212, 175, 55, .3);
+      outline: none;
+    }
+  </style>
 </head>
+
 <body class="pb-20">
 
-<header class="flex items-center justify-between p-4 sticky top-0 bg-black/70 backdrop-blur-md z-50">
-  <div class="flex items-center space-x-2">
-    <img src="/assets/morIcon.png" alt="Morrow Icon" class="w-8 h-8">
-    <h1 class="text-lg font-semibold gold">Bills Paid Tracker</h1>
-  </div>
-  <button id="authBtn" class="btn">Sign In</button>
-</header>
+  <header class="flex items-center justify-between p-4 sticky top-0 bg-black/70 backdrop-blur-md z-50">
+    <div class="flex items-center space-x-2">
+      <img src="/assets/morIcon.png" alt="Morrow Icon" class="w-8 h-8">
+      <h1 class="text-lg font-semibold gold">Bills Paid Tracker</h1>
+    </div>
+    <button id="authBtn" class="btn">Sign In</button>
+  </header>
 
-<section id="summary" class="glass m-4 p-4 grid grid-cols-2 gap-2 text-center">
-  <div>✅ Paid: <span id="paidCount" class="gold">0</span></div>
-  <div>⚠️ Partial: <span id="partialCount" class="gold">0</span></div>
-  <div>❌ Unpaid: <span id="unpaidCount" class="gold">0</span></div>
-  <div>💰 Total: <span id="totalSummary" class="gold">$0 / $0</span></div>
-</section>
+  <section id="summary" class="glass m-4 p-4 grid grid-cols-2 gap-2 text-center">
+    <div>✅ Paid: <span id="paidCount" class="gold">0</span></div>
+    <div>⚠️ Partial: <span id="partialCount" class="gold">0</span></div>
+    <div>❌ Unpaid: <span id="unpaidCount" class="gold">0</span></div>
+    <div>💰 Total: <span id="totalSummary" class="gold">$0 / $0</span></div>
+  </section>
 
-<main id="billsContainer" class="space-y-4 px-4"></main>
+  <main id="billsContainer" class="space-y-4 px-4"></main>
 
-<section id="totals" class="glass m-4 p-4 text-center">
-  <div class="mb-2">📆 <span id="monthName" class="gold"></span></div>
-  <div>This Month — Paid: <span id="monthPaid" class="gold">$0</span> | Remaining: <span id="monthRemain" class="gold">$0</span></div>
-  <div class="mt-2">This Year — Paid: <span id="yearPaid" class="gold">$0</span> | Remaining: <span id="yearRemain" class="gold">$0</span></div>
-</section>
+  <section id="totals" class="glass m-4 p-4 text-center">
+    <div class="mb-2">📆 <span id="monthName" class="gold"></span></div>
+    <div>This Month — Paid: <span id="monthPaid" class="gold">$0</span> | Remaining: <span id="monthRemain"
+        class="gold">$0</span></div>
+    <div class="mt-2">This Year — Paid: <span id="yearPaid" class="gold">$0</span> | Remaining: <span id="yearRemain"
+        class="gold">$0</span></div>
+  </section>
 
-<div id="toast"></div>
-<div id="drawerOverlay"></div>
+  <div id="toast"></div>
+  <div id="drawerOverlay"></div>
 
-<nav id="bottomTabs">
-  <div class="tab" data-target="bills"><span class="tab-icon">🏷️</span>Bills</div>
-  <div class="tab" data-target="payments"><span class="tab-icon">💰</span>Payments</div>
-  <div class="tab" data-target="logs"><span class="tab-icon">📋</span>Logs</div>
-</nav><script type="module">
-import {
-  app, db, auth, provider,
-  signInWithPopup, onAuthStateChanged, signOut,
-  collection, addDoc, getDocs, getDoc, updateDoc, doc
-} from "/assets/js/firebase-init.js";
+  <nav id="bottomTabs">
+    <div class="tab" data-target="bills"><span class="tab-icon">🏷️</span>Bills</div>
+    <div class="tab" data-target="payments"><span class="tab-icon">💰</span>Payments</div>
+    <div class="tab" data-target="logs"><span class="tab-icon">📋</span>Logs</div>
+  </nav>
+  <script type="module">
+    import {
+      app, db, auth, provider,
+      signInWithPopup, onAuthStateChanged, signOut,
+      collection, addDoc, getDocs, getDoc, updateDoc, doc
+    } from "/assets/js/firebase-init.js";
 
-/* =============== 🔔 Toast + Logs =============== */
-const toast=document.getElementById("toast");
-const logEntries=[];
-function showToast(msg,color="var(--gold)"){
-  toast.style.borderColor=color;
-  toast.textContent=msg;
-  toast.classList.add("show");
-  setTimeout(()=>toast.classList.remove("show"),3000);
-}
-const _log=console.log,_warn=console.warn,_err=console.error;
-function pushLog(type,msg,color){
-  const t=new Date().toLocaleTimeString();
-  logEntries.unshift({t,msg,type,color});
-  showToast(msg,color);
-}
-console.log=(...a)=>{_log(...a);pushLog("normal",a.join(" "),"var(--gold)");};
-console.warn=(...a)=>{_warn(...a);pushLog("warn",a.join(" "),"#facc15");};
-console.error=(...a)=>{_err(...a);pushLog("error",a.join(" "),"#ef4444");};
-
-/* =============== 📱 Drawer System =============== */
-const overlay=document.getElementById("drawerOverlay");
-const tabs=document.querySelectorAll(".tab");
-let activeDrawer=null,currentKey=null,isDragging=false,startY=0;
-const snapPoints={closed:100,full:0};
-const drawers={};
-
-
-function closeAll(){
-  if(activeDrawer){
-    activeDrawer.style.transition="transform .3s ease";
-    activeDrawer.style.transform="translateY(100%)";
-    setTimeout(()=>{
-      if(activeDrawer && activeDrawer.parentNode===overlay){
-        overlay.removeChild(activeDrawer);
-      }
-      // ✅ clear all references
-      for(const key in drawers){
-        drawers[key]=null;
-      }
-      activeDrawer=null;
-      currentKey=null;
-      overlay.classList.remove("visible");
-      document.getElementById("bottomTabs").style.opacity="1";
-      tabs.forEach(t=>t.classList.remove("active"));
-    },300);
-  }
-}
-
-function openDrawer(key){
-  closeAll();
-  const drawer=document.createElement("div");
-  drawer.className="drawer";
-  drawer.innerHTML=generateDrawerHTML(key);
-  overlay.appendChild(drawer);
-  drawers[key]=drawer;
-  overlay.classList.add("visible");
-
-  // ✅ Bind close button (works every time)
-  setTimeout(()=>{
-    const closeBtn=drawer.querySelector(".drawer-close");
-    if(closeBtn){
-      closeBtn.addEventListener("click",(e)=>{
-        e.stopPropagation();
-        closeAll();
-      });
+    /* =============== 🔔 Toast + Logs =============== */
+    const toast = document.getElementById("toast");
+    const logEntries = [];
+    function showToast(msg, color = "var(--gold)") {
+      toast.style.borderColor = color;
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 3000);
     }
-  },50);
+    const _log = console.log, _warn = console.warn, _err = console.error;
+    function pushLog(type, msg, color) {
+      const t = new Date().toLocaleTimeString();
+      logEntries.unshift({ t, msg, type, color });
+      showToast(msg, color);
+    }
+    console.log = (...a) => { _log(...a); pushLog("normal", a.join(" "), "var(--gold)"); };
+    console.warn = (...a) => { _warn(...a); pushLog("warn", a.join(" "), "#facc15"); };
+    console.error = (...a) => { _err(...a); pushLog("error", a.join(" "), "#ef4444"); };
 
-  requestAnimationFrame(()=>drawer.style.transform="translateY(0%)");
-  tabs.forEach(t=>t.dataset.target===key?t.classList.add("active"):t.classList.remove("active"));
-  activeDrawer=drawer;
-  currentKey=key;
- // 🕒 Wait until drawer content actually exists before applying logic
-console.log(`🔍 Waiting for drawer "${key}" to render...`);
-const waitForDrawer = setInterval(() => {
-  const drawerReady = document.querySelector(".drawer");
-  const selectorMap = {
-    bills: "#addBill",
-    payments: "#submitPayment",
-    logs: ".log-entry, .drawer-header" // fallback for logs
-  };
-  const keySelector = selectorMap[key] || ".drawer";
-  const foundElement = drawerReady?.querySelector(keySelector);
+    /* =============== 📱 Drawer System =============== */
+    const overlay = document.getElementById("drawerOverlay");
+    const tabs = document.querySelectorAll(".tab");
+    let activeDrawer = null, currentKey = null, isDragging = false, startY = 0;
+    const snapPoints = { closed: 100, full: 0 };
+    const drawers = {};
 
-  if (foundElement) {
-    console.log(`✅ Drawer "${key}" content detected, initializing actions...`);
-    clearInterval(waitForDrawer);
-    handleDrawerActions(key);
-  }
-}, 100);
 
-}
-/* ===== 🧲 Attach Touch & Pointer Events ===== */
-/* ===== 📱 Global Gesture System ===== */
-let dragDrawer = null;
-let dragStartY = 0;
-let dragDelta = 0;
-let dragKey = null;
-const bottomTabs = document.getElementById("bottomTabs");
+    function closeAll() {
+      if (activeDrawer) {
+        activeDrawer.style.transition = "transform .3s ease";
+        activeDrawer.style.transform = "translateY(100%)";
+        setTimeout(() => {
+          if (activeDrawer && activeDrawer.parentNode === overlay) {
+            overlay.removeChild(activeDrawer);
+          }
+          // ✅ clear all references
+          for (const key in drawers) {
+            drawers[key] = null;
+          }
+          activeDrawer = null;
+          currentKey = null;
+          overlay.classList.remove("visible");
+          document.getElementById("bottomTabs").style.opacity = "1";
+          tabs.forEach(t => t.classList.remove("active"));
+        }, 300);
+      }
+    }
 
-// 🔹 Detect start
-window.addEventListener("touchstart",(e)=>{
-  const touchY = e.touches[0].clientY;
-  const touchX = e.touches[0].clientX;
-  const screenH = window.innerHeight;
-
-  // If drawer is open → we can drag it down
-  if(activeDrawer){
-    dragDrawer = activeDrawer;
-    dragKey = currentKey;
-    dragStartY = touchY;
-    dragDelta = 0;
-    dragDrawer.style.transition = "none";
-    return;
-  }
-
-  // If touching in bottom 20 % → open drawer from that tab
-  if(touchY > screenH * 0.8){
-    tabs.forEach(tab=>{
-      const rect = tab.getBoundingClientRect();
-      if(touchX >= rect.left && touchX <= rect.right){
-        dragKey = tab.dataset.target;
-        // Prepare drawer before any move
-        if(!drawers[dragKey]){
-          const drawer = document.createElement("div");
-          drawer.className = "drawer";
-          drawer.innerHTML = generateDrawerHTML(dragKey);
-          overlay.appendChild(drawer);
-// ✅ Ensure close button works on gesture-created drawers too
-setTimeout(()=>{
-  const closeBtn=drawer.querySelector(".drawer-close");
-  if(closeBtn){
-    closeBtn.addEventListener("click",(e)=>{
-      e.stopPropagation();
+    function openDrawer(key) {
       closeAll();
-    });
-  }
-},50);
-          drawers[dragKey] = drawer;
-          overlay.classList.add("visible");
-          activeDrawer = drawer;
-          currentKey = dragKey;
-          bottomTabs.style.opacity = "0.5";
-          drawer.style.transition = "none";
+      const drawer = document.createElement("div");
+      drawer.className = "drawer";
+      drawer.innerHTML = generateDrawerHTML(key);
+      overlay.appendChild(drawer);
+      drawers[key] = drawer;
+      overlay.classList.add("visible");
+
+      // ✅ Bind close button (works every time)
+      setTimeout(() => {
+        const closeBtn = drawer.querySelector(".drawer-close");
+        if (closeBtn) {
+          closeBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            closeAll();
+          });
         }
-        dragDrawer = drawers[dragKey];
+      }, 50);
+
+      requestAnimationFrame(() => drawer.style.transform = "translateY(0%)");
+      tabs.forEach(t => t.dataset.target === key ? t.classList.add("active") : t.classList.remove("active"));
+      activeDrawer = drawer;
+      currentKey = key;
+      // 🕒 Wait until drawer content actually exists before applying logic
+      console.log(`🔍 Waiting for drawer "${key}" to render...`);
+      const waitForDrawer = setInterval(() => {
+        const drawerReady = document.querySelector(".drawer");
+        const selectorMap = {
+          bills: "#addBill",
+          payments: "#submitPayment",
+          logs: ".log-entry, .drawer-header" // fallback for logs
+        };
+        const keySelector = selectorMap[key] || ".drawer";
+        const foundElement = drawerReady?.querySelector(keySelector);
+
+        if (foundElement) {
+          console.log(`✅ Drawer "${key}" content detected, initializing actions...`);
+          clearInterval(waitForDrawer);
+          handleDrawerActions(key);
+        }
+      }, 100);
+
+    }
+    /* ===== 🧲 Attach Touch & Pointer Events ===== */
+    /* ===== 📱 Global Gesture System ===== */
+    let dragDrawer = null;
+    let dragStartY = 0;
+    let dragDelta = 0;
+    let dragKey = null;
+    const bottomTabs = document.getElementById("bottomTabs");
+
+    // 🔹 Detect start
+    window.addEventListener("touchstart", (e) => {
+      const touchY = e.touches[0].clientY;
+      const touchX = e.touches[0].clientX;
+      const screenH = window.innerHeight;
+
+      // If drawer is open → we can drag it down
+      if (activeDrawer) {
+        dragDrawer = activeDrawer;
+        dragKey = currentKey;
         dragStartY = touchY;
+        dragDelta = 0;
+        dragDrawer.style.transition = "none";
+        return;
+      }
+
+      // If touching in bottom 20 % → open drawer from that tab
+      if (touchY > screenH * 0.8) {
+        tabs.forEach(tab => {
+          const rect = tab.getBoundingClientRect();
+          if (touchX >= rect.left && touchX <= rect.right) {
+            dragKey = tab.dataset.target;
+            // Prepare drawer before any move
+            if (!drawers[dragKey]) {
+              const drawer = document.createElement("div");
+              drawer.className = "drawer";
+              drawer.innerHTML = generateDrawerHTML(dragKey);
+              overlay.appendChild(drawer);
+              // ✅ Ensure close button works on gesture-created drawers too
+              setTimeout(() => {
+                const closeBtn = drawer.querySelector(".drawer-close");
+                if (closeBtn) {
+                  closeBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    closeAll();
+                  });
+                }
+              }, 50);
+              drawers[dragKey] = drawer;
+              overlay.classList.add("visible");
+              activeDrawer = drawer;
+              currentKey = dragKey;
+              bottomTabs.style.opacity = "0.5";
+              drawer.style.transition = "none";
+            }
+            dragDrawer = drawers[dragKey];
+            dragStartY = touchY;
+          }
+        });
       }
     });
-  }
-});
 
-// 🔹 Move
-window.addEventListener("touchmove",(e)=>{
-  if(!dragDrawer) return;
-  const currentY = e.touches[0].clientY;
-  dragDelta = (currentY - dragStartY) * 1.5; // more sensitive
-  const percent = Math.min(100, Math.max(0, (dragDelta / window.innerHeight) * 100));
-  dragDrawer.style.transform = `translateY(${percent}%)`;
-  e.preventDefault();
-});
+    // 🔹 Move
+    window.addEventListener("touchmove", (e) => {
+      if (!dragDrawer) return;
+      const currentY = e.touches[0].clientY;
+      dragDelta = (currentY - dragStartY) * 1.5; // more sensitive
+      const percent = Math.min(100, Math.max(0, (dragDelta / window.innerHeight) * 100));
+      dragDrawer.style.transform = `translateY(${percent}%)`;
+      e.preventDefault();
+    });
 
-// 🔹 End
-window.addEventListener("touchend",()=>{
-  if(!dragDrawer) return;
-  const cur = parseFloat(dragDrawer.style.transform.replace(/[^\d.]/g,"")) || 0;
-  let snapTo = snapPoints.full;
-  if(cur > 25) snapTo = snapPoints.closed;
+    // 🔹 End
+    window.addEventListener("touchend", () => {
+      if (!dragDrawer) return;
+      const cur = parseFloat(dragDrawer.style.transform.replace(/[^\d.]/g, "")) || 0;
+      let snapTo = snapPoints.full;
+      if (cur > 25) snapTo = snapPoints.closed;
 
-  dragDrawer.style.transition = "transform .3s ease";
-  dragDrawer.style.transform = `translateY(${snapTo}%)`;
+      dragDrawer.style.transition = "transform .3s ease";
+      dragDrawer.style.transform = `translateY(${snapTo}%)`;
 
-  if(snapTo === snapPoints.closed){
-    setTimeout(closeAll,300);
-  } else {
-    dragDrawer.dataset.open = "true";
-    bottomTabs.style.opacity = "1";
-  }
+      if (snapTo === snapPoints.closed) {
+        setTimeout(closeAll, 300);
+      } else {
+        dragDrawer.dataset.open = "true";
+        bottomTabs.style.opacity = "1";
+      }
 
-  dragDrawer = null;
-  dragKey = null;
-});
+      dragDrawer = null;
+      dragKey = null;
+    });
 
-/* ===== Drawer Content Builder ===== */
-function generateDrawerHTML(key){
-  let html=`<div class="drawer-handle"></div>
+    /* ===== Drawer Content Builder ===== */
+    function generateDrawerHTML(key) {
+      let html = `<div class="drawer-handle"></div>
             <div class="drawer-header gold text-lg">
-            ${key[0].toUpperCase()+key.slice(1)}
+            ${key[0].toUpperCase() + key.slice(1)}
             <span class="drawer-close">✕</span></div>`;
-  if(key==="bills"){
-    html+=`<div class="p-4">
+      if (key === "bills") {
+        html += `<div class="p-4">
       <input id="billName" placeholder="Bill Name" class="mb-3">
       <input id="billAmount" type="number" placeholder="Amount" class="mb-3">
       <input id="billDueDay" type="number" placeholder="Due Day (1–31)" class="mb-3" min="1" max="31">
@@ -318,253 +656,499 @@ function generateDrawerHTML(key){
         <button id="addBill" class="btn flex-1 border-[var(--gold)] gold font-semibold">Add</button>
         <button id="deleteBill" class="btn flex-1 border-red-500 text-red-400">Delete</button>
       </div></div>`;
-  }
-  if(key==="payments"){
-    html+=`<div class="p-4">
+      }
+      if (key === "payments") {
+        html += `<div class="p-4">
       <select id="paymentBillSelect" class="mb-3"></select>
       <input id="paymentAmount" type="number" placeholder="Amount Paid" class="mb-3">
       <input id="paymentDate" type="date" class="mb-3">
       <button id="submitPayment" class="btn w-full border-[var(--gold)] gold font-semibold">Submit</button>
     </div>`;
-  }
-  if(key==="logs"){
-    html+=`<div class="p-4">
-      ${logEntries.length?logEntries.map(l=>`<div class="log-entry log-${l.type}">[${l.t}] ${l.msg}</div>`).join(""):'<div class="opacity-50">No logs yet.</div>'}
+      }
+      if (key === "logs") {
+        html += `<div class="p-4">
+      ${logEntries.length ? logEntries.map(l => `<div class="log-entry log-${l.type}">[${l.t}] ${l.msg}</div>`).join("") : '<div class="opacity-50">No logs yet.</div>'}
     </div>`;
-  }
-  return html;
-}
+      }
+      return html;
+    }
 
-/* ===== Tab Clicks ===== */
-tabs.forEach(tab=>{
-  tab.addEventListener("click",()=>{
-    const key=tab.dataset.target;
-    if(activeDrawer&&currentKey===key){closeAll();}
-    else openDrawer(key);
-  });
-});/* =============== 🔥 Firebase Logic =============== */
-const authBtn=document.getElementById("authBtn");
-const billsContainer=document.getElementById("billsContainer");
-const currentDate=new Date();
-const monthNames=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
-const monthDisplay=["January","February","March","April","May","June","July","August","September","October","November","December"];
-document.getElementById("monthName").textContent=monthDisplay[currentDate.getMonth()];
-let userId=null;
-
-/* --- Auth --- */
-authBtn.onclick=()=>{auth.currentUser?signOut(auth):signInWithPopup(auth,provider);};
-onAuthStateChanged(auth,(user)=>{
-  if(user){
-    userId=user.uid;
-    authBtn.textContent="Sign Out";
-    console.log(`Signed in as ${user.email}`);
-    loadBills();
-  }else{
-    userId=null;
-    authBtn.textContent="Sign In";
-    billsContainer.innerHTML="";
-    console.log("Signed out");
-  }
-});
-
-/* --- Load Bills --- */
-function loadBills(){
-  const billsRef=collection(db,"users",userId,"bills");
-  import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
-  .then(({onSnapshot})=>{
-    onSnapshot(billsRef,(snapshot)=>{
-      billsContainer.innerHTML="";
-      snapshot.forEach(docSnap=>{
-        if(docSnap.id!=="checklist"){renderBill(docSnap.id,docSnap.data());}
+    /* ===== Tab Clicks ===== */
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        const key = tab.dataset.target;
+        if (activeDrawer && currentKey === key) { closeAll(); }
+        else openDrawer(key);
       });
-    });
-  });
-}
+    });/* =============== 🔥 Firebase Logic =============== */
+    const authBtn = document.getElementById("authBtn");
+    const billsContainer = document.getElementById("billsContainer");
+    const currentDate = new Date();
+    const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+    const monthDisplay = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    document.getElementById("monthName").textContent = monthDisplay[currentDate.getMonth()];
+    let userId = null;
 
-/* --- Render Each Bill --- */
-function renderBill(id,bill){
-  const card=document.createElement("div");
-  card.className="glass p-4";
-  card.innerHTML=`
-    <div class="flex justify-between items-center mb-2">
-      <h3 class="text-lg font-semibold gold">${bill.name}</h3>
-      <div class="text-sm opacity-80">$${bill.amount}</div>
-    </div>
-    <div class="text-xs mb-2">Due: ${bill.dueDay} | Last Paid: ${bill.lastPaid?new Date(bill.lastPaid.seconds*1000).toLocaleDateString():"Never"}</div>
-    <div class="flex flex-wrap mb-2">
-      ${monthNames.map(m=>{
-        const s=bill.months?.[m]||"unpaid";
-        const i=s==="paid"?"✓":s==="partial"?"✓":s==="late"?"✕":"";
-        const c=s==="paid"?"status-paid":s==="partial"?"status-partial":s==="late"?"status-late":"status-unpaid";
-        return `<div class="month-circle ${c}">${i}</div>`;
-      }).join("")}
-    </div>
-    <div class="text-sm border-t border-[var(--border)] pt-2">
-      ${(bill.transactions||[]).slice().reverse().map(t=>
-        `<div>💳 $${t.amountPaid} — ${new Date(t.date.seconds*1000).toLocaleDateString()} (${t.status})</div>`
-      ).join("")}
-    </div>`;
-  billsContainer.appendChild(card);
-}
-
-/* =============== 🧾 Drawer Actions =============== */
-async function handleDrawerActions(key){
-  if(key==="bills"){
-    const addBtn=document.getElementById("addBill");
-    const delBtn=document.getElementById("deleteBill");
-
-    addBtn.onclick=async()=>{
-      if(!userId)return;
-      const name=document.getElementById("billName").value.trim();
-      const amount=parseFloat(document.getElementById("billAmount").value);
-      const dueDay=parseInt(document.getElementById("billDueDay").value);
-      if(!name||!amount||!dueDay)return showToast("Fill all fields","#facc15");
-      await addDoc(collection(db,"users",userId,"bills"),{
-        name,amount,dueDay,lastPaid:null,months:{},transactions:[]
-      });
-      showToast("Bill added","var(--gold)");
-      closeAll();
-    };
-
-    delBtn.onclick=async()=>{
-      if(!userId)return;
-      const name=document.getElementById("billName").value.trim();
-      if(!name)return showToast("Enter name to delete","#facc15");
-      const billsRef=collection(db,"users",userId,"bills");
-      const snap=await getDocs(billsRef);
-      snap.forEach(async d=>{
-        if(d.id!=="checklist" && d.data().name===name){
-          const {deleteDoc}=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-          await deleteDoc(d.ref);
-        }
-      });
-      showToast("Bill deleted","#ef4444");
-      closeAll();
-    };
-  }
-
- if (key === "payments") {
-  console.log("🟡 handleDrawerActions('payments') started");
-  const select = document.getElementById("paymentBillSelect");
-  const dateInput = document.getElementById("paymentDate");
-  const submitBtn = document.getElementById("submitPayment");
-
-  if (!userId) {
-    console.warn("⚠️ No userId yet, cannot load bills for payments.");
-    return;
-  }
-
-  try {
-    console.log(`📡 Fetching bills for userId=${userId}...`);
-    const billsCol = collection(db, "users", userId, "bills");
-    const snap = await getDocs(billsCol);
-
-    console.log(`📋 Fetched ${snap.size} documents from Firestore.`);
-    select.innerHTML = "";
-
-    const seen = new Set();
-    snap.forEach((d) => {
-      if (d.id !== "checklist") {
-        const bill = d.data();
-        console.log(`➡️ Bill found: ${bill.name} ($${bill.amount})`);
-        const name = bill.name.trim();
-        if (!seen.has(name)) {
-          seen.add(name);
-          const o = document.createElement("option");
-          o.value = d.id;
-          o.textContent = name;
-          select.appendChild(o);
-        }
+    /* --- Auth --- */
+    authBtn.onclick = () => { auth.currentUser ? signOut(auth) : signInWithPopup(auth, provider); };
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userId = user.uid;
+        authBtn.textContent = "Sign Out";
+        console.log(`Signed in as ${user.email}`);
+        loadBills();
+      } else {
+        userId = null// For testing purposes, replace with null to disable;
+        authBtn.textContent = "Sign In";
+        billsContainer.innerHTML = "";
+        console.log("Signed Out");
       }
     });
 
-    if (snap.size === 0) {
-      console.warn("⚠️ No bills found to populate dropdown.");
+    /* --- Load Bills --- */
+    function loadBills() {
+      const billsRef = collection(db, "users", userId, "bills");
+      import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
+        .then(({ onSnapshot }) => {
+          onSnapshot(billsRef, (snapshot) => {
+            billsContainer.innerHTML = "";
+            snapshot.forEach(docSnap => {
+              if (docSnap.id !== "checklist") { renderBill(docSnap.id, docSnap.data()); billTotals(); }
+            });
+          });
+        });
+    }
+    function billTotals() {
+      let paidCount = 0, partialCount = 0, unpaidCount = 0;
+      let monthPaid = 0, monthTotal = 0, yearPaid = 0, yearTotal = 0;
+      const currentMonth = monthNames[currentDate.getMonth()];
+      const currentYear = currentDate.getFullYear();
+
+      const billsRef = collection(db, "users", userId, "bills");
+      getDocs(billsRef).then(snapshot => {
+        snapshot.forEach(docSnap => {
+          if (docSnap.id === "checklist") return;
+          const bill = docSnap.data();
+          const status = bill.months?.[currentMonth] || "unpaid";
+          if (status === "paid") paidCount++;
+          else if (status === "partial") partialCount++;
+          else unpaidCount++;
+
+          // Monthly totals
+          monthTotal += bill.amount;
+          if (status === "paid") monthPaid += bill.amount;
+          else if (status === "partial") {
+            const lastTrans = bill.transactions?.slice().reverse().find(t => {
+              const d = new Date(t.date.seconds * 1000);
+              return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentYear;
+            });
+            if (lastTrans) monthPaid += lastTrans.amountPaid;
+          }
+        });
+      }).then(() => {
+        yearTotal = monthTotal * 12;
+        yearPaid = monthPaid; // Simplified for demo purposes
+
+        document.getElementById("paidCount").textContent = paidCount;
+        document.getElementById("partialCount").textContent = partialCount;
+        document.getElementById("unpaidCount").textContent = unpaidCount;
+        document.getElementById("totalSummary").textContent = `$${(paidCount + partialCount) * 100} / $${(paidCount + partialCount + unpaidCount) * 100}`;
+
+        document.getElementById("monthPaid").textContent = `$${monthPaid.toFixed(2)}`;
+        document.getElementById("monthRemain").textContent = `$${(monthTotal - monthPaid).toFixed(2)}`;
+        document.getElementById("yearPaid").textContent = `$${yearPaid.toFixed(2)}`;
+        document.getElementById("yearRemain").textContent = `$${(yearTotal - yearPaid).toFixed(2)}`;
+      });
+
+
+    }
+    /* --- Render Each Bill --- */
+    async function renderBill(id, bill) {
+      // 🧮 Recalculate monthly statuses before rendering
+      const updatedMonths = { ...bill.months };
+      const transactions = bill.transactions || [];
+
+      monthNames.forEach((m, i) => {
+        const monthPayments = transactions.filter(t => {
+          const d = new Date(t.date.seconds * 1000);
+          return d.getMonth() === i && d.getFullYear() === new Date().getFullYear();
+        });
+
+        if (monthPayments.length > 0) {
+          const totalPaid = monthPayments.reduce((a, t) => a + t.amountPaid, 0);
+          let status = "unpaid";
+          if (totalPaid >= bill.amount) status = "paid";
+          else if (totalPaid > 0) status = "partial";
+
+          const lastPaymentDate = new Date(
+            monthPayments[monthPayments.length - 1].date.seconds * 1000
+          );
+          if (lastPaymentDate.getDate() > bill.dueDay && status !== "paid")
+            status = "late";
+
+          updatedMonths[m] = status;
+        } else {
+          updatedMonths[m] = "unpaid";
+        }
+      });
+
+      // 🧾 Sync changes if needed
+      if (JSON.stringify(updatedMonths) !== JSON.stringify(bill.months)) {
+        const billRef = doc(db, "users", userId, "bills", id);
+        await updateDoc(billRef, { months: updatedMonths });
+        console.log(`✅ Auto-corrected months for "${bill.name}"`);
+      }
+      bill.months = updatedMonths;
+
+      // 🧱 Create wrapper for each bill
+      const wrapper = document.createElement("div");
+      wrapper.className = "bill-wrapper";
+
+      // ===== Header (bill-card) =====
+      const header = document.createElement("div");
+      header.className = "bill-card toggle-header flex justify-between items-center mb-1 cursor-pointer";
+
+      header.innerHTML = `
+    <div class="flex items-center">
+      ${bill.iconUrl
+          ? `<div class="icon-wrapper"><img src="${bill.iconUrl}" alt="${bill.name}" class="bill-icon"></div>`
+          : bill.icon
+            ? `<div class="icon-wrapper"><span class="text-2xl">${bill.icon}</span></div>`
+            : `<div class="icon-wrapper"><span class="text-lg gold">${bill.name[0]}</span></div>`
+        }
+      ${!bill.iconUrl ? `<h3 class="text-base font-semibold gold">${bill.name}</h3>` : ""}
+
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="text-sm opacity-80">$${bill.amount}</div>
+      <span class="arrow gold text-lg select-none">▾</span>
+    </div>
+  `;
+
+      // ===== Details (glass) =====
+      const details = document.createElement("div");
+      details.className = "glass bill-details";
+
+      details.innerHTML = `
+    <div class="text-xs mb-2">Due: ${bill.dueDay} | Last Paid: ${bill.lastPaid ? new Date(bill.lastPaid.seconds * 1000).toLocaleDateString() : "Never"
+        }</div>
+
+    <div class="months-container mb-2">
+      ${monthNames
+          .map((m) => {
+            const s = bill.months?.[m] || "unpaid";
+            const i = s === "paid" ? "✓" : s === "partial" ? "✓" : s === "late" ? "✕" : "";
+            const c =
+              s === "paid"
+                ? "status-paid"
+                : s === "partial"
+                  ? "status-partial"
+                  : s === "late"
+                    ? "status-late"
+                    : "status-unpaid";
+            const n = m[0].toUpperCase() + m.slice(1);
+            return `
+            <div class="month-item">
+              <div class="month-circle ${c}">${i}</div>
+              <div class="month">${n}</div>
+            </div>
+          `;
+          })
+          .join("")}
+    </div>
+
+    <div class="text-sm border-t border-[var(--border)] pt-2 transactions">
+      ${(bill.transactions || []).length
+          ? bill.transactions
+            .slice()
+            .reverse()
+            .map(
+              (t) => `<div>💳 $${t.amountPaid} — ${new Date(
+                t.date.seconds * 1000
+              ).toLocaleDateString()} (${t.status})</div>`
+            )
+            .join("")
+          : "<div class='opacity-60'>No payments yet</div>"
+        }
+    </div>
+  `;
+
+      // Add to container
+      wrapper.appendChild(header);
+      wrapper.appendChild(details);
+      billsContainer.appendChild(wrapper);
+
+      // 🪄 Expand / Collapse
+      let expanded = false;
+      const arrow = header.querySelector(".arrow");
+      // 🧩 Add icon upload click listener
+      const iconWrapper = header.querySelector(".icon-wrapper");
+      if (iconWrapper) {
+        iconWrapper.style.cursor = "pointer";
+        iconWrapper.title = "Click to upload icon";
+
+        iconWrapper.addEventListener("click", async (e) => {
+          e.stopPropagation(); // prevent collapsing the card
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = "image/*";
+
+          input.onchange = async () => {
+            const file = input.files[0];
+            if (!file) return;
+
+            // 🖼️ Preview immediately
+            const reader = new FileReader();
+            reader.onload = () => {
+              iconWrapper.innerHTML = `<img src="${reader.result}" class="bill-icon" alt="icon preview">`;
+            };
+            reader.readAsDataURL(file);
+
+            // 🔥 Upload to Firebase Storage
+            try {
+              const { getStorage, ref, uploadBytes, getDownloadURL } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js");
+              const storage = getStorage();
+              const storageRef = ref(storage, `users/${userId}/bills/${id}/icon_${Date.now()}.png`);
+
+              await uploadBytes(storageRef, file);
+              const downloadURL = await getDownloadURL(storageRef);
+
+              // 🧾 Save the URL to Firestore
+              const billRef = doc(db, "users", userId, "bills", id);
+              await updateDoc(billRef, { iconUrl: downloadURL });
+
+              showToast("Icon uploaded successfully!", "var(--gold)");
+              console.log(`✅ Icon updated for ${bill.name}`);
+            } catch (err) {
+              console.error("❌ Icon upload failed:", err);
+              showToast("Failed to upload icon", "#ef4444");
+            }
+          };
+
+          input.click();
+        });
+      }
+
+
+      header.addEventListener("click", () => {
+        expanded = !expanded;
+        if (expanded) {
+          header.classList.add("expanded");
+          details.classList.add("expanded");
+          arrow.textContent = "▾";
+        } else {
+          header.classList.remove("expanded");
+          details.classList.remove("expanded");
+          arrow.textContent = "▸";
+        }
+      });
     }
 
-    if (select.options.length > 0) {
-      console.log(`✅ Dropdown populated with ${select.options.length} bills.`);
-    } else {
-      console.warn("⚠️ Dropdown remains empty after population.");
+
+
+    /* =============== 🧾 Drawer Actions =============== */
+    async function handleDrawerActions(key) {
+      if (key === "bills") {
+        const addBtn = document.getElementById("addBill");
+        const delBtn = document.getElementById("deleteBill");
+
+        addBtn.onclick = async () => {
+          if (!userId) return;
+          const name = document.getElementById("billName").value.trim();
+          const amount = parseFloat(document.getElementById("billAmount").value);
+          const dueDay = parseInt(document.getElementById("billDueDay").value);
+          if (!name || !amount || !dueDay) return showToast("Fill all fields", "#facc15");
+          await addDoc(collection(db, "users", userId, "bills"), {
+            name, amount, dueDay, lastPaid: null, months: {}, transactions: []
+          });
+          showToast("Bill added", "var(--gold)");
+          closeAll();
+        };
+
+        delBtn.onclick = async () => {
+          if (!userId) return;
+          const name = document.getElementById("billName").value.trim();
+          if (!name) return showToast("Enter name to delete", "#facc15");
+          const billsRef = collection(db, "users", userId, "bills");
+          const snap = await getDocs(billsRef);
+          snap.forEach(async d => {
+            if (d.id !== "checklist" && d.data().name === name) {
+              const { deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+              await deleteDoc(d.ref);
+            }
+          });
+          showToast("Bill deleted", "#ef4444");
+          closeAll();
+        };
+      }
+
+      if (key === "payments") {
+        console.log("🟡 handleDrawerActions('payments') started");
+        const select = document.getElementById("paymentBillSelect");
+        const dateInput = document.getElementById("paymentDate");
+        const submitBtn = document.getElementById("submitPayment");
+
+        if (!userId) {
+          console.warn("⚠️ No userId yet, cannot load bills for payments.");
+          return;
+        }
+
+        try {
+          console.log(`📡 Fetching bills for userId=${userId}...`);
+          const billsCol = collection(db, "users", userId, "bills");
+          const snap = await getDocs(billsCol);
+
+          console.log(`📋 Fetched ${snap.size} documents from Firestore.`);
+          select.innerHTML = "";
+
+          const seen = new Set();
+          snap.forEach((d) => {
+            if (d.id !== "checklist") {
+              const bill = d.data();
+              console.log(`➡️ Bill found: ${bill.name} ($${bill.amount})`);
+              const name = bill.name.trim();
+              if (!seen.has(name)) {
+                seen.add(name);
+                const o = document.createElement("option");
+                o.value = d.id;
+                o.textContent = name;
+                select.appendChild(o);
+              }
+            }
+          });
+
+          if (snap.size === 0) {
+            console.warn("⚠️ No bills found to populate dropdown.");
+          }
+
+          if (select.options.length > 0) {
+            console.log(`✅ Dropdown populated with ${select.options.length} bills.`);
+          } else {
+            console.warn("⚠️ Dropdown remains empty after population.");
+          }
+
+          dateInput.valueAsDate = new Date();
+          console.log(`📅 Date input set to: ${dateInput.value}`);
+          submitBtn.onclick = submitPayment;
+          console.log("🟢 Payment submit handler attached.");
+        } catch (err) {
+          console.error("❌ Error loading bills:", err);
+        }
+      }
+
     }
 
-    dateInput.valueAsDate = new Date();
-    console.log(`📅 Date input set to: ${dateInput.value}`);
-    submitBtn.onclick = submitPayment;
-    console.log("🟢 Payment submit handler attached.");
-  } catch (err) {
-    console.error("❌ Error loading bills:", err);
-  }
-}
+    /* =============== 💰 Submit Payment =============== */
+    async function submitPayment() {
+      const billId = document.getElementById("paymentBillSelect").value;
+      const amountPaid = parseFloat(document.getElementById("paymentAmount").value);
+      const datePaid = new Date(document.getElementById("paymentDate").value);
+      if (!billId || isNaN(amountPaid)) return showToast("Enter valid payment", "#facc15");
 
-}
+      const billRef = doc(db, "users", userId, "bills", billId);
+      const billSnap = await getDoc(billRef);
+      if (!billSnap.exists()) return;
 
-/* =============== 💰 Submit Payment =============== */
-async function submitPayment(){
-  const billId=document.getElementById("paymentBillSelect").value;
-  const amountPaid=parseFloat(document.getElementById("paymentAmount").value);
-  const datePaid=new Date(document.getElementById("paymentDate").value);
-  if(!billId||isNaN(amountPaid))return showToast("Enter valid payment","#facc15");
+      const bill = billSnap.data();
+      const monthKey = monthNames[datePaid.getMonth()];
 
-  const billRef=doc(db,"users",userId,"bills",billId);
-  const billSnap=await getDoc(billRef);
-  if(!billSnap.exists())return;
+      // 🧮 Gather all payments for the same month
+      const existingPayments = (bill.transactions || []).filter(t => {
+        const tDate = new Date(t.date.seconds * 1000);
+        return (
+          tDate.getMonth() === datePaid.getMonth() &&
+          tDate.getFullYear() === datePaid.getFullYear()
+        );
+      });
 
-  const bill=billSnap.data();
-  const monthKey=monthNames[datePaid.getMonth()];
-  let status="paid";
-  if(amountPaid<bill.amount)status="partial";
-  if(datePaid.getDate()>bill.dueDay)status="late";
+      // Include the new payment
+      const totalMonthPaid = existingPayments.reduce((a, t) => a + t.amountPaid, amountPaid);
 
-  const newMonths={...bill.months,[monthKey]:status};
-  const newTransactions=[...(bill.transactions||[]),{
-    amountPaid,date:{seconds:datePaid.getTime()/1000},status
-  }];
+      // 🧠 Determine status based on totals
+      let status = "unpaid";
+      if (totalMonthPaid >= bill.amount) {
+        status = "paid";
+      } else if (totalMonthPaid > 0) {
+        status = "partial";
+      }
 
-  await updateDoc(billRef,{
-    months:newMonths,
-    transactions:newTransactions,
-    lastPaid:{seconds:datePaid.getTime()/1000}
-  });
+      // Late overrides only if not fully paid
+      if (datePaid.getDate() > bill.dueDay && status !== "paid") {
+        status = "late";
+      }
 
-  showToast("Payment recorded","var(--gold)");
-  closeAll();
-}
+      // 🧾 Add new transaction
+      const newTransaction = {
+        amountPaid,
+        date: { seconds: datePaid.getTime() / 1000 },
+        status
+      };
 
-/* =============== 🧩 Drawer Observer =============== */
-/* =============== 🧩 Drawer Observer (loop-safe) =============== */
-let lastHandledKey = null;
-const observer = new MutationObserver((mutations) => {
-  if (!currentKey || !activeDrawer) return;
+      // Combine and filter duplicates safely
+      const allTransactions = [...(bill.transactions || []), newTransaction];
 
-  // Only run once per drawer open — not every DOM change
-  if (lastHandledKey === currentKey) return;
-  lastHandledKey = currentKey;
+      // 🧩 Update all past transactions for this month to reflect the corrected status
+      const updatedTransactions = allTransactions.map(t => {
+        const tDate = new Date(t.date.seconds * 1000);
+        if (
+          tDate.getMonth() === datePaid.getMonth() &&
+          tDate.getFullYear() === datePaid.getFullYear()
+        ) {
+          return { ...t, status };
+        }
+        return t;
+      });
 
-  console.log(`👀 Drawer mutation detected for "${currentKey}", running setup once.`);
-  handleDrawerActions(currentKey);
+      // 🗓️ Update months map
+      const newMonths = { ...bill.months, [monthKey]: status };
 
-  // Rebind close button safely
-  const closeBtn = activeDrawer.querySelector(".drawer-close");
-  if (closeBtn && !closeBtn.dataset.bound) {
-    closeBtn.dataset.bound = "true";
-    closeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
+      // 🧱 Commit update
+      await updateDoc(billRef, {
+        months: newMonths,
+        transactions: updatedTransactions,
+        lastPaid: { seconds: datePaid.getTime() / 1000 }
+      });
+
+      showToast(`Payment recorded (${status.toUpperCase()})`, "var(--gold)");
       closeAll();
+    }
+
+
+    /* =============== 🧩 Drawer Observer =============== */
+    /* =============== 🧩 Drawer Observer (loop-safe) =============== */
+    let lastHandledKey = null;
+    const observer = new MutationObserver((mutations) => {
+      if (!currentKey || !activeDrawer) return;
+
+      // Only run once per drawer open — not every DOM change
+      if (lastHandledKey === currentKey) return;
+      lastHandledKey = currentKey;
+
+      console.log(`👀 Drawer mutation detected for "${currentKey}", running setup once.`);
+      handleDrawerActions(currentKey);
+
+      // Rebind close button safely
+      const closeBtn = activeDrawer.querySelector(".drawer-close");
+      if (closeBtn && !closeBtn.dataset.bound) {
+        closeBtn.dataset.bound = "true";
+        closeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          closeAll();
+        });
+      }
     });
-  }
-});
 
-// Observe once globally
-observer.observe(overlay, { childList: true, subtree: true });
+    // Observe once globally
+    observer.observe(overlay, { childList: true, subtree: true });
 
-// Reset the tracker when closing all drawers
-const originalCloseAll = closeAll;
-closeAll = function () {
-  lastHandledKey = null; // allow re-trigger for next open
-  originalCloseAll();
-};
+    // Reset the tracker when closing all drawers
+    const originalCloseAll = closeAll;
+    closeAll = function () {
+      lastHandledKey = null; // allow re-trigger for next open
+      originalCloseAll();
+    };
 
-</script>
+  </script>
 </body>
+
 </html>
