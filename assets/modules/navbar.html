@@ -252,8 +252,14 @@
     const text = isSignedIn ? "Sign Out" : "Sign In";
     authBtn.textContent = text;
     authBtnMobile.textContent = text;
-    document.getElementById("billsLink").style.display = isAdmin ? "inline-block" : "none";
-document.getElementById("adminLink").style.display = isAdmin ? "inline-block" : "none";
 
+    // Cache elements safely
+    const billsLink = document.getElementById("billsLink");
+    const adminLink = document.getElementById("adminLink");
+
+    if (billsLink && adminLink) {
+      billsLink.style.display = isAdmin ? "inline-block" : "none";
+      adminLink.style.display = isAdmin ? "inline-block" : "none";
+    }
   };
 </script>
