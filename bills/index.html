@@ -574,7 +574,7 @@
       }
 
       // If touching in bottom 20 % → open drawer from that tab
-      if (touchY > screenH * 0.95) {
+      if (touchY > screenH * 1) {
         tabs.forEach(tab => {
           const rect = tab.getBoundingClientRect();
           if (touchX >= rect.left && touchX <= rect.right) {
