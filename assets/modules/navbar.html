@@ -196,7 +196,8 @@
 <li><a href="/account">Account</a></li>
     <li><a href="/about">About</a></li>
     <li><a href="/contact">Contact</a></li>
-    <li id="adminLink" style="display:none;"><a href="/admin">Admin</a></li>
+    <li id="billsLink" style="display:none;"><a href="/bills">Bills</a></li>
+<li id="adminLink" style="display:none;"><a href="/admin">Admin</a></li>
     <!-- Mobile-only Sign In -->
     <li><button id="authBtnMobile">Login</button></li>
   </ul>
@@ -251,6 +252,7 @@
     const text = isSignedIn ? "Sign Out" : "Sign In";
     authBtn.textContent = text;
     authBtnMobile.textContent = text;
-    document.getElementById("adminLink").style.display = isAdmin ? "inline-block" : "none";
+    document.getElementById("billsLink").style.display = isAdmin ? "inline-block" : "none";
+document.getElementById("adminLink").style.display = isAdmin ? "inline-block" : "none";
   };
 </script>
