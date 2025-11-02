@@ -7,6 +7,7 @@
   <title>Morrow Industries — Bills Paid Tracker</title>
   <link rel="icon" href="/assets/morIcon.png">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="/assets/js/maintenance-listener.js"></script>
   <style>
     :root {
       --gold: #d4af37;
@@ -417,13 +418,8 @@
 
 <body class="pb-20">
 
-  <header class="flex items-center justify-between p-4 sticky top-0 bg-black/70 backdrop-blur-md z-50">
-    <div class="flex items-center space-x-2">
-      <img src="/assets/morIcon.png" alt="Morrow Icon" class="w-8 h-8">
-      <h1 class="text-lg font-semibold gold">Bills Paid Tracker</h1>
-    </div>
-    <button id="authBtn" class="btn">Sign In</button>
-  </header>
+  
+  <div id="navbar-container"></div>
 
   <section id="summary" class="glass m-4 p-4 grid grid-cols-2 gap-2 text-center">
     <div>✅ Paid: <span id="paidCount" class="gold">0</span></div>
@@ -449,7 +445,31 @@
     <div class="tab" data-target="bills"><span class="tab-icon">🏷️</span>Bills</div>
     <div class="tab" data-target="payments"><span class="tab-icon">💰</span>Payments</div>
     <div class="tab" data-target="logs"><span class="tab-icon">📋</span>Logs</div>
-  </nav>
+  </nav><script>
+
+    // Reusable dynamic HTML module loader (ensures <script> executes)
+    async function loadModule(targetSelector, url) {
+      const target = document.querySelector(targetSelector);
+      if (!target) throw new Error(`Target ${targetSelector} not found`);
+      const html = await (await fetch(url, { cache: "no-store" })).text();
+      target.innerHTML = html;
+
+      // Execute all <script> tags properly
+      const scripts = Array.from(target.querySelectorAll("script"));
+      for (const oldS of scripts) {
+        const s = document.createElement("script");
+        if (oldS.type) s.type = oldS.type;
+        if (oldS.getAttribute("type") === "module") s.type = "module";
+        if (oldS.src) s.src = oldS.src;
+        else s.textContent = oldS.textContent;
+        document.body.appendChild(s);
+      }
+    }
+
+    // Load Navbar
+    loadModule("#navbar-container", "/assets/modules/navbar.html")
+      .catch(err => console.error("Navbar load failed:", err));
+  </script>
   <script type="module">
     import {
       app, db, auth, provider,
@@ -693,12 +713,12 @@
     onAuthStateChanged(auth, (user) => {
       if (user) {
         userId = user.uid;
-        authBtn.textContent = "Sign Out";
+        authBtn.textContent = "Logout";
         console.log(`Signed in as ${user.email}`);
         loadBills();
       } else {
         userId = null// For testing purposes, replace with null to disable;
-        authBtn.textContent = "Sign In";
+        authBtn.textContent = "Login";
         billsContainer.innerHTML = "";
         console.log("Signed Out");
       }
