@@ -199,7 +199,7 @@
     <li><a href="/bills">Bills</a></li>
 <li id="adminLink" style="display:none;"><a href="/admin">Admin</a></li>
     <!-- Mobile-only Sign In -->
-    <li><button id="authBtnMobile">Login</button></li>
+    <li><button id="authBtnMobile"></button></li>
   </ul>
 
   <div class="burger" id="burger">
@@ -213,50 +213,59 @@
 </nav>
 
 <script>
-  const burger = document.getElementById("burger");
-  const nav = document.getElementById("navLinks");
-  const authBtn = document.getElementById("authBtn");
-  const authBtnMobile = document.getElementById("authBtnMobile");
+  document.addEventListener("DOMContentLoaded", () => {
+    const burger = document.getElementById("burger");
+    const nav = document.getElementById("navLinks");
+    const authBtn = document.getElementById("authBtn");
+    const authBtnMobile = document.getElementById("authBtnMobile");
 
-  const navSlide = () => {
-    const navLinks = document.querySelectorAll(".nav-links li");
-    burger.addEventListener("click", () => {
-      // Toggle Nav
-      nav.classList.toggle("nav-active");
+    const navSlide = () => {
+      const navLinks = document.querySelectorAll(".nav-links li");
+      burger.addEventListener("click", () => {
+        nav.classList.toggle("nav-active");
 
-      // Animate Links
-      navLinks.forEach((link, index) => {
-        if (link.style.animation) {
-          link.style.animation = ""; // reset
-        } else {
-          link.style.animation = `navLinkFade 0.5s ease forwards ${index / 7 + 0.3}s`;
-        }
+        navLinks.forEach((link, index) => {
+          if (link.style.animation) {
+            link.style.animation = "";
+          } else {
+            link.style.animation = `navLinkFade 0.5s ease forwards ${index / 7 + 0.3}s`;
+          }
+        });
+
+        burger.classList.toggle("toggle");
       });
+    };
+    navSlide();
 
-      // Burger animation
-      burger.classList.toggle("toggle");
-    });
-  };
-  navSlide();
+    // Emit custom event when user clicks sign in/out
+    const emitAuthClick = () => {
+      document.dispatchEvent(new CustomEvent("mi-auth-click"));
+    };
 
-  // Emit custom event when user clicks sign in/out
-  const emitAuthClick = () => {
-    document.dispatchEvent(new CustomEvent("mi-auth-click"));
-  };
+    authBtn.addEventListener("click", emitAuthClick);
+    authBtnMobile.addEventListener("click", emitAuthClick);
 
-  authBtn.addEventListener("click", emitAuthClick);
-  authBtnMobile.addEventListener("click", emitAuthClick);
-
-  // External scripts can update the button text based on auth state
-  window.setAuthState = function (isSignedIn, isAdmin = false) {
-    const text = isSignedIn ? "Sign Out" : "Sign In";
-    authBtn.textContent = text;
-    authBtnMobile.textContent = text;
-
-    const adminLink = document.getElementById("adminLink");
-
-    if (adminLink) {
-      adminLink.style.display = isAdmin ? "inline-block" : "none";
+    // Detect device and set default button text
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const defaultText = "Login";
+    if (isMobile) {
+      authBtnMobile.textContent = defaultText;
+    } else {
+      authBtn.textContent = defaultText;
     }
-  };
+
+    // External scripts can update button text and admin visibility
+    window.setAuthState = function (isSignedIn, isAdmin = false) {
+      const text = isSignedIn ? "Log Out" : "Login";
+      authBtn.textContent = text;
+      authBtnMobile.textContent = text;
+
+      console.log("authBtn text:", text);
+
+      const adminLink = document.getElementById("adminLink");
+      if (adminLink) {
+        adminLink.style.display = isAdmin ? "inline-block" : "none";
+      }
+    };
+  });
 </script>
