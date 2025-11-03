@@ -372,7 +372,7 @@
       justify-content: space-around;
       align-items: center;
       border-top: 1px solid var(--border);
-      z-index: 70;
+      z-index: 7000;
       transition: opacity .3s ease;
     }
 
@@ -443,32 +443,30 @@
       opacity: 1;
     }
 
-    .clone-fly {
-      position: fixed;
-      z-index: 200;
-      border-radius: 50%;
-      pointer-events: none;
-      transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1),
-        opacity 0.6s ease;
-      will-change: transform, opacity;
-    }
+    
+
 
     /* Smooth fade/unroll */
     @keyframes modalUnroll {
       0% {
-        transform: scale(0.85) translateY(50px);
+        transform: scaleY(0.0) translateY(50px);
         opacity: 0;
         filter: blur(4px);
       }
-
+      
+      20% {
+        transform: scaleY(0.20) translateY(-10px);
+        opacity: 1;
+        filter: blur(0);
+      }
       60% {
-        transform: scale(1.02) translateY(-6px);
+        transform: scaleY(0.80) translateY(-10px);
         opacity: 1;
         filter: blur(0);
       }
 
       100% {
-        transform: scale(1) translateY(0);
+        transform: scaleY(1) translateY(0);
         opacity: 1;
       }
     }
@@ -476,17 +474,20 @@
     /* Reverse roll when closing */
     @keyframes modalReroll {
       0% {
-        transform: scale(1) translateY(0);
+        transform: scaleY(1) translateY(0);
         opacity: 1;
       }
-
+      20% {
+        transform: scaleY(0.7) translateY(15px);
+        opacity: 0.9;
+      }
       40% {
-        transform: scale(0.97) translateY(25px);
+        transform: scaleY(0.5) translateY(25px);
         opacity: 0.8;
       }
 
       100% {
-        transform: scale(0.85) translateY(60px);
+        transform: scaleY(0.0) translateY(60px);
         opacity: 0;
       }
     }
@@ -560,7 +561,7 @@
   <nav id="bottomTabs">
     <div class="tab" data-target="bills"><span class="tab-icon">🏷️</span>Bills</div>
     <div class="tab" data-target="payments"><span class="tab-icon">💰</span>Payments</div>
-    <div class="tab" data-target="logs"><span class="tab-icon">📋</span>Logs</div>
+    <!--<div class="tab" data-target="logs"><span class="tab-icon">📋</span>Logs</div>-->
   </nav>
   <script>
 
@@ -1077,70 +1078,7 @@
     }
 
     // 🪟 Open Bill Modal
-    // 🪟 Open Bill Modal (fixed with proper animations)
     function openBillModal(id, bill) {
-      /* ==================== 🔧 DEBUG MODE: Modal Animation Tracker ==================== */
-      const DEBUG_ANIMATIONS = true; // set to false to disable
-
-      function debugLog(step, color = "gold") {
-        if (!DEBUG_ANIMATIONS) return;
-        const timestamp = new Date().toLocaleTimeString();
-        console.log(`%c[${timestamp}] ${step}`, `color:${color}; font-weight:bold;`);
-      }
-
-      if (DEBUG_ANIMATIONS) {
-        // Track modal visibility and animation states
-        const modal = document.getElementById("billModal");
-        const modalBackdrop = document.getElementById("modalBackdrop");
-
-        // Observe modal style changes
-        const observer = new MutationObserver(() => {
-          const visible = !modal.classList.contains("hidden");
-          debugLog(`Modal ${visible ? "VISIBLE" : "HIDDEN"}`, visible ? "lightgreen" : "gray");
-        });
-
-        observer.observe(modal, { attributes: true, attributeFilter: ["class", "style"] });
-
-        // Listen for animation events on the modal box
-        document.addEventListener("animationstart", (e) => {
-          if (e.target.classList.contains("modal-box")) {
-            debugLog(`Animation START: ${e.animationName}`, "cyan");
-          }
-        });
-
-        document.addEventListener("animationend", (e) => {
-          if (e.target.classList.contains("modal-box")) {
-            debugLog(`Animation END: ${e.animationName}`, "orange");
-          }
-        });
-
-        // Listen for opacity transitions on the backdrop
-        const originalOpacity = getComputedStyle(modalBackdrop).opacity;
-        let lastOpacity = originalOpacity;
-        const opacityWatcher = setInterval(() => {
-          const currentOpacity = getComputedStyle(modalBackdrop).opacity;
-          if (currentOpacity !== lastOpacity) {
-            debugLog(`Backdrop opacity → ${currentOpacity}`, "#6cf");
-            lastOpacity = currentOpacity;
-          }
-        }, 100);
-
-        // Watch clone-fly elements (icon animation)
-        const cloneObserver = new MutationObserver((mutations) => {
-          for (const m of mutations) {
-            m.addedNodes.forEach((n) => {
-              if (n.classList && n.classList.contains("clone-fly")) {
-                debugLog("🟡 Clone-Fly CREATED", "yellow");
-                n.addEventListener("transitionend", () => debugLog("🟢 Clone-Fly FINISHED", "lime"));
-              }
-            });
-          }
-        });
-        cloneObserver.observe(document.body, { childList: true });
-
-        debugLog("✅ Animation Debug Mode Enabled", "violet");
-      }
-
       const modal = document.getElementById("billModal");
       const modalContent = document.getElementById("modalContent");
       const closeModalBtn = document.getElementById("closeModal");
@@ -1247,6 +1185,15 @@
       ${editHTML}
     </div>
   </div>`;
+      // 🪩 Prepare the modal image for scale-in animation
+      const modalImage = modalContent.querySelector("img");
+      if (modalImage) {
+        modalImage.style.transform = "scale(0.01)";
+        modalImage.style.opacity = "0";
+        modalImage.style.transition =
+          "transform 0.55s cubic-bezier(0.15, 0.8, 0.15, 1), opacity 0.25s ease";
+      }
+
 
       const modalBox = modal.querySelector(".modal-box");
 
@@ -1255,60 +1202,43 @@
         (img) => img.src.includes((bill.iconUrl || "").split("?")[0])
       );
 
-      // 🔹 Create clone and animate it
-      let clone = null;
-      if (sourceEl) {
-        const rect = sourceEl.getBoundingClientRect();
-        clone = sourceEl.cloneNode(true);
-        clone.classList.add("clone-fly");
-        document.body.appendChild(clone);
+     
 
-        Object.assign(clone.style, {
-          top: `${rect.top}px`,
-          left: `${rect.left}px`,
-          width: `${rect.width}px`,
-          height: `${rect.height}px`,
-          transform: "scale(1)",
-          opacity: "1"
-        });
 
-        // Fly to modal center
-        setTimeout(() => {
-          const targetRect = modalBox.getBoundingClientRect();
-          const targetX =
-            targetRect.left + targetRect.width / 2 - rect.left - rect.width / 2;
-          const targetY =
-            targetRect.top + targetRect.height / 2 - rect.top - rect.height / 2;
-          clone.style.transform = `translate(${targetX}px, ${targetY}px) scale(3)`;
-          clone.style.opacity = "0";
-        }, 200);
-      }
+
 
       // 🎬 Fade + Unroll Modal Animation
-      const modalImage = modalContent.querySelector("img");
       const showModal = () => {
         modal.style.display = "flex";
         modal.classList.remove("hidden");
         modal.style.opacity = "0";
-        modalBox.style.transform = "scale(0.9) translateY(60px)";
+        modalBox.style.transform = "scaleY(0.1) translateY(60px)";
         document.body.style.overflow = "hidden";
 
         requestAnimationFrame(() => {
-          modal.style.transition = "opacity 0.4s ease";
+          modal.style.transition = "opacity 0.1s ease";
           modal.style.opacity = "1";
           modalBox.style.animation =
-            "modalUnroll 0.45s cubic-bezier(0.25, 0.8, 0.25, 1) forwards";
-          setTimeout(() => clone?.remove(), 600);
+            "modalUnroll 0.35s ease forwards";
+          // 🪄 Animate modal image scale-in after the clone finishes flying
+          if (modalImage) {
+            setTimeout(() => {
+              modalImage.style.opacity = "1";
+              modalImage.style.transform = "scaleX(1)";
+              
+            }, 100); // start right after the clone fade-out
+          }
+
         });
       };
 
       if (modalImage) {
         if (modalImage.complete) showModal();
         else {
-          modalImage.onload = () => setTimeout(showModal, 120);
+          modalImage.onload = () => setTimeout(showModal, 20);
           modalImage.onerror = showModal;
         }
-      } else setTimeout(showModal, 120);
+      } else setTimeout(showModal, 20);
 
       // 🧩 Buttons
       const details = modalContent.querySelector("#billDetailsSection");
@@ -1320,33 +1250,9 @@
       // 🧩 Close modal with reroll + reverse fly animation
       // 🧩 Close modal with reroll + reverse fly animation
       const closeModal = () => {
-        modalBox.style.animation = "modalReroll 0.35s ease forwards";
+        modalBox.style.animation = "modalReroll 0.25s ease forwards";
         modalBackdrop.style.opacity = "0";
 
-        if (sourceEl && bill.iconUrl) {
-          const rect = sourceEl.getBoundingClientRect();
-          const reverseClone = sourceEl.cloneNode(true);
-          reverseClone.classList.add("clone-fly");
-          document.body.appendChild(reverseClone);
-
-          const modalRect = modalBox.getBoundingClientRect();
-          Object.assign(reverseClone.style, {
-            top: `${modalRect.top + modalRect.height / 2 - rect.height / 2}px`,
-            left: `${modalRect.left + modalRect.width / 2 - rect.width / 2}px`,
-            width: `${rect.width}px`,
-            height: `${rect.height}px`,
-            transform: "scale(3)",
-            opacity: "0"
-          });
-
-          // fly back animation
-          requestAnimationFrame(() => {
-            reverseClone.style.transform = `translate(${rect.left - modalRect.left}px, ${rect.top - modalRect.top}px) scale(1)`;
-            reverseClone.style.opacity = "1";
-          });
-
-          setTimeout(() => reverseClone.remove(), 500);
-        }
 
         // fade + hide after animations
         setTimeout(() => {
