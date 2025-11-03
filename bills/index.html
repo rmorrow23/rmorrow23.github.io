@@ -15,6 +15,7 @@
       --surface: rgba(18, 20, 27, .75);
       --text: #e9eef8;
       --border: rgba(255, 255, 255, .08);
+      --fontSize: 2rem;
     }
 
     html,
@@ -150,7 +151,7 @@
 
     .bill-card.expanded .icon-wrapper {
       transform: scale(4.5) translateX(2rem);
-}
+    }
 
     .bill-icon {
       width: 80%;
@@ -308,25 +309,26 @@
     }
 
     .drawer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  background: rgba(18, 20, 27, .96);
-  border-top: 1px solid var(--border);
-  border-radius: 1rem 1rem 0 0;
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, .5);
-  transform: translateY(100%);
-  transition: transform .35s cubic-bezier(.25, .8, .25, 1);
-  max-height: 90vh;
-  padding-bottom: env(safe-area-inset-bottom, 80px);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
-  z-index: 80;
-}
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      background: rgba(18, 20, 27, .96);
+      border-top: 1px solid var(--border);
+      border-radius: 1rem 1rem 0 0;
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, .5);
+      transform: translateY(100%);
+      transition: transform .35s cubic-bezier(.25, .8, .25, 1);
+      max-height: 90vh;
+      padding-bottom: env(safe-area-inset-bottom, 80px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+      z-index: 80;
+    }
+
     .drawer-handle {
       width: 48px;
       height: 5px;
@@ -404,7 +406,7 @@
       width: 90%;
       transition: .2s;
       justify-self: center;
-      height: 2rem;
+      height: 3rem;
     }
 
     input:focus,
@@ -413,12 +415,39 @@
       box-shadow: 0 0 6px rgba(212, 175, 55, .3);
       outline: none;
     }
+
+    /* ===== Modal Action Transitions ===== */
+    #modalActionsWrapper {
+      height: 3.5rem;
+      /* consistent fixed height for both button states */
+      position: relative;
+    }
+
+    #modalActions,
+    #editActions {
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      transition: all 0.35s ease;
+    }
+
+    .actions-hide {
+      transform: translateY(100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .actions-show {
+      transform: translateY(0);
+      opacity: 1;
+    }
   </style>
 </head>
 
 <body class="pb-20">
 
-  
+
   <div id="navbar-container"></div>
 
   <section id="summary" class="glass m-4 p-4 grid grid-cols-2 gap-2 text-center">
@@ -440,12 +469,43 @@
 
   <div id="toast"></div>
   <div id="drawerOverlay"></div>
+  <!-- Bill Details Modal -->
+  <div id="billModal" class="fixed inset-0 hidden items-center justify-center z-[100]">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="modalBackdrop"></div>
+
+    <div
+      class="relative bg-[rgba(18,20,27,0.95)] border border-[var(--border)] rounded-2xl p-6 max-w-md w-[95%] text-center shadow-lg overflow-y-hidden max-h-[100vh]">
+      <button id="closeModal"
+        class="absolute top-2 right-3 text-[var(--text)] opacity-70 hover:opacity-100 text-lg">✕</button>
+      <div id="modalContent"></div>
+
+      <div id="modalActionsWrapper"
+        class="relative mt-2 flex flex-col items-stretch overflow-hidden transition-all duration-300 ease-in-out">
+
+        <!-- Default Actions -->
+        <div id="modalActions" class="flex justify-between space-x-2 actions-show absolute inset-0">
+          <button id="editBill" class="btn flex-1 border-[var(--gold)] gold font-semibold">Edit</button>
+          <button id="deleteBillModal" class="btn flex-1 border-red-500 text-red-400">Delete</button>
+        </div>
+
+        <!-- Edit Mode Actions -->
+        <div id="editActions" class="flex justify-between space-x-2 actions-hide absolute inset-0">
+          <button id="saveEdit" class="btn flex-1 border-[var(--gold)] gold font-semibold">Save</button>
+          <button id="cancelEdit" class="btn flex-1 border-gray-500 text-gray-300">Cancel</button>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
 
   <nav id="bottomTabs">
     <div class="tab" data-target="bills"><span class="tab-icon">🏷️</span>Bills</div>
     <div class="tab" data-target="payments"><span class="tab-icon">💰</span>Payments</div>
     <div class="tab" data-target="logs"><span class="tab-icon">📋</span>Logs</div>
-  </nav><script>
+  </nav>
+  <script>
 
     // Reusable dynamic HTML module loader (ensures <script> executes)
     async function loadModule(targetSelector, url) {
@@ -950,17 +1010,238 @@
 
 
       header.addEventListener("click", () => {
-        expanded = !expanded;
-        if (expanded) {
-          header.classList.add("expanded");
-          details.classList.add("expanded");
-          arrow.textContent = "▾";
-        } else {
-          header.classList.remove("expanded");
-          details.classList.remove("expanded");
-          arrow.textContent = "▸";
-        }
+        openBillModal(id, bill);
       });
+
+    }
+
+    // 🪟 Open Bill Modal
+    function openBillModal(id, bill) {
+      const modal = document.getElementById("billModal");
+      const modalContent = document.getElementById("modalContent");
+      const closeModalBtn = document.getElementById("closeModal");
+      const deleteBtn = document.getElementById("deleteBillModal");
+      const editBtn = document.getElementById("editBill");
+
+      // 🧭 Header (name or icon)
+      const headerHTML = bill.iconUrl
+        ? `
+      <div class="flex justify-center mb-3">
+        <img src="${bill.iconUrl}" alt="${bill.name}"
+             class="w-100 h-100 object-contain rounded-xl ">
+      </div>`
+        : `<h2 class="text-xl font-semibold gold mb-3">${bill.name}</h2>`;
+
+      // 🧾 View Section (details)
+      const detailsHTML = `
+    <div id="billDetailsSection" class="transition-all duration-300 ease-in-out translate-y-0 opacity-100">
+      <div class="text-sm mb-2">Due: ${bill.dueDay} | Last Paid: ${bill.lastPaid
+          ? new Date(bill.lastPaid.seconds * 1000).toLocaleDateString()
+          : "Never"
+        }</div>
+
+      <div class="months-container mb-3">
+        ${monthNames
+          .map((m) => {
+            const s = bill.months?.[m] || "unpaid";
+            const i =
+              s === "paid"
+                ? "✓"
+                : s === "partial"
+                  ? "✓"
+                  : s === "late"
+                    ? "✕"
+                    : "";
+            const c =
+              s === "paid"
+                ? "status-paid"
+                : s === "partial"
+                  ? "status-partial"
+                  : s === "late"
+                    ? "status-late"
+                    : "status-unpaid";
+            const n = m[0].toUpperCase() + m.slice(1);
+            return `
+              <div class="month-item">
+                <div class="month-circle ${c}">${i}</div>
+                <div class="month">${n}</div>
+              </div>`;
+          })
+          .join("")}
+      </div>
+
+      <div class="text-sm border-t border-[var(--border)] pt-2 transactions text-left">
+        ${(bill.transactions || []).length
+          ? bill.transactions
+            .slice()
+            .reverse()
+            .map(
+              (t) => `
+            <div>💳 $${t.amountPaid} — ${new Date(
+                t.date.seconds * 1000
+              ).toLocaleDateString()} (${t.status})</div>
+          `
+            )
+            .join("")
+          : "<div class='opacity-60 text-center'>No payments yet</div>"
+        }
+      </div>
+    </div>
+  `;
+
+      // 📝 Edit Section (hidden by default)
+      const editHTML = `
+    <div id="billEditSection"
+     class="absolute inset-0 bg-[rgba(18,20,27,0)]
+            rounded-2xl p-5 flex flex-col
+            justify-start items-center
+            transition-all duration-300 ease-in-out
+            translate-y-full opacity-0 overflow-y-hidden">
+
+  <h3 class="text-lg gold font-semibold mb-4 self-start">Edit Bill</h3>
+
+  <div class="w-full flex flex-col space-y-3">
+    <input id="editName"
+       value="${bill.name}"
+       placeholder="Bill Name"
+       class="w-full border border-[var(--border)]
+       bg-black/40 text-[var(--text)]
+       rounded-lg p-2.5 text-base"
+       style="font-size: var(--fontSize);">
+
+
+
+    <input id="editAmount"
+           value="${bill.amount}"
+           type="number"
+           placeholder="Amount"
+           class="w-full border border-[var(--border)]
+           bg-black/40 text-[var(--text)]
+           rounded-lg p-2.5 text-base"
+           style="font-size: var(--fontSize);">
+
+    <input id="editDueDay"
+           value="${bill.dueDay}"
+           type="number"
+           placeholder="Due Day (1–31)"
+           min="1" max="31"
+           class="w-full border border-[var(--border)]
+           bg-black/40 text-[var(--text)]
+           rounded-lg p-2.5 text-base"
+           style="font-size: var(--fontSize);">
+  </div>
+</div>
+
+  `;
+
+      // 🧩 Build full modal content
+      modalContent.innerHTML = `
+    <div class="relative overflow-hidden">
+      ${headerHTML}
+      <div class="relative">
+        ${detailsHTML}
+        ${editHTML}
+      </div>
+    </div>
+  `;
+
+      // 🎬 Animate modal in
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      document.body.style.overflow = "hidden";
+
+      const details = modalContent.querySelector("#billDetailsSection");
+      const editor = modalContent.querySelector("#billEditSection");
+      const editButton = document.getElementById("editBill");
+      const deleteButton = document.getElementById("deleteBillModal");
+      const modalActions = document.getElementById("modalActions");
+      const editActions = document.getElementById("editActions");
+
+
+
+      // 🧩 Close modal
+      const closeModal = () => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        document.body.style.overflow = "";
+      };
+      closeModalBtn.onclick = closeModal;
+      document.getElementById("modalBackdrop").onclick = closeModal;
+
+      // 🗑️ Delete bill
+      deleteBtn.onclick = async () => {
+        try {
+          const { deleteDoc, doc } = await import(
+            "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+          );
+          const billRef = doc(db, "users", userId, "bills", id);
+          await deleteDoc(billRef);
+          showToast("Bill deleted", "#ef4444");
+          closeModal();
+        } catch (err) {
+          console.error("❌ Delete failed:", err);
+          showToast("Failed to delete bill", "#ef4444");
+        }
+      };
+
+      // ✏️ Enter edit mode
+      editButton.onclick = () => {
+        // Slide content up
+        details.style.transform = "translateY(-100%)";
+        details.style.opacity = "0";
+        editor.style.transform = "translateY(0)";
+        editor.style.opacity = "1";
+
+        // Swap action buttons
+        modalActions.classList.remove("actions-show");
+        modalActions.classList.add("actions-hide");
+        editActions.classList.remove("actions-hide");
+        editActions.classList.add("actions-show");
+      };
+
+      // 🔙 Reusable function for returning to details
+      const returnToDetails = () => {
+        editor.style.transform = "translateY(100%)";
+        editor.style.opacity = "0";
+        details.style.transform = "translateY(0)";
+        details.style.opacity = "1";
+
+        // Swap action buttons back
+        editActions.classList.remove("actions-show");
+        editActions.classList.add("actions-hide");
+        modalActions.classList.remove("actions-hide");
+        modalActions.classList.add("actions-show");
+      };
+
+      document.getElementById("cancelEdit").onclick = returnToDetails;
+
+      document.getElementById("saveEdit").onclick = async () => {
+        const newName = document.getElementById("editName").value.trim();
+        const newAmount = parseFloat(document.getElementById("editAmount").value);
+        const newDueDay = parseInt(document.getElementById("editDueDay").value);
+        if (!newName || isNaN(newAmount) || isNaN(newDueDay))
+          return showToast("Fill all fields", "#facc15");
+
+        try {
+          const { updateDoc, doc } = await import(
+            "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+          );
+          const billRef = doc(db, "users", userId, "bills", id);
+          await updateDoc(billRef, {
+            name: newName,
+            amount: newAmount,
+            dueDay: newDueDay,
+          });
+          showToast("Bill updated", "var(--gold)");
+          returnToDetails();
+        } catch (err) {
+          console.error("❌ Update failed:", err);
+          showToast("Failed to update bill", "#ef4444");
+        }
+      };
+
+
+
     }
 
 
