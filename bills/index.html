@@ -442,6 +442,47 @@
       transform: translateY(0);
       opacity: 1;
     }
+
+    @keyframes modalUnroll {
+      0% {
+        transform: scale(0.9) translateY(60px);
+        opacity: 0;
+        clip-path: inset(0 0 100% 0 round 20px);
+      }
+
+      70% {
+        transform: scale(1.02) translateY(-4px);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+    }
+
+
+    @keyframes modalReroll {
+      0% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+        clip-path: inset(0 0 0 0 round 20px);
+      }
+
+      40% {
+        clip-path: inset(0 0 10% 0 round 20px);
+      }
+
+      100% {
+        transform: scale(0.9) translateY(60px);
+        opacity: 0;
+        clip-path: inset(0 0 100% 0 round 20px);
+      }
+    }
+
+    .modal-box {
+      animation: modalUnroll 0.45s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    }
   </style>
 </head>
 
@@ -474,7 +515,7 @@
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="modalBackdrop"></div>
 
     <div
-      class="relative bg-[rgba(18,20,27,0.95)] border border-[var(--border)] rounded-2xl p-6 max-w-md w-[95%] text-center shadow-lg overflow-y-hidden max-h-[100vh]">
+      class="modal-box bg-[rgba(18,20,27,0.95)] border border-[var(--border)] rounded-2xl p-6 max-w-md w-[95%] text-center shadow-lg overflow-y-hidden max-h-[100vh]">
       <button id="closeModal"
         class="absolute top-2 right-3 text-[var(--text)] opacity-70 hover:opacity-100 text-lg">✕</button>
       <div id="modalContent"></div>
@@ -1022,26 +1063,27 @@
       const closeModalBtn = document.getElementById("closeModal");
       const deleteBtn = document.getElementById("deleteBillModal");
       const editBtn = document.getElementById("editBill");
+      const modalBackdrop = document.getElementById("modalBackdrop");
 
       // 🧭 Header (name or icon)
       const headerHTML = bill.iconUrl
         ? `
-      <div class="flex justify-center mb-3">
-        <img src="${bill.iconUrl}" alt="${bill.name}"
-             class="w-100 h-100 object-contain rounded-xl ">
-      </div>`
+    <div class="flex justify-center mb-3">
+      <img src="${bill.iconUrl}" alt="${bill.name}"
+           class="w-100 h-100 object-contain rounded-xl">
+    </div>`
         : `<h2 class="text-xl font-semibold gold mb-3">${bill.name}</h2>`;
 
       // 🧾 View Section (details)
       const detailsHTML = `
-    <div id="billDetailsSection" class="transition-all duration-300 ease-in-out translate-y-0 opacity-100">
-      <div class="text-sm mb-2">Due: ${bill.dueDay} | Last Paid: ${bill.lastPaid
+  <div id="billDetailsSection" class="transition-all duration-300 ease-in-out translate-y-0 opacity-100">
+    <div class="text-sm mb-2">Due: ${bill.dueDay} | Last Paid: ${bill.lastPaid
           ? new Date(bill.lastPaid.seconds * 1000).toLocaleDateString()
           : "Never"
         }</div>
 
-      <div class="months-container mb-3">
-        ${monthNames
+    <div class="months-container mb-3">
+      ${monthNames
           .map((m) => {
             const s = bill.months?.[m] || "unpaid";
             const i =
@@ -1062,93 +1104,141 @@
                     : "status-unpaid";
             const n = m[0].toUpperCase() + m.slice(1);
             return `
-              <div class="month-item">
-                <div class="month-circle ${c}">${i}</div>
-                <div class="month">${n}</div>
-              </div>`;
+            <div class="month-item">
+              <div class="month-circle ${c}">${i}</div>
+              <div class="month">${n}</div>
+            </div>`;
           })
           .join("")}
-      </div>
+    </div>
 
-      <div class="text-sm border-t border-[var(--border)] pt-2 transactions text-left">
-        ${(bill.transactions || []).length
+    <div class="text-sm border-t border-[var(--border)] pt-2 transactions text-left">
+      ${(bill.transactions || []).length
           ? bill.transactions
             .slice()
             .reverse()
             .map(
               (t) => `
-            <div>💳 $${t.amountPaid} — ${new Date(
+          <div>💳 $${t.amountPaid} — ${new Date(
                 t.date.seconds * 1000
-              ).toLocaleDateString()} (${t.status})</div>
-          `
+              ).toLocaleDateString()} (${t.status})</div>`
             )
             .join("")
           : "<div class='opacity-60 text-center'>No payments yet</div>"
         }
-      </div>
     </div>
-  `;
+  </div>`;
 
       // 📝 Edit Section (hidden by default)
       const editHTML = `
-    <div id="billEditSection"
-     class="absolute inset-0 bg-[rgba(18,20,27,0)]
-            rounded-2xl p-5 flex flex-col
-            justify-start items-center
-            transition-all duration-300 ease-in-out
-            translate-y-full opacity-0 overflow-y-hidden">
+  <div id="billEditSection"
+       class="absolute inset-0 bg-[rgba(18,20,27,0)]
+              rounded-2xl p-5 flex flex-col
+              justify-start items-center
+              transition-all duration-300 ease-in-out
+              translate-y-full opacity-0 overflow-y-hidden">
 
-  <h3 class="text-lg gold font-semibold mb-4 self-start">Edit Bill</h3>
+    <h3 class="text-lg gold font-semibold mb-4 self-start">Edit Bill</h3>
 
-  <div class="w-full flex flex-col space-y-3">
-    <input id="editName"
-       value="${bill.name}"
-       placeholder="Bill Name"
-       class="w-full border border-[var(--border)]
-       bg-black/40 text-[var(--text)]
-       rounded-lg p-2.5 text-base"
-       style="font-size: var(--fontSize);">
+    <div class="w-full flex flex-col space-y-3">
+      <input id="editName"
+             value="${bill.name}"
+             placeholder="Bill Name"
+             class="w-full border border-[var(--border)]
+             bg-black/40 text-[var(--text)]
+             rounded-lg p-2.5 text-base"
+             style="font-size: var(--fontSize);">
 
+      <input id="editAmount"
+             value="${bill.amount}"
+             type="number"
+             placeholder="Amount"
+             class="w-full border border-[var(--border)]
+             bg-black/40 text-[var(--text)]
+             rounded-lg p-2.5 text-base"
+             style="font-size: var(--fontSize);">
 
-
-    <input id="editAmount"
-           value="${bill.amount}"
-           type="number"
-           placeholder="Amount"
-           class="w-full border border-[var(--border)]
-           bg-black/40 text-[var(--text)]
-           rounded-lg p-2.5 text-base"
-           style="font-size: var(--fontSize);">
-
-    <input id="editDueDay"
-           value="${bill.dueDay}"
-           type="number"
-           placeholder="Due Day (1–31)"
-           min="1" max="31"
-           class="w-full border border-[var(--border)]
-           bg-black/40 text-[var(--text)]
-           rounded-lg p-2.5 text-base"
-           style="font-size: var(--fontSize);">
-  </div>
-</div>
-
-  `;
+      <input id="editDueDay"
+             value="${bill.dueDay}"
+             type="number"
+             placeholder="Due Day (1–31)"
+             min="1" max="31"
+             class="w-full border border-[var(--border)]
+             bg-black/40 text-[var(--text)]
+             rounded-lg p-2.5 text-base"
+             style="font-size: var(--fontSize);">
+    </div>
+  </div>`;
 
       // 🧩 Build full modal content
       modalContent.innerHTML = `
-    <div class="relative overflow-hidden">
-      ${headerHTML}
-      <div class="relative">
-        ${detailsHTML}
-        ${editHTML}
-      </div>
+  <div class="relative overflow-hidden">
+    ${headerHTML}
+    <div class="relative">
+      ${detailsHTML}
+      ${editHTML}
     </div>
-  `;
+  </div>`;
+
+      const modalBox = modal.querySelector(".modal-box") || modal.querySelector(".relative");
+
+
+      // 🔹 Animate fly-in (if icon or name area exists)
+      const sourceEl = [...document.querySelectorAll(".bill-card img")].find(
+        (img) => img.src.includes(bill.iconUrl.split("?")[0])
+      );
+
+      let clone = null;
+
+      if (sourceEl) {
+        const rect = sourceEl.getBoundingClientRect();
+        clone = sourceEl.cloneNode(true);
+        clone.classList.add("clone-fly");
+        document.body.appendChild(clone);
+
+        Object.assign(clone.style, {
+          top: `${rect.top}px`,
+          left: `${rect.left}px`,
+          width: `${rect.width}px`,
+          height: `${rect.height}px`,
+          transform: "scale(1)",
+          opacity: "1"
+        });
+
+        // Fly to modal
+        setTimeout(() => {
+          const targetRect = modalBox.getBoundingClientRect();
+          const targetX = targetRect.left + targetRect.width / 2 - rect.left - rect.width / 2;
+          const targetY = targetRect.top + targetRect.height / 2 - rect.top - rect.height / 2;
+
+          clone.style.transform = `translate(${targetX}px, ${targetY}px) scale(3)`;
+          clone.style.opacity = "0";
+        }, 10);
+      }
 
       // 🎬 Animate modal in
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
-      document.body.style.overflow = "hidden";
+      // 🕒 Wait until the icon (if any) is loaded before animating the modal
+      const modalImage = modalContent.querySelector("img");
+      const showModal = () => {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        modalBox.style.animation = "modalUnroll 0.45s cubic-bezier(0.25, 0.8, 0.25, 1) forwards";
+        document.body.style.overflow = "hidden";
+        setTimeout(() => clone?.remove(), 450);
+      };
+
+      if (modalImage) {
+        // Wait for the image to load before showing
+        if (modalImage.complete) {
+          showModal();
+        } else {
+          modalImage.onload = showModal;
+          modalImage.onerror = showModal; // fallback in case of broken URL
+        }
+      } else {
+        showModal();
+      }
+
 
       const details = modalContent.querySelector("#billDetailsSection");
       const editor = modalContent.querySelector("#billEditSection");
@@ -1157,23 +1247,52 @@
       const modalActions = document.getElementById("modalActions");
       const editActions = document.getElementById("editActions");
 
-
-
       // 🧩 Close modal
       const closeModal = () => {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
-        document.body.style.overflow = "";
+        modalBox.style.animation = "modalReroll 0.35s ease forwards";
+        modalBackdrop.style.transition = "opacity 0.3s ease";
+        modalBackdrop.style.opacity = "0";
+
+        // Fly out clone
+        if (sourceEl && bill.iconUrl) {
+          const rect = sourceEl.getBoundingClientRect();
+          const reverseClone = sourceEl.cloneNode(true);
+          reverseClone.classList.add("clone-fly");
+          document.body.appendChild(reverseClone);
+          const modalRect = modalBox.getBoundingClientRect();
+
+          Object.assign(reverseClone.style, {
+            top: `${modalRect.top + modalRect.height / 2 - rect.height / 2}px`,
+            left: `${modalRect.left + modalRect.width / 2 - rect.width / 2}px`,
+            width: `${rect.width}px`,
+            height: `${rect.height}px`,
+            transform: "scale(3)",
+            opacity: "0"
+          });
+
+          requestAnimationFrame(() => {
+            reverseClone.style.transform = `translate(${rect.left - modalRect.left}px, ${rect.top - modalRect.top}px) scale(1)`;
+            reverseClone.style.opacity = "1";
+          });
+
+          setTimeout(() => reverseClone.remove(), 500);
+        }
+
+        setTimeout(() => {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+          modalBackdrop.style.opacity = "1";
+          document.body.style.overflow = "";
+        }, 300);
       };
+
       closeModalBtn.onclick = closeModal;
-      document.getElementById("modalBackdrop").onclick = closeModal;
+      modalBackdrop.onclick = closeModal;
 
       // 🗑️ Delete bill
       deleteBtn.onclick = async () => {
         try {
-          const { deleteDoc, doc } = await import(
-            "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
-          );
+          const { deleteDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
           const billRef = doc(db, "users", userId, "bills", id);
           await deleteDoc(billRef);
           showToast("Bill deleted", "#ef4444");
@@ -1186,27 +1305,24 @@
 
       // ✏️ Enter edit mode
       editButton.onclick = () => {
-        // Slide content up
         details.style.transform = "translateY(-100%)";
         details.style.opacity = "0";
         editor.style.transform = "translateY(0)";
         editor.style.opacity = "1";
 
-        // Swap action buttons
         modalActions.classList.remove("actions-show");
         modalActions.classList.add("actions-hide");
         editActions.classList.remove("actions-hide");
         editActions.classList.add("actions-show");
       };
 
-      // 🔙 Reusable function for returning to details
+      // 🔙 Return to details
       const returnToDetails = () => {
         editor.style.transform = "translateY(100%)";
         editor.style.opacity = "0";
         details.style.transform = "translateY(0)";
         details.style.opacity = "1";
 
-        // Swap action buttons back
         editActions.classList.remove("actions-show");
         editActions.classList.add("actions-hide");
         modalActions.classList.remove("actions-hide");
@@ -1223,15 +1339,9 @@
           return showToast("Fill all fields", "#facc15");
 
         try {
-          const { updateDoc, doc } = await import(
-            "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
-          );
+          const { updateDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
           const billRef = doc(db, "users", userId, "bills", id);
-          await updateDoc(billRef, {
-            name: newName,
-            amount: newAmount,
-            dueDay: newDueDay,
-          });
+          await updateDoc(billRef, { name: newName, amount: newAmount, dueDay: newDueDay });
           showToast("Bill updated", "var(--gold)");
           returnToDetails();
         } catch (err) {
@@ -1239,10 +1349,8 @@
           showToast("Failed to update bill", "#ef4444");
         }
       };
-
-
-
     }
+
 
 
 
