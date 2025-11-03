@@ -443,16 +443,28 @@
       opacity: 1;
     }
 
+    .clone-fly {
+      position: fixed;
+      z-index: 200;
+      border-radius: 50%;
+      pointer-events: none;
+      transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1),
+        opacity 0.6s ease;
+      will-change: transform, opacity;
+    }
+
+    /* Smooth fade/unroll */
     @keyframes modalUnroll {
       0% {
-        transform: scale(0.9) translateY(60px);
+        transform: scale(0.85) translateY(50px);
         opacity: 0;
-        clip-path: inset(0 0 100% 0 round 20px);
+        filter: blur(4px);
       }
 
-      70% {
-        transform: scale(1.02) translateY(-4px);
+      60% {
+        transform: scale(1.02) translateY(-6px);
         opacity: 1;
+        filter: blur(0);
       }
 
       100% {
@@ -461,27 +473,31 @@
       }
     }
 
-
+    /* Reverse roll when closing */
     @keyframes modalReroll {
       0% {
         transform: scale(1) translateY(0);
         opacity: 1;
-        clip-path: inset(0 0 0 0 round 20px);
       }
 
       40% {
-        clip-path: inset(0 0 10% 0 round 20px);
+        transform: scale(0.97) translateY(25px);
+        opacity: 0.8;
       }
 
       100% {
-        transform: scale(0.9) translateY(60px);
+        transform: scale(0.85) translateY(60px);
         opacity: 0;
-        clip-path: inset(0 0 100% 0 round 20px);
       }
     }
 
-    .modal-box {
-      animation: modalUnroll 0.45s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    /* Ensure modal and backdrop hide correctly after close */
+    #billModal.hidden {
+      display: none !important;
+    }
+
+    #modalBackdrop {
+      transition: opacity 0.3s ease;
     }
   </style>
 </head>
@@ -802,6 +818,7 @@
       });
     });/* =============== 🔥 Firebase Logic =============== */
     const authBtn = document.getElementById("authBtn");
+    const authBtnMobile = document.getElementById("authBtnMobile");
     const billsContainer = document.getElementById("billsContainer");
     const currentDate = new Date();
     const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
@@ -811,15 +828,18 @@
 
     /* --- Auth --- */
     authBtn.onclick = () => { auth.currentUser ? signOut(auth) : signInWithPopup(auth, provider); };
+    authBtnMobile.onclick = () => { auth.currentUser ? signOut(auth) : signInWithPopup(auth, provider); };
     onAuthStateChanged(auth, (user) => {
       if (user) {
         userId = user.uid;
         authBtn.textContent = "Logout";
+        authBtnMobile.textContent = "Logout";
         console.log(`Signed in as ${user.email}`);
         loadBills();
       } else {
         userId = null// For testing purposes, replace with null to disable;
         authBtn.textContent = "Login";
+        authBtnMobile.textContent = "Login";
         billsContainer.innerHTML = "";
         console.log("Signed Out");
       }
@@ -1057,12 +1077,74 @@
     }
 
     // 🪟 Open Bill Modal
+    // 🪟 Open Bill Modal (fixed with proper animations)
     function openBillModal(id, bill) {
+      /* ==================== 🔧 DEBUG MODE: Modal Animation Tracker ==================== */
+      const DEBUG_ANIMATIONS = true; // set to false to disable
+
+      function debugLog(step, color = "gold") {
+        if (!DEBUG_ANIMATIONS) return;
+        const timestamp = new Date().toLocaleTimeString();
+        console.log(`%c[${timestamp}] ${step}`, `color:${color}; font-weight:bold;`);
+      }
+
+      if (DEBUG_ANIMATIONS) {
+        // Track modal visibility and animation states
+        const modal = document.getElementById("billModal");
+        const modalBackdrop = document.getElementById("modalBackdrop");
+
+        // Observe modal style changes
+        const observer = new MutationObserver(() => {
+          const visible = !modal.classList.contains("hidden");
+          debugLog(`Modal ${visible ? "VISIBLE" : "HIDDEN"}`, visible ? "lightgreen" : "gray");
+        });
+
+        observer.observe(modal, { attributes: true, attributeFilter: ["class", "style"] });
+
+        // Listen for animation events on the modal box
+        document.addEventListener("animationstart", (e) => {
+          if (e.target.classList.contains("modal-box")) {
+            debugLog(`Animation START: ${e.animationName}`, "cyan");
+          }
+        });
+
+        document.addEventListener("animationend", (e) => {
+          if (e.target.classList.contains("modal-box")) {
+            debugLog(`Animation END: ${e.animationName}`, "orange");
+          }
+        });
+
+        // Listen for opacity transitions on the backdrop
+        const originalOpacity = getComputedStyle(modalBackdrop).opacity;
+        let lastOpacity = originalOpacity;
+        const opacityWatcher = setInterval(() => {
+          const currentOpacity = getComputedStyle(modalBackdrop).opacity;
+          if (currentOpacity !== lastOpacity) {
+            debugLog(`Backdrop opacity → ${currentOpacity}`, "#6cf");
+            lastOpacity = currentOpacity;
+          }
+        }, 100);
+
+        // Watch clone-fly elements (icon animation)
+        const cloneObserver = new MutationObserver((mutations) => {
+          for (const m of mutations) {
+            m.addedNodes.forEach((n) => {
+              if (n.classList && n.classList.contains("clone-fly")) {
+                debugLog("🟡 Clone-Fly CREATED", "yellow");
+                n.addEventListener("transitionend", () => debugLog("🟢 Clone-Fly FINISHED", "lime"));
+              }
+            });
+          }
+        });
+        cloneObserver.observe(document.body, { childList: true });
+
+        debugLog("✅ Animation Debug Mode Enabled", "violet");
+      }
+
       const modal = document.getElementById("billModal");
       const modalContent = document.getElementById("modalContent");
       const closeModalBtn = document.getElementById("closeModal");
       const deleteBtn = document.getElementById("deleteBillModal");
-      const editBtn = document.getElementById("editBill");
       const modalBackdrop = document.getElementById("modalBackdrop");
 
       // 🧭 Header (name or icon)
@@ -1087,13 +1169,7 @@
           .map((m) => {
             const s = bill.months?.[m] || "unpaid";
             const i =
-              s === "paid"
-                ? "✓"
-                : s === "partial"
-                  ? "✓"
-                  : s === "late"
-                    ? "✕"
-                    : "";
+              s === "paid" ? "✓" : s === "partial" ? "✓" : s === "late" ? "✕" : "";
             const c =
               s === "paid"
                 ? "status-paid"
@@ -1118,10 +1194,10 @@
             .slice()
             .reverse()
             .map(
-              (t) => `
-          <div>💳 $${t.amountPaid} — ${new Date(
-                t.date.seconds * 1000
-              ).toLocaleDateString()} (${t.status})</div>`
+              (t) =>
+                `<div>💳 $${t.amountPaid} — ${new Date(
+                  t.date.seconds * 1000
+                ).toLocaleDateString()} (${t.status})</div>`
             )
             .join("")
           : "<div class='opacity-60 text-center'>No payments yet</div>"
@@ -1141,28 +1217,20 @@
     <h3 class="text-lg gold font-semibold mb-4 self-start">Edit Bill</h3>
 
     <div class="w-full flex flex-col space-y-3">
-      <input id="editName"
-             value="${bill.name}"
-             placeholder="Bill Name"
+      <input id="editName" value="${bill.name}" placeholder="Bill Name"
              class="w-full border border-[var(--border)]
              bg-black/40 text-[var(--text)]
              rounded-lg p-2.5 text-base"
              style="font-size: var(--fontSize);">
 
-      <input id="editAmount"
-             value="${bill.amount}"
-             type="number"
-             placeholder="Amount"
+      <input id="editAmount" value="${bill.amount}" type="number" placeholder="Amount"
              class="w-full border border-[var(--border)]
              bg-black/40 text-[var(--text)]
              rounded-lg p-2.5 text-base"
              style="font-size: var(--fontSize);">
 
-      <input id="editDueDay"
-             value="${bill.dueDay}"
-             type="number"
-             placeholder="Due Day (1–31)"
-             min="1" max="31"
+      <input id="editDueDay" value="${bill.dueDay}" type="number"
+             placeholder="Due Day (1–31)" min="1" max="31"
              class="w-full border border-[var(--border)]
              bg-black/40 text-[var(--text)]
              rounded-lg p-2.5 text-base"
@@ -1180,16 +1248,15 @@
     </div>
   </div>`;
 
-      const modalBox = modal.querySelector(".modal-box") || modal.querySelector(".relative");
+      const modalBox = modal.querySelector(".modal-box");
 
-
-      // 🔹 Animate fly-in (if icon or name area exists)
+      // 🔹 Find the source icon or text element
       const sourceEl = [...document.querySelectorAll(".bill-card img")].find(
-        (img) => img.src.includes(bill.iconUrl.split("?")[0])
+        (img) => img.src.includes((bill.iconUrl || "").split("?")[0])
       );
 
+      // 🔹 Create clone and animate it
       let clone = null;
-
       if (sourceEl) {
         const rect = sourceEl.getBoundingClientRect();
         clone = sourceEl.cloneNode(true);
@@ -1205,62 +1272,64 @@
           opacity: "1"
         });
 
-        // Fly to modal
+        // Fly to modal center
         setTimeout(() => {
           const targetRect = modalBox.getBoundingClientRect();
-          const targetX = targetRect.left + targetRect.width / 2 - rect.left - rect.width / 2;
-          const targetY = targetRect.top + targetRect.height / 2 - rect.top - rect.height / 2;
-
+          const targetX =
+            targetRect.left + targetRect.width / 2 - rect.left - rect.width / 2;
+          const targetY =
+            targetRect.top + targetRect.height / 2 - rect.top - rect.height / 2;
           clone.style.transform = `translate(${targetX}px, ${targetY}px) scale(3)`;
           clone.style.opacity = "0";
-        }, 10);
+        }, 200);
       }
 
-      // 🎬 Animate modal in
-      // 🕒 Wait until the icon (if any) is loaded before animating the modal
+      // 🎬 Fade + Unroll Modal Animation
       const modalImage = modalContent.querySelector("img");
       const showModal = () => {
+        modal.style.display = "flex";
         modal.classList.remove("hidden");
-        modal.classList.add("flex");
-        modalBox.style.animation = "modalUnroll 0.45s cubic-bezier(0.25, 0.8, 0.25, 1) forwards";
+        modal.style.opacity = "0";
+        modalBox.style.transform = "scale(0.9) translateY(60px)";
         document.body.style.overflow = "hidden";
-        setTimeout(() => clone?.remove(), 450);
+
+        requestAnimationFrame(() => {
+          modal.style.transition = "opacity 0.4s ease";
+          modal.style.opacity = "1";
+          modalBox.style.animation =
+            "modalUnroll 0.45s cubic-bezier(0.25, 0.8, 0.25, 1) forwards";
+          setTimeout(() => clone?.remove(), 600);
+        });
       };
 
       if (modalImage) {
-        // Wait for the image to load before showing
-        if (modalImage.complete) {
-          showModal();
-        } else {
-          modalImage.onload = showModal;
-          modalImage.onerror = showModal; // fallback in case of broken URL
+        if (modalImage.complete) showModal();
+        else {
+          modalImage.onload = () => setTimeout(showModal, 120);
+          modalImage.onerror = showModal;
         }
-      } else {
-        showModal();
-      }
+      } else setTimeout(showModal, 120);
 
-
+      // 🧩 Buttons
       const details = modalContent.querySelector("#billDetailsSection");
       const editor = modalContent.querySelector("#billEditSection");
       const editButton = document.getElementById("editBill");
-      const deleteButton = document.getElementById("deleteBillModal");
       const modalActions = document.getElementById("modalActions");
       const editActions = document.getElementById("editActions");
 
-      // 🧩 Close modal
+      // 🧩 Close modal with reroll + reverse fly animation
+      // 🧩 Close modal with reroll + reverse fly animation
       const closeModal = () => {
         modalBox.style.animation = "modalReroll 0.35s ease forwards";
-        modalBackdrop.style.transition = "opacity 0.3s ease";
         modalBackdrop.style.opacity = "0";
 
-        // Fly out clone
         if (sourceEl && bill.iconUrl) {
           const rect = sourceEl.getBoundingClientRect();
           const reverseClone = sourceEl.cloneNode(true);
           reverseClone.classList.add("clone-fly");
           document.body.appendChild(reverseClone);
-          const modalRect = modalBox.getBoundingClientRect();
 
+          const modalRect = modalBox.getBoundingClientRect();
           Object.assign(reverseClone.style, {
             top: `${modalRect.top + modalRect.height / 2 - rect.height / 2}px`,
             left: `${modalRect.left + modalRect.width / 2 - rect.width / 2}px`,
@@ -1270,6 +1339,7 @@
             opacity: "0"
           });
 
+          // fly back animation
           requestAnimationFrame(() => {
             reverseClone.style.transform = `translate(${rect.left - modalRect.left}px, ${rect.top - modalRect.top}px) scale(1)`;
             reverseClone.style.opacity = "1";
@@ -1278,32 +1348,19 @@
           setTimeout(() => reverseClone.remove(), 500);
         }
 
+        // fade + hide after animations
         setTimeout(() => {
           modal.classList.add("hidden");
           modal.classList.remove("flex");
-          modalBackdrop.style.opacity = "1";
           document.body.style.overflow = "";
-        }, 300);
+        }, 400);
       };
+
 
       closeModalBtn.onclick = closeModal;
       modalBackdrop.onclick = closeModal;
 
-      // 🗑️ Delete bill
-      deleteBtn.onclick = async () => {
-        try {
-          const { deleteDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-          const billRef = doc(db, "users", userId, "bills", id);
-          await deleteDoc(billRef);
-          showToast("Bill deleted", "#ef4444");
-          closeModal();
-        } catch (err) {
-          console.error("❌ Delete failed:", err);
-          showToast("Failed to delete bill", "#ef4444");
-        }
-      };
-
-      // ✏️ Enter edit mode
+      // ✏️ Edit Mode Toggle
       editButton.onclick = () => {
         details.style.transform = "translateY(-100%)";
         details.style.opacity = "0";
@@ -1316,8 +1373,7 @@
         editActions.classList.add("actions-show");
       };
 
-      // 🔙 Return to details
-      const returnToDetails = () => {
+      document.getElementById("cancelEdit").onclick = () => {
         editor.style.transform = "translateY(100%)";
         editor.style.opacity = "0";
         details.style.transform = "translateY(0)";
@@ -1329,8 +1385,6 @@
         modalActions.classList.add("actions-show");
       };
 
-      document.getElementById("cancelEdit").onclick = returnToDetails;
-
       document.getElementById("saveEdit").onclick = async () => {
         const newName = document.getElementById("editName").value.trim();
         const newAmount = parseFloat(document.getElementById("editAmount").value);
@@ -1339,17 +1393,47 @@
           return showToast("Fill all fields", "#facc15");
 
         try {
-          const { updateDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+          const { updateDoc, doc } = await import(
+            "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+          );
           const billRef = doc(db, "users", userId, "bills", id);
-          await updateDoc(billRef, { name: newName, amount: newAmount, dueDay: newDueDay });
+          await updateDoc(billRef, {
+            name: newName,
+            amount: newAmount,
+            dueDay: newDueDay
+          });
           showToast("Bill updated", "var(--gold)");
-          returnToDetails();
+          editor.style.transform = "translateY(100%)";
+          editor.style.opacity = "0";
+          details.style.transform = "translateY(0)";
+          details.style.opacity = "1";
+          modalActions.classList.remove("actions-hide");
+          modalActions.classList.add("actions-show");
+          editActions.classList.remove("actions-show");
+          editActions.classList.add("actions-hide");
         } catch (err) {
           console.error("❌ Update failed:", err);
           showToast("Failed to update bill", "#ef4444");
         }
       };
+
+      // 🗑️ Delete bill
+      deleteBtn.onclick = async () => {
+        try {
+          const { deleteDoc, doc } = await import(
+            "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+          );
+          const billRef = doc(db, "users", userId, "bills", id);
+          await deleteDoc(billRef);
+          showToast("Bill deleted", "#ef4444");
+          closeModal();
+        } catch (err) {
+          console.error("❌ Delete failed:", err);
+          showToast("Failed to delete bill", "#ef4444");
+        }
+      };
     }
+
 
 
 
