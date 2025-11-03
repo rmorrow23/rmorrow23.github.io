@@ -1,9 +1,9 @@
 const CACHE_NAME = 'morrow-industries-cache-v3';
 const urlsToCache = [
-//  '/',
-//  '/index.html',
- // '/manifest.json',
- // '/assets/css/style.css'
+  //  '/',
+  //  '/index.html',
+  // '/manifest.json',
+  // '/assets/css/style.css'
 ];
 
 // Install
@@ -15,14 +15,46 @@ self.addEventListener('install', event => {
   );
 });
 
-// Fetch
-self.addEventListener('fetch', event => {
+//fetch
+self.addEventListener("fetch", (event) => {
+  // Only handle GET requests (ignore POST, PUT, etc.)
+  if (event.request.method !== "GET") return;
+
   event.respondWith(
-    caches.match(event.request).then(response => 
-      response || fetch(event.request)
-    )
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        // Serve from cache, then update in background
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open("dynamic-cache").then((cache) =>
+              cache.put(event.request, networkResponse.clone())
+            );
+          }
+        });
+        return cachedResponse;
+      }
+
+      // Otherwise, fetch from network
+      return fetch(event.request)
+        .then((networkResponse) => {
+          // Cache successful responses for next time
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open("dynamic-cache").then((cache) => {
+              cache.put(event.request, clone);
+            });
+          }
+          return networkResponse;
+        })
+        .catch((err) => {
+          console.warn("⚠️ Fetch failed, offline?", event.request.url, err);
+          // Optionally return a fallback (e.g. offline.html)
+          return caches.match("/offline.html");
+        });
+    })
   );
 });
+
 
 // Activate
 self.addEventListener('activate', event => {
