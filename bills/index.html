@@ -647,7 +647,7 @@
       toast.style.borderColor = color;
       toast.textContent = msg;
       toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 3000);
+      setTimeout(() => toast.classList.remove("show"), 0);
     }
     const _log = console.log, _warn = console.warn, _err = console.error;
     function pushLog(type, msg, color) {
