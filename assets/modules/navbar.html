@@ -213,59 +213,54 @@
 </nav>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const burger = document.getElementById("burger");
-    const nav = document.getElementById("navLinks");
-    const authBtn = document.getElementById("authBtn");
-    const authBtnMobile = document.getElementById("authBtnMobile");
+(function initNavbar() {
+  const burger = document.getElementById("burger");
+  const nav = document.getElementById("navLinks");
+  const authBtn = document.getElementById("authBtn");
+  const authBtnMobile = document.getElementById("authBtnMobile");
 
-    const navSlide = () => {
-      const navLinks = document.querySelectorAll(".nav-links li");
-      burger.addEventListener("click", () => {
-        nav.classList.toggle("nav-active");
+  if (!burger || !nav) {
+    console.warn("Navbar not ready yet, retrying...");
+    setTimeout(initNavbar, 100);
+    return;
+  }
 
-        navLinks.forEach((link, index) => {
-          if (link.style.animation) {
-            link.style.animation = "";
-          } else {
-            link.style.animation = `navLinkFade 0.5s ease forwards ${index / 7 + 0.3}s`;
-          }
-        });
-
-        burger.classList.toggle("toggle");
+  const navSlide = () => {
+    const navLinks = document.querySelectorAll(".nav-links li");
+    burger.addEventListener("click", () => {
+      nav.classList.toggle("nav-active");
+      navLinks.forEach((link, index) => {
+        link.style.animation = link.style.animation
+          ? ""
+          : `navLinkFade 0.5s ease forwards ${index / 7 + 0.3}s`;
       });
-    };
-    navSlide();
+      burger.classList.toggle("toggle");
+    });
+  };
+  navSlide();
 
-    // Emit custom event when user clicks sign in/out
-    const emitAuthClick = () => {
-      document.dispatchEvent(new CustomEvent("mi-auth-click"));
-    };
+  // Emit custom event when user clicks sign in/out
+  const emitAuthClick = () => document.dispatchEvent(new CustomEvent("mi-auth-click"));
+  authBtn.addEventListener("click", emitAuthClick);
+  authBtnMobile.addEventListener("click", emitAuthClick);
 
-    authBtn.addEventListener("click", emitAuthClick);
-    authBtnMobile.addEventListener("click", emitAuthClick);
+  // Detect device and set default button text
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+  const defaultText = "Login";
+  if (isMobile) authBtnMobile.textContent = defaultText;
+  else authBtn.textContent = defaultText;
 
-    // Detect device and set default button text
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
-    const defaultText = "Login";
-    if (isMobile) {
-      authBtnMobile.textContent = defaultText;
-    } else {
-      authBtn.textContent = defaultText;
-    }
+  // External scripts can update button text and admin visibility
+  window.setAuthState = function (isSignedIn, isAdmin = false) {
+    const text = isSignedIn ? "Log Out" : "Login";
+    authBtn.textContent = text;
+    authBtnMobile.textContent = text;
+    console.log("authBtn text:", text);
+    const adminLink = document.getElementById("adminLink");
+    if (adminLink) adminLink.style.display = isAdmin ? "inline-block" : "none";
+  };
 
-    // External scripts can update button text and admin visibility
-    window.setAuthState = function (isSignedIn, isAdmin = false) {
-      const text = isSignedIn ? "Log Out" : "Login";
-      authBtn.textContent = text;
-      authBtnMobile.textContent = text;
-
-      console.log("authBtn text:", text);
-
-      const adminLink = document.getElementById("adminLink");
-      if (adminLink) {
-        adminLink.style.display = isAdmin ? "inline-block" : "none";
-      }
-    };
-  });
+  console.log("✅ Navbar JS initialized");
+})();
 </script>
+

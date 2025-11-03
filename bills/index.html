@@ -443,7 +443,7 @@
       opacity: 1;
     }
 
-    
+
 
 
     /* Smooth fade/unroll */
@@ -453,12 +453,13 @@
         opacity: 0;
         filter: blur(4px);
       }
-      
+
       20% {
         transform: scaleY(0.20) translateY(-10px);
         opacity: 1;
         filter: blur(0);
       }
+
       60% {
         transform: scaleY(0.80) translateY(-10px);
         opacity: 1;
@@ -477,10 +478,12 @@
         transform: scaleY(1) translateY(0);
         opacity: 1;
       }
+
       20% {
         transform: scaleY(0.7) translateY(15px);
         opacity: 0.9;
       }
+
       40% {
         transform: scaleY(0.5) translateY(25px);
         opacity: 0.8;
@@ -504,9 +507,51 @@
 </head>
 
 <body class="pb-20">
+ <div id="navbar-container"></div>
+
+<script>
+  async function loadModule(targetSelector, url) {
+    const target = document.querySelector(targetSelector);
+    if (!target) throw new Error(`Target ${targetSelector} not found`);
+    const response = await fetch(url, { cache: "no-store" });
+    const html = await response.text();
+
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+
+    // ✅ Move <style> tags to <head> first
+    temp.querySelectorAll("style").forEach(style => {
+      const s = document.createElement("style");
+      s.textContent = style.textContent;
+      document.head.appendChild(s);
+      style.remove();
+    });
+
+    // ✅ Extract scripts BEFORE inserting HTML
+    const scripts = Array.from(temp.querySelectorAll("script"));
+    scripts.forEach(script => script.remove());
+
+    // ✅ Now safely insert the rest of the HTML
+    target.innerHTML = temp.innerHTML;
+
+    // ✅ Re-execute all scripts properly
+    for (const oldScript of scripts) {
+      const newScript = document.createElement("script");
+      if (oldScript.type) newScript.type = oldScript.type;
+      if (oldScript.src) newScript.src = oldScript.src;
+      else newScript.textContent = oldScript.textContent;
+      document.body.appendChild(newScript);
+    }
+
+    console.log("✅ Navbar imported and scripts executed");
+  }
+
+  // Load the navbar
+  loadModule("#navbar-container", "/assets/modules/navbar.html")
+    .catch(err => console.error("Navbar load failed:", err));
+</script>
 
 
-  <div id="navbar-container"></div>
 
   <section id="summary" class="glass m-4 p-4 grid grid-cols-2 gap-2 text-center">
     <div>✅ Paid: <span id="paidCount" class="gold">0</span></div>
@@ -828,19 +873,13 @@
     let userId = null;
 
     /* --- Auth --- */
-    authBtn.onclick = () => { auth.currentUser ? signOut(auth) : signInWithPopup(auth, provider); };
-    authBtnMobile.onclick = () => { auth.currentUser ? signOut(auth) : signInWithPopup(auth, provider); };
     onAuthStateChanged(auth, (user) => {
       if (user) {
         userId = user.uid;
-        authBtn.textContent = "Logout";
-        authBtnMobile.textContent = "Logout";
         console.log(`Signed in as ${user.email}`);
         loadBills();
       } else {
         userId = null// For testing purposes, replace with null to disable;
-        authBtn.textContent = "Login";
-        authBtnMobile.textContent = "Login";
         billsContainer.innerHTML = "";
         console.log("Signed Out");
       }
@@ -1202,7 +1241,7 @@
         (img) => img.src.includes((bill.iconUrl || "").split("?")[0])
       );
 
-     
+
 
 
 
@@ -1225,7 +1264,7 @@
             setTimeout(() => {
               modalImage.style.opacity = "1";
               modalImage.style.transform = "scaleX(1)";
-              
+
             }, 100); // start right after the clone fade-out
           }
 
