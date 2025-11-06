@@ -7,17 +7,6 @@
 <link rel="icon" href="/morIcon.png">
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Three.js imports -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-    "three/examples/jsm/loaders/STLLoader": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/STLLoader.js",
-    "three/examples/jsm/controls/OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js"
-  }
-}
-</script>
-
 <style>
 :root {
   --gold: #d4af37;
@@ -47,9 +36,7 @@ header h1 {
   font-family: 'Cinzel', serif;
   letter-spacing: 1px;
 }
-section {
-  padding: 2rem;
-}
+section { padding: 2rem; }
 .model-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -96,10 +83,7 @@ section {
   border-radius: 0.5rem;
   transition: 0.3s;
 }
-.upload-form button:hover {
-  background: #fff;
-  color: #000;
-}
+.upload-form button:hover { background: #fff; color: #000; }
 #viewerModal {
   position: fixed;
   inset: 0;
@@ -133,19 +117,13 @@ section {
   cursor: pointer;
   transition: 0.3s;
 }
-#closeModal:hover {
-  color: #fff;
-}
-#viewerContainer {
-  flex: 1;
-}
+#closeModal:hover { color: #fff; }
+#viewerContainer { flex: 1; }
 #viewerControls {
   margin-top: 0.5rem;
   text-align: center;
 }
-#zoomSlider {
-  width: 60%;
-}
+#zoomSlider { width: 60%; }
 button.download-btn {
   background: var(--gold);
   color: #000;
@@ -156,9 +134,7 @@ button.download-btn {
   margin-left: 1rem;
   cursor: pointer;
 }
-button.download-btn:hover {
-  background: #fff;
-}
+button.download-btn:hover { background: #fff; }
 </style>
 </head>
 <body>
@@ -195,21 +171,14 @@ button.download-btn:hover {
   </div>
 </div>
 
-<!-- Use your shared Firebase initialization -->
 <script type="module">
 import {
-  app,
-  db,
-  storage,
-  collection,
-  addDoc,
-  getDocs,
-  ref,
-  uploadBytes,
-  getDownloadURL
+  app, db, storage,
+  collection, addDoc, getDocs,
+  ref, uploadBytes, getDownloadURL
 } from "/assets/js/firebase-init.js";
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js";
 
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js";
 import { STLLoader } from "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/STLLoader.js";
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js";
 
@@ -238,7 +207,7 @@ async function loadModels() {
     card.className = "model-card";
     card.innerHTML = `<h2 class='text-lg mb-2 font-semibold text-[var(--gold)]'>${data.name}</h2>
                       <p class='text-sm opacity-70'>Click to view</p>`;
-    card.addEventListener("click", () => openViewer(data.url, data.name));
+    card.addEventListener("click", () => openViewer(data.url));
     container.appendChild(card);
   });
 }
@@ -274,32 +243,55 @@ function openViewer(url) {
   viewerContainer.innerHTML = "";
   currentModelUrl = url;
 
+  // Scene setup
   const scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(60, viewerContainer.clientWidth / viewerContainer.clientHeight, 0.1, 1000);
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(viewerContainer.clientWidth, viewerContainer.clientHeight);
   viewerContainer.appendChild(renderer.domElement);
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.8);
-  const dir = new THREE.DirectionalLight(0xffffff, 0.5);
-  dir.position.set(5, 5, 5);
-  scene.add(ambient, dir);
+  camera = new THREE.PerspectiveCamera(60, viewerContainer.clientWidth / viewerContainer.clientHeight, 0.001, 10000);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 1.2;
 
+  // Lighting
+  const ambient = new THREE.AmbientLight(0xffffff, 1.2);
+  const dir1 = new THREE.DirectionalLight(0xffffff, 1);
+  dir1.position.set(5, 5, 5);
+  const dir2 = new THREE.DirectionalLight(0xffffff, 0.6);
+  dir2.position.set(-5, -5, -5);
+  scene.add(ambient, dir1, dir2);
+
+  // Load STL with mm→m scaling
   const loader = new STLLoader();
   loader.load(url, geometry => {
-    const material = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.6, roughness: 0.4 });
-    const mesh = new THREE.Mesh(geometry, material);
     geometry.computeBoundingBox();
+
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xd4af37,
+      metalness: 0.6,
+      roughness: 0.4,
+      side: THREE.DoubleSide
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
     const center = geometry.boundingBox.getCenter(new THREE.Vector3());
+    const size = geometry.boundingBox.getSize(new THREE.Vector3()).length();
     mesh.position.sub(center);
+
+    // convert from mm to meters-ish (scale up)
+    const mmToMeters = 0.1; // adjust if too small/large
+    mesh.scale.setScalar(mmToMeters);
     scene.add(mesh);
 
-    camera.position.z = geometry.boundingBox.max.z * 3;
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 1.2;
+    // camera framing
+    const distance = size * mmToMeters * 0.6;
+    camera.position.set(distance, distance, distance);
+    camera.lookAt(0, 0, 0);
+    controls.target.set(0, 0, 0);
 
+    // animate
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
