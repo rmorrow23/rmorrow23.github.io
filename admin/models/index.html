@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morrow Industries — 3D Model Portal</title>
+<link rel="icon" href="/morIcon.png">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Three.js imports -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/examples/jsm/loaders/STLLoader": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/STLLoader.js",
+    "three/examples/jsm/controls/OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js"
+  }
+}
+</script>
+
+<style>
+:root {
+  --gold: #d4af37;
+  --bg: #0a0b0f;
+  --glass: rgba(18,20,27,0.8);
+  --border: rgba(255,255,255,0.08);
+  --text: #e9eef8;
+}
+body {
+  font-family: 'Inter', sans-serif;
+  background: radial-gradient(circle at center, var(--bg) 0%, #000 100%);
+  color: var(--text);
+  margin: 0;
+  overflow-x: hidden;
+}
+header {
+  padding: 1rem 1.5rem;
+  backdrop-filter: blur(16px);
+  background: var(--glass);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+header h1 {
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  letter-spacing: 1px;
+}
+section {
+  padding: 2rem;
+}
+.model-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.model-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.model-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--gold);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+}
+.upload-form {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+}
+.upload-form input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+.upload-form button {
+  background: var(--gold);
+  color: #000;
+  font-weight: bold;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  transition: 0.3s;
+}
+.upload-form button:hover {
+  background: #fff;
+  color: #000;
+}
+#viewerModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(10px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-content {
+  position: relative;
+  width: 90%;
+  max-width: 850px;
+  height: 75vh;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+#closeModal {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  color: var(--gold);
+  font-size: 1.5rem;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+#closeModal:hover {
+  color: #fff;
+}
+#viewerContainer {
+  flex: 1;
+}
+#viewerControls {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+#zoomSlider {
+  width: 60%;
+}
+button.download-btn {
+  background: var(--gold);
+  color: #000;
+  border: none;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  margin-left: 1rem;
+  cursor: pointer;
+}
+button.download-btn:hover {
+  background: #fff;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Morrow Industries</h1>
+  <span class="text-sm opacity-70">3D Model Manager</span>
+</header>
+
+<section>
+  <h2 class="text-xl text-[var(--gold)] font-semibold text-center mb-4">Upload New Model</h2>
+  <form id="uploadForm" class="upload-form">
+    <input type="text" id="modelName" placeholder="Model Name" required>
+    <input type="file" id="modelFile" accept=".stl" required>
+    <button type="submit">Upload Model</button>
+    <p id="uploadStatus" class="text-sm mt-2 opacity-70"></p>
+  </form>
+</section>
+
+<section>
+  <h2 class="text-xl text-[var(--gold)] font-semibold text-center mb-2">Available Models</h2>
+  <div id="modelContainer" class="model-list">
+    <p class="text-center opacity-70">Loading models...</p>
+  </div>
+</section>
+
+<div id="viewerModal">
+  <div class="modal-content">
+    <button id="closeModal">&times;</button>
+    <div id="viewerContainer"></div>
+    <div id="viewerControls">
+      <input type="range" id="zoomSlider" min="10" max="200" value="60">
+      <button class="download-btn" id="downloadBtn">Download STL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Use your shared Firebase initialization -->
+<script type="module">
+import {
+  app,
+  db,
+  storage,
+  collection,
+  addDoc,
+  getDocs,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "/assets/js/firebase-init.js";
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js";
+
+import { STLLoader } from "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/STLLoader.js";
+import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js";
+
+// === UI Elements ===
+const container = document.getElementById("modelContainer");
+const modal = document.getElementById("viewerModal");
+const viewerContainer = document.getElementById("viewerContainer");
+const closeBtn = document.getElementById("closeModal");
+const zoomSlider = document.getElementById("zoomSlider");
+const downloadBtn = document.getElementById("downloadBtn");
+
+let currentModelUrl = null;
+let camera, controls, renderer;
+
+// === Load Models from Firestore ===
+async function loadModels() {
+  container.innerHTML = "";
+  const snapshot = await getDocs(collection(db, "models"));
+  if (snapshot.empty) {
+    container.innerHTML = "<p class='text-center opacity-70'>No models found.</p>";
+    return;
+  }
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const card = document.createElement("div");
+    card.className = "model-card";
+    card.innerHTML = `<h2 class='text-lg mb-2 font-semibold text-[var(--gold)]'>${data.name}</h2>
+                      <p class='text-sm opacity-70'>Click to view</p>`;
+    card.addEventListener("click", () => openViewer(data.url, data.name));
+    container.appendChild(card);
+  });
+}
+
+// === Upload New Model ===
+const uploadForm = document.getElementById("uploadForm");
+uploadForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = document.getElementById("modelName").value.trim();
+  const file = document.getElementById("modelFile").files[0];
+  const status = document.getElementById("uploadStatus");
+
+  if (!name || !file) return alert("Please enter a name and select a file.");
+
+  status.textContent = "Uploading...";
+  try {
+    const storageRef = ref(storage, `models/${file.name}`);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    await addDoc(collection(db, "models"), { name, url });
+    status.textContent = "Upload complete!";
+    uploadForm.reset();
+    loadModels();
+  } catch (err) {
+    console.error(err);
+    status.textContent = "Error uploading model.";
+  }
+});
+
+// === 3D Viewer ===
+function openViewer(url) {
+  modal.style.display = "flex";
+  viewerContainer.innerHTML = "";
+  currentModelUrl = url;
+
+  const scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(60, viewerContainer.clientWidth / viewerContainer.clientHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(viewerContainer.clientWidth, viewerContainer.clientHeight);
+  viewerContainer.appendChild(renderer.domElement);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.5);
+  dir.position.set(5, 5, 5);
+  scene.add(ambient, dir);
+
+  const loader = new STLLoader();
+  loader.load(url, geometry => {
+    const material = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.6, roughness: 0.4 });
+    const mesh = new THREE.Mesh(geometry, material);
+    geometry.computeBoundingBox();
+    const center = geometry.boundingBox.getCenter(new THREE.Vector3());
+    mesh.position.sub(center);
+    scene.add(mesh);
+
+    camera.position.z = geometry.boundingBox.max.z * 3;
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.2;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  });
+}
+
+// === Zoom + Download Controls ===
+zoomSlider.addEventListener("input", () => {
+  if (camera) {
+    camera.fov = zoomSlider.value;
+    camera.updateProjectionMatrix();
+  }
+});
+
+downloadBtn.onclick = () => {
+  if (currentModelUrl) window.open(currentModelUrl, "_blank");
+};
+
+// === Modal Close ===
+closeBtn.onclick = () => {
+  modal.style.display = "none";
+  viewerContainer.innerHTML = "";
+};
+
+window.onclick = (e) => {
+  if (e.target === modal) {
+    modal.style.display = "none";
+    viewerContainer.innerHTML = "";
+  }
+};
+
+loadModels();
+</script>
+</body>
+</html>
