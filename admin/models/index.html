@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Morrow Industries — 3D Model Portal</title>
-<link rel="icon" href="/morIcon.png">
+<link rel="icon" href="/morIcon.png" />
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
@@ -16,7 +16,7 @@
   --text: #e9eef8;
 }
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   background: radial-gradient(circle at center, var(--bg) 0%, #000 100%);
   color: var(--text);
   margin: 0;
@@ -33,10 +33,12 @@ header {
 }
 header h1 {
   color: var(--gold);
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   letter-spacing: 1px;
 }
-section { padding: 2rem; }
+section {
+  padding: 2rem;
+}
 .model-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -67,7 +69,7 @@ section { padding: 2rem; }
   text-align: center;
 }
 .upload-form input {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   color: var(--text);
   padding: 0.5rem;
@@ -83,11 +85,14 @@ section { padding: 2rem; }
   border-radius: 0.5rem;
   transition: 0.3s;
 }
-.upload-form button:hover { background: #fff; color: #000; }
+.upload-form button:hover {
+  background: #fff;
+  color: #000;
+}
 #viewerModal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
   display: none;
   align-items: center;
@@ -117,13 +122,19 @@ section { padding: 2rem; }
   cursor: pointer;
   transition: 0.3s;
 }
-#closeModal:hover { color: #fff; }
-#viewerContainer { flex: 1; }
+#closeModal:hover {
+  color: #fff;
+}
+#viewerContainer {
+  flex: 1;
+}
 #viewerControls {
   margin-top: 0.5rem;
   text-align: center;
 }
-#zoomSlider { width: 60%; }
+#zoomSlider {
+  width: 60%;
+}
 button.download-btn {
   background: var(--gold);
   color: #000;
@@ -134,7 +145,9 @@ button.download-btn {
   margin-left: 1rem;
   cursor: pointer;
 }
-button.download-btn:hover { background: #fff; }
+button.download-btn:hover {
+  background: #fff;
+}
 </style>
 </head>
 <body>
@@ -144,17 +157,25 @@ button.download-btn:hover { background: #fff; }
 </header>
 
 <section>
-  <h2 class="text-xl text-[var(--gold)] font-semibold text-center mb-4">Upload New Model</h2>
+  <h2
+    class="text-xl text-[var(--gold)] font-semibold text-center mb-4"
+  >
+    Upload New Model
+  </h2>
   <form id="uploadForm" class="upload-form">
-    <input type="text" id="modelName" placeholder="Model Name" required>
-    <input type="file" id="modelFile" accept=".stl" required>
+    <input type="text" id="modelName" placeholder="Model Name" required />
+    <input type="file" id="modelFile" accept=".stl" required />
     <button type="submit">Upload Model</button>
     <p id="uploadStatus" class="text-sm mt-2 opacity-70"></p>
   </form>
 </section>
 
 <section>
-  <h2 class="text-xl text-[var(--gold)] font-semibold text-center mb-2">Available Models</h2>
+  <h2
+    class="text-xl text-[var(--gold)] font-semibold text-center mb-2"
+  >
+    Available Models
+  </h2>
   <div id="modelContainer" class="model-list">
     <p class="text-center opacity-70">Loading models...</p>
   </div>
@@ -165,7 +186,7 @@ button.download-btn:hover { background: #fff; }
     <button id="closeModal">&times;</button>
     <div id="viewerContainer"></div>
     <div id="viewerControls">
-      <input type="range" id="zoomSlider" min="10" max="200" value="60">
+      <input type="range" id="zoomSlider" min="10" max="200" value="60" />
       <button class="download-btn" id="downloadBtn">Download STL</button>
     </div>
   </div>
@@ -178,9 +199,11 @@ import {
   ref, uploadBytes, getDownloadURL
 } from "/assets/js/firebase-init.js";
 
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js";
-import { STLLoader } from "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/STLLoader.js";
-import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js";
+// ✅ Use esm.sh to automatically patch imports
+import * as THREE from "https://esm.sh/three@0.165.0";
+import { STLLoader } from "https://esm.sh/three@0.165.0/examples/jsm/loaders/STLLoader.js";
+import { OrbitControls } from "https://esm.sh/three@0.165.0/examples/jsm/controls/OrbitControls.js";
+window.THREE = THREE;
 
 // === UI Elements ===
 const container = document.getElementById("modelContainer");
@@ -193,33 +216,34 @@ const downloadBtn = document.getElementById("downloadBtn");
 let currentModelUrl = null;
 let camera, controls, renderer;
 
-// === Load Models from Firestore ===
+// === Load Models ===
 async function loadModels() {
   container.innerHTML = "";
   const snapshot = await getDocs(collection(db, "models"));
   if (snapshot.empty) {
-    container.innerHTML = "<p class='text-center opacity-70'>No models found.</p>";
+    container.innerHTML =
+      "<p class='text-center opacity-70'>No models found.</p>";
     return;
   }
-  snapshot.forEach(doc => {
+  snapshot.forEach((doc) => {
     const data = doc.data();
     const card = document.createElement("div");
     card.className = "model-card";
-    card.innerHTML = `<h2 class='text-lg mb-2 font-semibold text-[var(--gold)]'>${data.name}</h2>
-                      <p class='text-sm opacity-70'>Click to view</p>`;
+    card.innerHTML = `
+      <h2 class='text-lg mb-2 font-semibold text-[var(--gold)]'>${data.name}</h2>
+      <p class='text-sm opacity-70'>Click to view</p>`;
     card.addEventListener("click", () => openViewer(data.url));
     container.appendChild(card);
   });
 }
 
-// === Upload New Model ===
+// === Upload Model ===
 const uploadForm = document.getElementById("uploadForm");
 uploadForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = document.getElementById("modelName").value.trim();
   const file = document.getElementById("modelFile").files[0];
   const status = document.getElementById("uploadStatus");
-
   if (!name || !file) return alert("Please enter a name and select a file.");
 
   status.textContent = "Uploading...";
@@ -243,72 +267,72 @@ function openViewer(url) {
   viewerContainer.innerHTML = "";
   currentModelUrl = url;
 
-  // Scene setup
   const scene = new THREE.Scene();
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(viewerContainer.clientWidth, viewerContainer.clientHeight);
+  renderer.setSize(
+    viewerContainer.clientWidth,
+    viewerContainer.clientHeight
+  );
   viewerContainer.appendChild(renderer.domElement);
 
-  camera = new THREE.PerspectiveCamera(60, viewerContainer.clientWidth / viewerContainer.clientHeight, 0.001, 10000);
-  const controls = new OrbitControls(camera, renderer.domElement);
+  camera = new THREE.PerspectiveCamera(
+    60,
+    viewerContainer.clientWidth / viewerContainer.clientHeight,
+    0.001,
+    10000
+  );
+  controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.autoRotate = true;
   controls.autoRotateSpeed = 1.2;
 
-  // Lighting
-  const ambient = new THREE.AmbientLight(0xffffff, 1.2);
+  // Lights
+  const ambient = new THREE.AmbientLight(0xffffff, 1.4);
   const dir1 = new THREE.DirectionalLight(0xffffff, 1);
   dir1.position.set(5, 5, 5);
-  const dir2 = new THREE.DirectionalLight(0xffffff, 0.6);
+  const dir2 = new THREE.DirectionalLight(0xffffff, 0.8);
   dir2.position.set(-5, -5, -5);
   scene.add(ambient, dir1, dir2);
 
-  // Load STL with mm→m scaling
+  // Load STL
   const loader = new STLLoader();
-  loader.load(url, geometry => {
+  loader.load(url, (geometry) => {
     geometry.computeBoundingBox();
-
     const material = new THREE.MeshStandardMaterial({
       color: 0xd4af37,
       metalness: 0.6,
       roughness: 0.4,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
-
     const mesh = new THREE.Mesh(geometry, material);
     const center = geometry.boundingBox.getCenter(new THREE.Vector3());
     const size = geometry.boundingBox.getSize(new THREE.Vector3()).length();
     mesh.position.sub(center);
-
-    // convert from mm to meters-ish (scale up)
-    const mmToMeters = 0.1; // adjust if too small/large
+    const mmToMeters = 0.1;
     mesh.scale.setScalar(mmToMeters);
     scene.add(mesh);
 
-    // camera framing
     const distance = size * mmToMeters * 0.6;
     camera.position.set(distance, distance, distance);
     camera.lookAt(0, 0, 0);
     controls.target.set(0, 0, 0);
 
-    // animate
-    function animate() {
+    const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
-    }
+    };
     animate();
   });
 }
 
-// === Zoom + Download Controls ===
+// === Zoom + Download ===
 zoomSlider.addEventListener("input", () => {
   if (camera) {
     camera.fov = zoomSlider.value;
     camera.updateProjectionMatrix();
   }
 });
-
 downloadBtn.onclick = () => {
   if (currentModelUrl) window.open(currentModelUrl, "_blank");
 };
@@ -318,14 +342,12 @@ closeBtn.onclick = () => {
   modal.style.display = "none";
   viewerContainer.innerHTML = "";
 };
-
 window.onclick = (e) => {
   if (e.target === modal) {
     modal.style.display = "none";
     viewerContainer.innerHTML = "";
   }
 };
-
 loadModels();
 </script>
 </body>
