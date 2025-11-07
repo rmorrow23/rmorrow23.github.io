@@ -1,0 +1,296 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynamic Schedule</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    body {
+      background: #000;
+      color: #000;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px 20px;
+      text-align: left;
+      margin: 0;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('rocks.jpg');
+      filter: blur(15px);
+      opacity: 1;
+      z-index: -1;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-size: 100% 100%;
+    }
+    .custom-select-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 80%;
+      margin-left: 45px;
+    }
+    .custom-select-wrapper select {
+      appearance: none;
+      background-color: #111;
+      color: #ff3c00;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 24px;
+      font-size: 1.5em;
+      box-shadow: 0 0 1px 2px rgba(255, 60, 0, 0.4);
+      outline: none;
+      width: 100%;
+      height: 3.5rem;
+      padding-right: 3rem;
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%23ff3c00" height="48" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 0.2rem center;
+      background-size: 3.5rem;
+    }
+    .card {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 15px;
+      background-color: #1c1c1c;
+      color: #fff;
+      padding: 0;
+      margin: 10px auto;
+      width: 95%;
+      max-width: 600px;
+      border-radius: 10px;
+      box-shadow: -4px 4px 2px 1px rgba(255, 60, 0, 0.25);
+      transition: transform 0.4s ease;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: slideFadeIn 0.4s ease forwards;
+    }
+    .card img {
+      width: 6.5rem;
+      height: 6.5rem;
+      filter: drop-shadow(0 0 0px #ff3c00);
+      border-radius: 10px 0 0 10px;
+    }
+    .card span {
+            width: 100%;
+      text-align: center;
+      font-size: 2.2rem;
+    }
+    
+    .card:hover{
+          box-shadow: -4px 4px 2px 1px rgba(60, 255, 0, 0.25);
+     }      
+    #top {
+      display: flex;
+      flex-direction: row;
+      width: 94%;
+      align-items: center;
+      margin-bottom: 30px;
+      z-index:1000;
+      background:rgba(150,150,150,0.3);
+      position: fixed; top: 0px; left: 0;
+      backdrop-filter: blur(10px);
+      padding: 0.7rem;
+    }
+    #confirmBtn {
+      display: none;
+      margin: 20px auto;
+      padding: 15px 30px;
+      font-size: 1.2em;
+      background-color: #ff3c00;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255, 60, 0, 0.6);
+    }
+    #successPopup {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #1f1f1f;
+      color: #ff3c00;
+      padding: 15px 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 2px rgba(60, 255, 0, 0.8);
+      z-index: 9999;
+      font-size: 1.2em;
+      width: 70%;
+      animation: fadeInOut 3s ease-in-out;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; top: 0; }
+      10% { opacity: 1; top: 20px; }
+      90% { opacity: 1; top: 20px; }
+      100% { opacity: 0; top: 0; }
+    }
+    @keyframes slideFadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    #schedule{
+          margin-top:1.5rem;
+          padding-top:1rem;
+          }
+  </style>
+</head>
+<body>
+  <div id="top">
+    <img src="Toyota.png" style="width:60px;" />
+    <div class="custom-select-wrapper">
+      <select id="daySelector">
+        <option value="Monday">Monday</option>
+        <option value="Tuesday">Tuesday</option>
+        <option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option>
+        <option value="Friday">Friday</option>
+        <option value="Saturday">Saturday</option>
+      </select>
+    </div>
+  </div>  <div id="schedule"></div>
+  <button id="confirmBtn">Confirm Schedule Update</button>
+  <div id="successPopup">Schedule successfully updated!</div>  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC4dG7sWtkmKl2uhiHH9mpmQcJE_QHYe68",
+      authDomain: "bob-ryvclk.firebaseapp.com",
+      databaseURL: "https://bob-ryvclk.firebaseio.com",
+      projectId: "bob-ryvclk",
+      storageBucket: "bob-ryvclk.appspot.com",
+      messagingSenderId: "756211447569",
+      appId: "1:756211447569:web:0746bfad9957a445b77eb0"
+    };
+
+    const icons = {
+      C1E: 'C1E.png',
+      C2D2: 'C2D2.png',
+      WD: 'WD.png',
+      DTL: 'DTL.png',
+      FT4A: 'FT4A.png'
+    };
+
+    const processMap = {
+      C1E: ["C1E", "C2D2", "WD", "DTL", "FT4A"],
+      C2D2: ["C2D2", "WD", "DTL", "FT4A", "C1E"],
+      WD: ["WD", "DTL", "FT4A", "C1E", "C2D2"],
+      DTL: ["DTL", "FT4A", "C1E", "C2D2", "WD"],
+      FT4A: ["FT4A", "C1E", "C2D2", "WD", "DTL"]
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    let scheduleData = {};
+    let pendingProcess = null;
+
+    function updateAllSchedules(firstMondayProcess) {
+
+  const base = ["C1E", "C2D2", "WD", "DTL", "FT4A"];
+
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  let rotation = [...base];
+
+  // Start with Monday's first process
+
+  while (rotation[0] !== firstMondayProcess) {
+
+    rotation.push(rotation.shift());
+
+  }
+
+  for (let i = 0; i < days.length; i++) {
+
+    const currentDaySchedule = [...rotation];
+
+    database.ref("TMMI/Schedule/" + days[i]).set(JSON.stringify(currentDaySchedule));
+
+    // Rotate so next day's first is current day's last
+
+    const last = currentDaySchedule[currentDaySchedule.length - 1];
+
+    while (rotation[0] !== last) {
+
+      rotation.push(rotation.shift());
+
+    }
+
+  }
+
+  pendingProcess = null;
+
+  document.getElementById('confirmBtn').style.display = 'none';
+
+  showSuccessPopup();
+
+}
+
+    function showSuccessPopup() {
+      const popup = document.getElementById('successPopup');
+      popup.style.display = 'block';
+      setTimeout(() => { popup.style.display = 'none'; }, 3000);
+    }
+
+    function renderScheduleForDay(day) {
+      const container = document.getElementById('schedule');
+      container.innerHTML = '';
+      document.getElementById('confirmBtn').style.display = 'none';
+      pendingProcess = null;
+
+      if (scheduleData[day] && typeof scheduleData[day] === 'string') {
+        const classes = JSON.parse(scheduleData[day]);
+
+        classes.forEach((item, index) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.style.animationDelay = `${index * 0.25}s`;
+          card.dataset.process = item;
+
+          const icon = document.createElement('img');
+          icon.src = icons[item] || 'https://cdn-icons-png.flaticon.com/512/565/565547.png';
+          icon.alt = item;
+
+          const label = document.createElement('span');
+          label.textContent = item;
+
+          card.appendChild(icon);
+          card.appendChild(label);
+          container.appendChild(card);
+
+          card.addEventListener('click', () => {
+            const selectedDay = document.getElementById('daySelector').value;
+            if (selectedDay === "Monday") {
+              pendingProcess = item;
+              document.getElementById('confirmBtn').style.display = 'block';
+            }
+          });
+        });
+      }
+    }
+
+    document.getElementById('confirmBtn').addEventListener('click', () => {
+      if (pendingProcess && processMap[pendingProcess]) {
+        updateAllSchedules(pendingProcess);
+        renderScheduleForDay("Monday");
+      }
+    });
+
+    firebase.database().ref('TMMI/Schedule').on('value', (snapshot) => {
+      scheduleData = snapshot.val();
+      renderScheduleForDay(document.getElementById('daySelector').value);
+    });
+
+    document.getElementById('daySelector').addEventListener('change', (e) => {
+      renderScheduleForDay(e.target.value);
+    });
+  </script></body>
+</html>
