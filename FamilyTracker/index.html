@@ -64,7 +64,8 @@
       doc,
       getDoc,
       collection,
-      onSnapshot
+      onSnapshot,
+      serverTimestamp
     } from "/assets/js/firebase-init.js";
 
     const loanContainer = document.getElementById('loanContainer');
@@ -118,7 +119,7 @@
         runningTotal -= t.amount;
         return `
           <tr>
-            <td class="px-2 py-1">${t.date.toDate().toLocaleDateString()}</td>
+            <td class="px-2 py-1">${t.date?.toDate().toLocaleDateString?.() || "—"}</td>
             <td class="px-2 py-1">$${t.amount.toFixed(2)}</td>
             <td class="px-2 py-1">${t.note || ""}</td>
             <td class="px-2 py-1">$${runningTotal.toFixed(2)}</td>

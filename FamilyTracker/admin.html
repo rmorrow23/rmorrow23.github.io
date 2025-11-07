@@ -6,7 +6,7 @@
   <title>Morrow Industries — Family Payment Tracker (Admin)</title>
   <link rel="icon" href="/morIcon.png" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/assets/js/firebase-init.js" type="module"></script>
+  <script type="module" src="/assets/js/firebase-init.js"></script>
   <style>
     :root {
       --gold: #d4af37;
@@ -21,6 +21,7 @@
       font-family: "Inter", sans-serif;
       margin: 0;
       overflow-x: hidden;
+      padding: 1.5rem;
     }
     .glass {
       background: var(--glass);
@@ -40,7 +41,7 @@
     button:hover { opacity: 0.85; }
   </style>
 </head>
-<body class="p-6">
+<body>
   <header class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-semibold text-[var(--gold)]">Family Payment Tracker — Admin</h1>
     <button id="logoutBtn">Sign Out</button>
@@ -66,21 +67,17 @@
     import {
       auth,
       db,
-      getAuth,
       GoogleAuthProvider,
       signInWithPopup,
       onAuthStateChanged,
       signOut,
-      getFirestore,
       collection,
       doc,
       getDocs,
       getDoc,
-      setDoc,
       updateDoc,
       addDoc,
-      onSnapshot,
-      serverTimestamp
+      onSnapshot
     } from "/assets/js/firebase-init.js";
 
     const userListEl = document.getElementById('userList');
@@ -147,6 +144,13 @@
       const ref = collection(db, "loans", uid, "userLoans");
       onSnapshot(ref, (snap) => {
         loanListEl.innerHTML = "";
+        if (snap.empty) {
+          const msg = document.createElement("div");
+          msg.className = "p-4 text-center text-gray-400 italic";
+          msg.textContent = "No loans found for this user.";
+          loanListEl.appendChild(msg);
+          return;
+        }
         snap.forEach(docSnap => renderLoan(uid, docSnap.id, docSnap.data()));
       });
     }
@@ -157,12 +161,14 @@
       let runningTotal = 0;
       const rows = transactions.map(t => {
         runningTotal -= t.amount;
-        return `<tr>
-          <td class="px-2 py-1">${t.date.toDate().toLocaleDateString()}</td>
-          <td class="px-2 py-1">$${t.amount.toFixed(2)}</td>
-          <td class="px-2 py-1">${t.note || ""}</td>
-          <td class="px-2 py-1">$${runningTotal.toFixed(2)}</td>
-        </tr>`;
+        const dateStr = t.date?.toDate?.().toLocaleDateString?.() || new Date(t.date).toLocaleDateString();
+        return `
+          <tr>
+            <td class="px-2 py-1">${dateStr}</td>
+            <td class="px-2 py-1">$${t.amount.toFixed(2)}</td>
+            <td class="px-2 py-1">${t.note || ""}</td>
+            <td class="px-2 py-1">$${runningTotal.toFixed(2)}</td>
+          </tr>`;
       }).join("");
 
       const total = runningTotal.toFixed(2);
@@ -185,6 +191,7 @@
       loanListEl.appendChild(loanCard);
     }
 
+    // --- ADD PAYMENT ---
     async function addPayment(e, uid, loanId) {
       e.preventDefault();
       const [amountInput, noteInput] = e.target.elements;
@@ -194,18 +201,22 @@
       const loanRef = doc(db, "loans", uid, "userLoans", loanId);
       const loanSnap = await getDoc(loanRef);
       const existing = loanSnap.data().transactions || [];
-      existing.push({ amount, note, date: serverTimestamp.now() });
+
+      // ✅ Use standard JS Date instead of serverTimestamp to avoid array error
+      existing.push({ amount, note, date: new Date() });
+
       await updateDoc(loanRef, { transactions: existing });
       e.target.reset();
     }
 
+    // --- ADD LOAN ---
     addLoanBtn.onclick = async () => {
       if (!selectedUser) return alert("Select a user first.");
       const name = prompt("Enter loan name:");
       if (!name) return;
       await addDoc(collection(db, "loans", selectedUser, "userLoans"), {
         loanName: name,
-        createdAt: serverTimestamp.now(),
+        createdAt: new Date(),
         transactions: []
       });
     };
