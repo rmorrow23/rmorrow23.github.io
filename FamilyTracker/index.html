@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morrow Industries — Family Payment Tracker</title>
+  <link rel="icon" href="/morIcon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js"></script>
+  <script src="/assets/js/firebase-init.js"></script>
+  <style>
+    :root {
+      --gold: #d4af37;
+      --bg: #0a0b0f;
+      --glass: rgba(18, 20, 27, 0.75);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #e9eef8;
+    }
+    body {
+      background: radial-gradient(circle at center, var(--bg) 0%, #000 100%);
+      color: var(--text);
+      font-family: "Inter", sans-serif;
+      margin: 0;
+    }
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(16px) saturate(140%);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+<body class="p-6">
+  <header class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-semibold text-[var(--gold)]">Family Payment Tracker</h1>
+    <button id="logoutBtn" class="bg-[var(--gold)] text-black px-3 py-1 rounded font-semibold">Sign Out</button>
+  </header>
+  <div id="loanContainer" class="space-y-6"></div>
+
+  <script type="module">
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    const auth = getAuth();
+    const db = getFirestore();
+
+    const loanContainer = document.getElementById('loanContainer');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    logoutBtn.onclick = () => signOut(auth);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        return;
+      }
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (!userDoc.exists() || userDoc.data().role_familyTracker !== "viewer") {
+        window.location = "unauthorized.html";
+        return;
+      }
+      watchLoans(user.uid);
+    });
+
+    function watchLoans(uid) {
+      const ref = collection(db, "loans", uid, "userLoans");
+      onSnapshot(ref, (snap) => {
+        loanContainer.innerHTML = "";
+        snap.forEach(docSnap => renderLoan(docSnap.data()));
+      });
+    }
+
+    function renderLoan(loan) {
+      const transactions = loan.transactions || [];
+      let runningTotal = 0;
+      const rows = transactions.map(t => {
+        runningTotal -= t.amount;
+        return `<tr>
+          <td class="px-2 py-1">${t.date.toDate().toLocaleDateString()}</td>
+          <td class="px-2 py-1">$${t.amount.toFixed(2)}</td>
+          <td class="px-2 py-1">${t.note || ""}</td>
+          <td class="px-2 py-1">$${runningTotal.toFixed(2)}</td>
+        </tr>`;
+      }).join("");
+      const total = runningTotal.toFixed(2);
+
+      const div = document.createElement("div");
+      div.className = "glass p-4";
+      div.innerHTML = `
+        <h2 class="text-[var(--gold)] font-semibold mb-2">${loan.loanName}</h2>
+        <p class="mb-2 text-sm">Current Balance: <span class="text-[var(--gold)] font-semibold">$${total}</span></p>
+        <table class="text-sm w-full border-t border-[var(--border)]">
+          <tr class="text-[var(--gold)]"><th>Date</th><th>Amount</th><th>Note</th><th>Remaining</th></tr>
+          ${rows || "<tr><td colspan='4' class='text-center p-2 text-xs'>No payments yet</td></tr>"}
+        </table>
+      `;
+      loanContainer.appendChild(div);
+    }
+  </script>
+</body>
+</html>
