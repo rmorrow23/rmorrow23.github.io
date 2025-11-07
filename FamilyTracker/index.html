@@ -6,10 +6,8 @@
   <title>Morrow Industries — Family Payment Tracker</title>
   <link rel="icon" href="/morIcon.png" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js"></script>
-  <script src="/assets/js/firebase-init.js"></script>
+  <script type="module" src="/assets/js/firebase-init.js"></script>
+
   <style>
     :root {
       --gold: #d4af37;
@@ -23,6 +21,8 @@
       color: var(--text);
       font-family: "Inter", sans-serif;
       margin: 0;
+      padding: 1.5rem;
+      min-height: 100vh;
     }
     .glass {
       background: var(--glass);
@@ -31,69 +31,112 @@
       border-radius: 1rem;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
     }
+    .gold { color: var(--gold); }
+    button {
+      background: var(--gold);
+      color: #000;
+      font-weight: 600;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1rem;
+      transition: 0.2s;
+    }
+    button:hover { opacity: 0.85; }
   </style>
 </head>
-<body class="p-6">
+<body>
   <header class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-semibold text-[var(--gold)]">Family Payment Tracker</h1>
-    <button id="logoutBtn" class="bg-[var(--gold)] text-black px-3 py-1 rounded font-semibold">Sign Out</button>
+    <button id="logoutBtn">Sign Out</button>
   </header>
-  <div id="loanContainer" class="space-y-6"></div>
+
+  <main id="loanContainer" class="space-y-6">
+    <div id="loading" class="text-center italic text-[var(--gold)]">Loading your loans...</div>
+  </main>
 
   <script type="module">
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
-    const auth = getAuth();
-    const db = getFirestore();
+    import {
+      auth,
+      db,
+      GoogleAuthProvider,
+      signInWithPopup,
+      onAuthStateChanged,
+      signOut,
+      doc,
+      getDoc,
+      collection,
+      onSnapshot
+    } from "/assets/js/firebase-init.js";
 
     const loanContainer = document.getElementById('loanContainer');
     const logoutBtn = document.getElementById('logoutBtn');
+    const loadingEl = document.getElementById('loading');
 
     logoutBtn.onclick = () => signOut(auth);
 
+    // --- AUTH FLOW ---
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
         return;
       }
+
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (!userDoc.exists() || userDoc.data().role_familyTracker !== "viewer") {
         window.location = "unauthorized.html";
         return;
       }
+
       watchLoans(user.uid);
     });
 
+    // --- WATCH USER LOANS ---
     function watchLoans(uid) {
       const ref = collection(db, "loans", uid, "userLoans");
       onSnapshot(ref, (snap) => {
         loanContainer.innerHTML = "";
+        if (snap.empty) {
+          const msg = document.createElement("div");
+          msg.className = "glass p-6 text-center";
+          msg.innerHTML = `
+            <h2 class="text-lg font-semibold text-[var(--gold)] mb-2">No Loans Found</h2>
+            <p class="text-sm text-gray-300">It looks like you don't have any active loans yet.</p>
+          `;
+          loanContainer.appendChild(msg);
+          return;
+        }
+
         snap.forEach(docSnap => renderLoan(docSnap.data()));
       });
     }
 
+    // --- RENDER EACH LOAN ---
     function renderLoan(loan) {
       const transactions = loan.transactions || [];
       let runningTotal = 0;
       const rows = transactions.map(t => {
         runningTotal -= t.amount;
-        return `<tr>
-          <td class="px-2 py-1">${t.date.toDate().toLocaleDateString()}</td>
-          <td class="px-2 py-1">$${t.amount.toFixed(2)}</td>
-          <td class="px-2 py-1">${t.note || ""}</td>
-          <td class="px-2 py-1">$${runningTotal.toFixed(2)}</td>
-        </tr>`;
+        return `
+          <tr>
+            <td class="px-2 py-1">${t.date.toDate().toLocaleDateString()}</td>
+            <td class="px-2 py-1">$${t.amount.toFixed(2)}</td>
+            <td class="px-2 py-1">${t.note || ""}</td>
+            <td class="px-2 py-1">$${runningTotal.toFixed(2)}</td>
+          </tr>`;
       }).join("");
-      const total = runningTotal.toFixed(2);
 
+      const total = runningTotal.toFixed(2);
       const div = document.createElement("div");
       div.className = "glass p-4";
       div.innerHTML = `
         <h2 class="text-[var(--gold)] font-semibold mb-2">${loan.loanName}</h2>
-        <p class="mb-2 text-sm">Current Balance: <span class="text-[var(--gold)] font-semibold">$${total}</span></p>
+        <p class="mb-2 text-sm">Current Balance:
+          <span class="text-[var(--gold)] font-semibold">$${total}</span>
+        </p>
         <table class="text-sm w-full border-t border-[var(--border)]">
-          <tr class="text-[var(--gold)]"><th>Date</th><th>Amount</th><th>Note</th><th>Remaining</th></tr>
+          <tr class="text-[var(--gold)]">
+            <th>Date</th><th>Amount</th><th>Note</th><th>Remaining</th>
+          </tr>
           ${rows || "<tr><td colspan='4' class='text-center p-2 text-xs'>No payments yet</td></tr>"}
         </table>
       `;
