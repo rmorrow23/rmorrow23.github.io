@@ -67,10 +67,11 @@ export {
   query,
   orderBy,
   onSnapshot,
+  GoogleAuthProvider,
   serverTimestamp,
   ref,
   uploadBytes,
   getDownloadURL,
-  getDocs,
+  getDocs,getAuth,getFirestore,
   deleteObject // ✅ These are optional but useful in other files
 };

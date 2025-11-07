@@ -6,10 +6,7 @@
   <title>Morrow Industries — Family Payment Tracker (Admin)</title>
   <link rel="icon" href="/morIcon.png" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js"></script>
-  <script src="/assets/js/firebase-init.js"></script>
+  <script src="/assets/js/firebase-init.js" type="module"></script>
   <style>
     :root {
       --gold: #d4af37;
@@ -66,11 +63,26 @@
   </div>
 
   <script type="module">
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-    import { getFirestore, collection, doc, getDocs, getDoc, setDoc, updateDoc, addDoc, onSnapshot, arrayUnion, Timestamp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import {
+      auth,
+      db,
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      onAuthStateChanged,
+      signOut,
+      getFirestore,
+      collection,
+      doc,
+      getDocs,
+      getDoc,
+      setDoc,
+      updateDoc,
+      addDoc,
+      onSnapshot,
+      serverTimestamp
+    } from "/assets/js/firebase-init.js";
 
-    const auth = getAuth();
-    const db = getFirestore();
     const userListEl = document.getElementById('userList');
     const loanListEl = document.getElementById('loanList');
     const addLoanBtn = document.getElementById('addLoanBtn');
@@ -182,7 +194,7 @@
       const loanRef = doc(db, "loans", uid, "userLoans", loanId);
       const loanSnap = await getDoc(loanRef);
       const existing = loanSnap.data().transactions || [];
-      existing.push({ amount, note, date: Timestamp.now() });
+      existing.push({ amount, note, date: serverTimestamp.now() });
       await updateDoc(loanRef, { transactions: existing });
       e.target.reset();
     }
@@ -193,7 +205,7 @@
       if (!name) return;
       await addDoc(collection(db, "loans", selectedUser, "userLoans"), {
         loanName: name,
-        createdAt: Timestamp.now(),
+        createdAt: serverTimestamp.now(),
         transactions: []
       });
     };
