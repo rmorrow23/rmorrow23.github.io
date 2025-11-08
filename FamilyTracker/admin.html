@@ -331,7 +331,7 @@ addLoanForm.onsubmit = async e => {
     startDate:fd.get("startDate")||null,
     firstPaymentDate:fd.get("firstPaymentDate")||null,
     paymentFrequency:fd.get("paymentFrequency"),
-    createdAt:Timestamp.now(),
+    createdAt:serverTimestamp(),
     transactions:[],
     futurePayments:[]
   };
