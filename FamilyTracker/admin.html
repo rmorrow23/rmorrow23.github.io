@@ -246,7 +246,7 @@ function renderLoan(uid, loanId, loan) {
   card.innerHTML = `
     <div class="flex justify-between items-center cursor-pointer" data-expand="${loanId}">
       <div class="flex items-center gap-3">
-        <img src="${loanIcon}" class="w-12 h-12 rounded-md object-cover border border-[rgba(255,255,255,0.1)] cursor-pointer" data-icon-change="${loanId}" />
+        <img src="${loanIcon}" class="w-120 h-12 object-cover cursor-pointer" data-icon-change="${loanId}" />
         <div>
           <h3 class="text-[#d4af37] font-semibold">${loanName}</h3>
           <p class="text-sm text-gray-300">Remaining: $${bal.remaining.toFixed(2)}</p>
