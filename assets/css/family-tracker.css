@@ -1,0 +1,198 @@
+/* ==========================================
+   Morrow Industries — Family Payment Tracker
+   Global Style Sheet (Admin + Viewer)
+   ========================================== */
+
+:root {
+  --gold: #d4af37;
+  --bg: #0a0b0f;
+  --glass: rgba(18, 20, 27, 0.75);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #e9eef8;
+  --muted: #a9b0be;
+}
+
+/* Base Layout */
+body {
+  background: radial-gradient(circle at center, var(--bg) 0%, #000 100%);
+  color: var(--text);
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/* Glass Utility */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: all 0.25s ease;
+}
+
+/* Summary Cards */
+.summary-card {
+  @apply glass p-4 rounded-xl text-center;
+}
+.summary-card h3 {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.summary-card .card-value {
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 1.3rem;
+  margin-top: 0.25rem;
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--gold);
+  color: #000;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  transition: 0.2s ease;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  transition: 0.2s ease;
+}
+.btn-secondary:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* Form Elements */
+.form-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--text);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  outline: none;
+}
+.form-input:focus {
+  border-color: var(--gold);
+}
+
+/* Overlay Background */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  z-index: 40;
+  transition: opacity 0.25s ease;
+}
+
+/* Modal Styling */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease;
+}
+.modal-content {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Loan Cards */
+#loanContainer > .glass {
+  border-left: 3px solid transparent;
+}
+#loanContainer > .glass:hover {
+  border-left: 3px solid var(--gold);
+  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.1);
+}
+
+/* Loan Details Tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th, td {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  font-size: 0.85rem;
+}
+th {
+  color: var(--gold);
+  font-weight: 500;
+}
+tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Collapsible Details */
+.hidden { display: none; }
+
+/* Animations */
+@keyframes expandDown {
+  from { max-height: 0; opacity: 0; }
+  to { max-height: 600px; opacity: 1; }
+}
+.expand {
+  animation: expandDown 0.3s ease forwards;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.3);
+}
+
+/* Navbar Glass */
+nav.glass {
+  background: rgba(10, 11, 15, 0.8);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .summary-card {
+    padding: 1rem;
+  }
+  .summary-card .card-value {
+    font-size: 1.1rem;
+  }
+}
