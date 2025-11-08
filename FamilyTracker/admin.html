@@ -5,221 +5,367 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Morrow Industries — Family Payment Tracker (Admin)</title>
   <link rel="icon" href="/morIcon.png" />
+  <link rel="stylesheet" href="/assets/css/family-tracker.css" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script type="module" src="/assets/js/firebase-init.js"></script>
-  <style>
-    :root {
-      --gold: #d4af37;
-      --bg: #0a0b0f;
-      --glass: rgba(18, 20, 27, 0.75);
-      --border: rgba(255, 255, 255, 0.08);
-      --text: #e9eef8;
-    }
-    body {
-      background: radial-gradient(circle at center, var(--bg) 0%, #000 100%);
-      color: var(--text);
-      font-family: "Inter", sans-serif;
-      margin: 0;
-      overflow-x: hidden;
-      padding: 1.5rem;
-    }
-    .glass {
-      background: var(--glass);
-      backdrop-filter: blur(16px) saturate(140%);
-      border: 1px solid var(--border);
-      border-radius: 1rem;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
-    }
-    button {
-      background: var(--gold);
-      color: #000;
-      font-weight: 600;
-      border-radius: 0.5rem;
-      padding: 0.5rem 1rem;
-      transition: 0.2s;
-    }
-    button:hover { opacity: 0.85; }
-  </style>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-storage.js" type="module"></script>
+  <script src="/assets/js/firebase-init.js" type="module"></script>
 </head>
-<body>
-  <header class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-semibold text-[var(--gold)]">Family Payment Tracker — Admin</h1>
-    <button id="logoutBtn">Sign Out</button>
-  </header>
 
-  <div id="adminPanel" class="grid md:grid-cols-3 gap-6">
-    <!-- User List -->
-    <div class="glass p-4">
-      <h2 class="text-lg font-semibold mb-3">All Users</h2>
-      <div id="userList" class="space-y-2 text-sm"></div>
+<body class="min-h-screen flex flex-col bg-gradient-to-b from-black to-[#0a0b0f] text-[#e9eef8] font-[Inter]">
+  <!-- Navbar -->
+  <nav class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 py-3 glass border-b border-[rgba(255,255,255,0.08)] shadow-lg">
+    <div class="flex items-center gap-3">
+      <img src="/morIcon.png" alt="logo" class="h-8 w-8" />
+      <span class="text-xl font-semibold text-[#d4af37]">Family Payment Tracker</span>
     </div>
+    <button id="logoutBtn" class="bg-[#d4af37] text-black font-semibold rounded-md px-3 py-1 hover:opacity-80 transition">Sign Out</button>
+  </nav>
 
-    <!-- User Detail / Loans -->
-    <div class="glass p-4 md:col-span-2">
-      <h2 class="text-lg font-semibold mb-3">User Loans</h2>
-      <div id="selectedUserInfo" class="mb-4 text-sm italic"></div>
-      <div id="loanList" class="space-y-4"></div>
-      <button id="addLoanBtn" class="mt-4">Add Loan</button>
+  <!-- Main Content -->
+  <main class="mt-20 px-6 pb-12">
+    <!-- Summary Cards -->
+    <section id="summary" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="summary-card" id="totalBalanceCard">
+        <h3>Total Balance</h3>
+        <p id="totalBalance" class="card-value">$0.00</p>
+      </div>
+      <div class="summary-card">
+        <h3>Next Due Date</h3>
+        <p id="nextDueDate" class="card-value">—</p>
+      </div>
+      <div class="summary-card">
+        <h3>Next Amount Due</h3>
+        <p id="nextAmountDue" class="card-value">$0.00</p>
+      </div>
+      <div class="summary-card">
+        <h3>Active Loans</h3>
+        <p id="activeLoans" class="card-value">0</p>
+      </div>
+    </section>
+
+    <!-- User Selector -->
+    <section class="glass p-4 rounded-lg mb-6">
+      <h2 class="text-lg font-semibold text-[#d4af37] mb-2">Select User</h2>
+      <select id="userSelect" class="w-full bg-transparent border border-[rgba(255,255,255,0.08)] rounded px-2 py-1">
+        <option value="">Select a user...</option>
+      </select>
+    </section>
+
+    <!-- Loans Dashboard -->
+    <section>
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-xl font-semibold text-[#d4af37]">User Loans</h2>
+        <button id="addLoanBtn" class="bg-[#d4af37] text-black font-semibold rounded-md px-4 py-1 hover:opacity-80 transition">+ Add Loan</button>
+      </div>
+      <div id="loanContainer" class="space-y-4"></div>
+    </section>
+  </main>
+
+  <!-- Add Loan Modal -->
+  <div id="addLoanModal" class="modal hidden">
+    <div class="modal-content glass p-6 w-[90%] max-w-lg">
+      <h2 class="text-xl font-semibold text-[#d4af37] mb-4">Add New Loan</h2>
+      <form id="addLoanForm" class="space-y-3">
+        <div>
+          <label class="block text-sm mb-1">Loan Name</label>
+          <input type="text" name="loanName" required class="form-input" placeholder="e.g., Camry Purchase" />
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Total Amount</label>
+          <input type="number" name="totalAmount" required class="form-input" placeholder="e.g., 12000" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm mb-1">Start Date</label>
+            <input type="date" name="startDate" class="form-input" />
+          </div>
+          <div>
+            <label class="block text-sm mb-1">First Payment Date</label>
+            <input type="date" name="firstPaymentDate" class="form-input" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Payment Frequency</label>
+          <select name="paymentFrequency" class="form-input">
+            <option value="monthly">Monthly</option>
+            <option value="biweekly">Biweekly</option>
+            <option value="weekly">Weekly</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Loan Icon</label>
+          <input type="file" id="loanIconInput" accept="image/*" class="form-input" />
+          <img id="loanIconPreview" src="/assets/icons/default-loan.png" class="w-16 h-16 mt-2 rounded-md object-cover border border-[rgba(255,255,255,0.1)]" />
+        </div>
+        <div class="flex justify-end gap-2 pt-4">
+          <button type="button" id="cancelAddLoan" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Save Loan</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <script type="module">
-    import {
-      auth,
-      db,
-      GoogleAuthProvider,
-      signInWithPopup,
-      onAuthStateChanged,
-      signOut,
-      collection,
-      doc,
-      getDocs,
-      getDoc,
-      updateDoc,
-      addDoc,
-      onSnapshot
-    } from "/assets/js/firebase-init.js";
+  <!-- Icon Upload Modal -->
+  <div id="iconUploadModal" class="modal hidden">
+    <div class="modal-content glass p-6 w-[90%] max-w-md text-center">
+      <h2 class="text-xl font-semibold text-[#d4af37] mb-4">Change Loan Icon</h2>
+      <img id="iconPreview" src="/assets/icons/default-loan.png" class="w-24 h-24 mx-auto rounded-md border border-[rgba(255,255,255,0.1)] object-cover mb-4" />
+      <input type="file" id="iconFileInput" accept="image/*" class="form-input mb-4" />
+      <div class="flex justify-center gap-3">
+        <button id="cancelIconUpload" class="btn-secondary">Cancel</button>
+        <button id="confirmIconUpload" class="btn-primary">Upload</button>
+      </div>
+    </div>
+  </div>
 
-    const userListEl = document.getElementById('userList');
-    const loanListEl = document.getElementById('loanList');
-    const addLoanBtn = document.getElementById('addLoanBtn');
-    const selectedUserInfo = document.getElementById('selectedUserInfo');
-    const logoutBtn = document.getElementById('logoutBtn');
+  <!-- Overlay Background -->
+  <div id="overlay" class="overlay hidden"></div>
 
-    let selectedUser = null;
+  <!-- JS Logic (Part 2 follows next) -->
+  <script type="module" src="/assets/js/firebase-init.js"></script>
+<script type="module">
+/* ──────────────────────────────
+   Morrow Industries – Family Payment Tracker (Admin Logic)
+────────────────────────────── */
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, getDocs, collection,
+  setDoc, updateDoc, addDoc, onSnapshot, Timestamp
+} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+import {
+  getStorage, ref, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.14.0/firebase-storage.js";
+import { app } from "/assets/js/firebase-init.js";
 
-    // --- AUTH ---
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        return;
-      }
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (!userDoc.exists() || userDoc.data().role_familyTracker !== "admin") {
-        window.location = "unauthorized.html";
-        return;
-      }
-      loadUsers();
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+/* ───────────── Elements ───────────── */
+const logoutBtn = document.getElementById("logoutBtn");
+const userSelect = document.getElementById("userSelect");
+const loanContainer = document.getElementById("loanContainer");
+const overlay = document.getElementById("overlay");
+
+/* Summary */
+const totalBalanceEl = document.getElementById("totalBalance");
+const nextDueDateEl = document.getElementById("nextDueDate");
+const nextAmountDueEl = document.getElementById("nextAmountDue");
+const activeLoansEl = document.getElementById("activeLoans");
+
+/* Add Loan Modal */
+const addLoanModal = document.getElementById("addLoanModal");
+const addLoanForm = document.getElementById("addLoanForm");
+const addLoanBtn = document.getElementById("addLoanBtn");
+const cancelAddLoan = document.getElementById("cancelAddLoan");
+const loanIconInput = document.getElementById("loanIconInput");
+const loanIconPreview = document.getElementById("loanIconPreview");
+
+/* Icon Upload Modal */
+const iconUploadModal = document.getElementById("iconUploadModal");
+const iconPreview = document.getElementById("iconPreview");
+const iconFileInput = document.getElementById("iconFileInput");
+const cancelIconUpload = document.getElementById("cancelIconUpload");
+const confirmIconUpload = document.getElementById("confirmIconUpload");
+
+let selectedUserId = null;
+let currentIconLoanId = null;
+let iconFile = null;
+let uploadedIconFile = null;
+
+/* ───────────── Authentication ───────────── */
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+    return;
+  }
+  const uDoc = await getDoc(doc(db, "users", user.uid));
+  if (!uDoc.exists() || uDoc.data().role_familyTracker !== "admin") {
+    window.location = "unauthorized.html";
+    return;
+  }
+  loadUsers();
+});
+logoutBtn.onclick = () => signOut(auth);
+
+/* ───────────── Load Users List ───────────── */
+async function loadUsers() {
+  const snap = await getDocs(collection(db, "users"));
+  snap.forEach(u => {
+    const data = u.data();
+    const opt = document.createElement("option");
+    opt.value = u.id;
+    opt.textContent = data.name || data.email;
+    userSelect.appendChild(opt);
+  });
+}
+
+/* ───────────── Watch Loans for Selected User ───────────── */
+userSelect.addEventListener("change", e => {
+  selectedUserId = e.target.value || null;
+  loanContainer.innerHTML = "";
+  if (selectedUserId) watchLoans(selectedUserId);
+});
+
+function watchLoans(uid) {
+  const ref = collection(db, "loans", uid, "userLoans");
+  onSnapshot(ref, snap => {
+    loanContainer.innerHTML = "";
+    let totalBal = 0;
+    let allFuture = [];
+    snap.forEach(docSnap => {
+      const loan = docSnap.data();
+      renderLoan(uid, docSnap.id, loan);
+      const bal = calcBalance(loan);
+      totalBal += bal.remaining;
+      if (loan.futurePayments) allFuture.push(...loan.futurePayments);
     });
+    updateSummary(totalBal, allFuture, snap.size);
+  });
+}
 
-    logoutBtn.onclick = () => signOut(auth);
+/* ───────────── Summary Calculations ───────────── */
+function updateSummary(total, futures, count) {
+  totalBalanceEl.textContent = `$${total.toFixed(2)}`;
+  activeLoansEl.textContent = count;
+  if (futures.length) {
+    futures.sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
+    const next = futures[0];
+    nextDueDateEl.textContent = new Date(next.dueDate).toLocaleDateString();
+    nextAmountDueEl.textContent = `$${next.amount.toFixed(2)}`;
+  } else {
+    nextDueDateEl.textContent = "—";
+    nextAmountDueEl.textContent = "$0.00";
+  }
+}
 
-    // --- LOAD USERS ---
-    async function loadUsers() {
-      userListEl.innerHTML = "";
-      const q = await getDocs(collection(db, "users"));
-      q.forEach(u => {
-        const data = u.data();
-        const item = document.createElement('div');
-        item.className = "p-2 rounded hover:bg-[var(--border)] cursor-pointer";
-        item.innerHTML = `
-          <div class="flex justify-between items-center">
-            <span>${data.name || data.email}</span>
-            <select data-uid="${u.id}" class="bg-transparent border border-[var(--border)] rounded px-1 text-xs">
-              <option value="">none</option>
-              <option value="admin" ${data.role_familyTracker === "admin" ? "selected" : ""}>admin</option>
-              <option value="viewer" ${data.role_familyTracker === "viewer" ? "selected" : ""}>viewer</option>
-            </select>
-          </div>`;
-        item.querySelector("select").addEventListener("change", (e) => updateUserRole(u.id, e.target.value));
-        item.addEventListener("click", () => selectUser(u.id, data));
-        userListEl.appendChild(item);
-      });
-    }
+/* ───────────── Render Loan Card ───────────── */
+function renderLoan(uid, loanId, loan) {
+  const { loanName, totalAmount=0, loanIcon="/assets/icons/default-loan.png" } = loan;
+  const bal = calcBalance(loan);
+  const percent = totalAmount ? (bal.paid/totalAmount)*100 : 0;
 
-    async function updateUserRole(uid, role) {
-      await updateDoc(doc(db, "users", uid), { role_familyTracker: role || null });
-    }
+  const card = document.createElement("div");
+  card.className = "glass rounded-lg p-4 transition transform hover:-translate-y-1 hover:shadow-lg";
+  card.innerHTML = `
+    <div class="flex justify-between items-center cursor-pointer" data-expand="${loanId}">
+      <div class="flex items-center gap-3">
+        <img src="${loanIcon}" class="w-12 h-12 rounded-md object-cover border border-[rgba(255,255,255,0.1)]" />
+        <div>
+          <h3 class="text-[#d4af37] font-semibold">${loanName}</h3>
+          <p class="text-sm text-gray-300">Remaining: $${bal.remaining.toFixed(2)}</p>
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="text-sm text-gray-400">Next Due</p>
+        <p class="text-sm">${bal.nextDue || "—"}</p>
+      </div>
+    </div>
+    <div class="w-full h-2 bg-[rgba(255,255,255,0.1)] rounded mt-3">
+      <div class="h-2 bg-[#d4af37] rounded" style="width:${percent}%"></div>
+    </div>
+    <div id="details-${loanId}" class="hidden mt-4">
+      ${renderLoanDetails(loan, bal)}
+    </div>
+  `;
+  card.querySelector(`[data-expand="${loanId}"]`).onclick = () => toggleDetails(loanId);
+  loanContainer.appendChild(card);
+}
 
-    // --- SELECT USER & LOAD LOANS ---
-    function selectUser(uid, data) {
-      selectedUser = uid;
-      selectedUserInfo.textContent = `Managing loans for: ${data.name || data.email}`;
-      watchLoans(uid);
-    }
+function calcBalance(loan) {
+  const payments = loan.transactions || [];
+  const totalPaid = payments.reduce((a,t)=>a+t.amount,0);
+  const future = loan.futurePayments || [];
+  const remaining = (loan.totalAmount||0) - totalPaid;
+  const nextDue = future.length ? future.sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate))[0].dueDate : null;
+  return { paid: totalPaid, remaining, nextDue };
+}
 
-    function watchLoans(uid) {
-      loanListEl.innerHTML = "";
-      const ref = collection(db, "loans", uid, "userLoans");
-      onSnapshot(ref, (snap) => {
-        loanListEl.innerHTML = "";
-        if (snap.empty) {
-          const msg = document.createElement("div");
-          msg.className = "p-4 text-center text-gray-400 italic";
-          msg.textContent = "No loans found for this user.";
-          loanListEl.appendChild(msg);
-          return;
-        }
-        snap.forEach(docSnap => renderLoan(uid, docSnap.id, docSnap.data()));
-      });
-    }
+/* ───────────── Expanded Details Section ───────────── */
+function renderLoanDetails(loan, bal) {
+  const payments = loan.transactions||[];
+  const futures = loan.futurePayments||[];
+  let running = loan.totalAmount||0;
+  const rows = payments.map(p=>{
+    running -= p.amount;
+    return `<tr><td>${p.date.toDate().toLocaleDateString()}</td>
+            <td>$${p.amount.toFixed(2)}</td><td>${p.note||""}</td>
+            <td>$${running.toFixed(2)}</td></tr>`;
+  }).join("");
+  const futRows = futures.map(f=>`
+    <tr><td>${new Date(f.dueDate).toLocaleDateString()}</td>
+        <td>$${f.amount.toFixed(2)}</td></tr>`).join("");
+  return `
+  <div class="glass p-3 rounded mt-3">
+    <p class="text-sm mb-2">Total: $${loan.totalAmount?.toFixed(2)||0}</p>
+    <p class="text-sm mb-4">Remaining: <span class="text-[#d4af37]">$${bal.remaining.toFixed(2)}</span></p>
+    <h4 class="font-semibold text-[#d4af37] mb-1">Payment History</h4>
+    <table class="text-sm w-full mb-4 border-t border-[rgba(255,255,255,0.1)]">
+      <tr class="text-[#d4af37]"><th>Date</th><th>Amount</th><th>Note</th><th>Remaining</th></tr>
+      ${rows || "<tr><td colspan='4' class='text-center py-1 text-xs'>No payments yet</td></tr>"}
+    </table>
+    <h4 class="font-semibold text-[#d4af37] mb-1">Future Payments</h4>
+    <table class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]">
+      <tr class="text-[#d4af37]"><th>Due Date</th><th>Amount</th></tr>
+      ${futRows || "<tr><td colspan='2' class='text-center py-1 text-xs'>No future payments</td></tr>"}
+    </table>
+  </div>`;
+}
+function toggleDetails(id){
+  const d=document.getElementById(`details-${id}`);
+  d.classList.toggle("hidden");
+}
 
-    function renderLoan(uid, loanId, loan) {
-      const loanCard = document.createElement('div');
-      const transactions = loan.transactions || [];
-      let runningTotal = 0;
-      const rows = transactions.map(t => {
-        runningTotal -= t.amount;
-        const dateStr = t.date?.toDate?.().toLocaleDateString?.() || new Date(t.date).toLocaleDateString();
-        return `
-          <tr>
-            <td class="px-2 py-1">${dateStr}</td>
-            <td class="px-2 py-1">$${t.amount.toFixed(2)}</td>
-            <td class="px-2 py-1">${t.note || ""}</td>
-            <td class="px-2 py-1">$${runningTotal.toFixed(2)}</td>
-          </tr>`;
-      }).join("");
+/* ───────────── Add Loan Modal Logic ───────────── */
+addLoanBtn.onclick=()=>openModal(addLoanModal);
+cancelAddLoan.onclick=()=>closeModal(addLoanModal);
+loanIconInput.onchange=e=>{
+  const f=e.target.files[0];
+  if(f){const r=new FileReader();r.onload=ev=>loanIconPreview.src=ev.target.result;r.readAsDataURL(f);uploadedIconFile=f;}
+};
+addLoanForm.onsubmit=async e=>{
+  e.preventDefault();
+  if(!selectedUserId)return alert("Select a user first.");
+  const form=new FormData(addLoanForm);
+  const loan={
+    loanName:form.get("loanName"),
+    totalAmount:parseFloat(form.get("totalAmount")),
+    startDate:form.get("startDate")||null,
+    firstPaymentDate:form.get("firstPaymentDate")||null,
+    paymentFrequency:form.get("paymentFrequency"),
+    createdAt:Timestamp.now(),
+    transactions:[],
+    futurePayments:[]
+  };
+  let iconURL="/assets/icons/default-loan.png";
+  if(uploadedIconFile){
+    const path=`loanIcons/${Date.now()}-${uploadedIconFile.name}`;
+    const sRef=ref(storage,path);
+    await uploadBytes(sRef,uploadedIconFile);
+    iconURL=await getDownloadURL(sRef);
+  }
+  loan.loanIcon=iconURL;
+  await addDoc(collection(db,"loans",selectedUserId,"userLoans"),loan);
+  addLoanForm.reset();loanIconPreview.src="/assets/icons/default-loan.png";
+  uploadedIconFile=null;
+  closeModal(addLoanModal);
+};
 
-      const total = runningTotal.toFixed(2);
+/* ───────────── Modal Helpers ───────────── */
+function openModal(m){m.classList.remove("hidden");overlay.classList.remove("hidden");}
+function closeModal(m){m.classList.add("hidden");overlay.classList.add("hidden");}
 
-      loanCard.className = "glass p-4";
-      loanCard.innerHTML = `
-        <h3 class="text-[var(--gold)] font-semibold mb-2">${loan.loanName}</h3>
-        <p class="mb-2 text-sm">Current Balance: <span class="text-[var(--gold)] font-semibold">$${total}</span></p>
-        <table class="text-sm w-full border-t border-[var(--border)] mb-3">
-          <tr class="text-[var(--gold)]"><th>Date</th><th>Amount</th><th>Note</th><th>Remaining</th></tr>
-          ${rows || "<tr><td colspan='4' class='text-center p-2 text-xs'>No payments yet</td></tr>"}
-        </table>
-        <form data-loan="${loanId}" class="addPayment space-x-2 text-sm">
-          <input type="number" step="0.01" placeholder="Amount" class="border px-2 py-1 rounded w-24 bg-transparent border-[var(--border)]">
-          <input type="text" placeholder="Note" class="border px-2 py-1 rounded w-40 bg-transparent border-[var(--border)]">
-          <button type="submit">Add Payment</button>
-        </form>
-      `;
-      loanCard.querySelector("form").addEventListener("submit", e => addPayment(e, uid, loanId));
-      loanListEl.appendChild(loanCard);
-    }
-
-    // --- ADD PAYMENT ---
-    async function addPayment(e, uid, loanId) {
-      e.preventDefault();
-      const [amountInput, noteInput] = e.target.elements;
-      const amount = parseFloat(amountInput.value);
-      const note = noteInput.value;
-      if (!amount) return;
-      const loanRef = doc(db, "loans", uid, "userLoans", loanId);
-      const loanSnap = await getDoc(loanRef);
-      const existing = loanSnap.data().transactions || [];
-
-      // ✅ Use standard JS Date instead of serverTimestamp to avoid array error
-      existing.push({ amount, note, date: new Date() });
-
-      await updateDoc(loanRef, { transactions: existing });
-      e.target.reset();
-    }
-
-    // --- ADD LOAN ---
-    addLoanBtn.onclick = async () => {
-      if (!selectedUser) return alert("Select a user first.");
-      const name = prompt("Enter loan name:");
-      if (!name) return;
-      await addDoc(collection(db, "loans", selectedUser, "userLoans"), {
-        loanName: name,
-        createdAt: new Date(),
-        transactions: []
-      });
-    };
-  </script>
+/* ───────────── Icon Upload Modal (placeholder) ───────────── */
+cancelIconUpload.onclick=()=>closeModal(iconUploadModal);
+confirmIconUpload.onclick=()=>closeModal(iconUploadModal);
+</script>
 </body>
 </html>
