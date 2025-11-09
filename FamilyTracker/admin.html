@@ -52,39 +52,33 @@
   <!-- Full-Screen Loan Details Modal (Admin) -->
   <div id="loanDetailsModal" class="fixed inset-0 hidden flex flex-col justify-end bg-black/80 backdrop-blur-xl z-50 transition-transform duration-300 ease-out">
     <div class="glass w-full max-h-[90vh] rounded-t-2xl overflow-y-auto p-6 transform translate-y-full transition-all duration-300" id="loanDetailsCard">
+  <!-- Top Bar -->
+  <div class="flex justify-between items-center mb-4">
+    <button id="closeLoanDetails" class="text-gray-400 hover:text-[#d4af37] text-xl font-bold">✕</button>
+    <h2 id="detailsName" class="text-xl font-semibold text-[#d4af37] text-center flex-1">Loan Title</h2>
+  </div>
 
-      <!-- Header -->
-      <div class="flex justify-between items-start mb-4">
-        <button id="closeLoanDetails" class="text-gray-400 hover:text-[#d4af37] text-xl font-bold">✕</button>
-        <div class="flex flex-col items-center gap-3 mx-auto">
-          <img id="detailsIcon" src="/assets/icons/default-loan.png" class="w-40 h-40 sm:w-32 sm:h-32 object-cover rounded-lg border border-[rgba(255,255,255,0.1)]" />
-          <h2 id="detailsName" class="text-xl font-semibold text-[#d4af37]">Loan Title</h2>
-        </div>
-        <div class="w-8"></div>
+  <!-- Tabs -->
+  <div class="flex justify-center gap-4 mb-6">
+    <button id="tabView" class="tab-btn active">View</button>
+    <button id="tabEdit" class="tab-btn">Edit</button>
+    <button id="tabPayment" class="tab-btn">Payment</button>
+  </div>
+
+  <!-- Panels Container -->
+  <div id="panelContainer" class="relative overflow-hidden min-h-[400px]">
+    <!-- VIEW PANEL -->
+    <div id="detailsPanel" class="panel detailsPanel active animate-slideDown">
+      <div class="flex flex-col items-center mb-4">
+        <img id="detailsIcon" src="/assets/icons/default-loan.png" class="w-32 h-32 object-cover mb-3 rounded-lg" />
       </div>
-
-      <!-- Stats Grid -->
-      <div id="detailsStats" class="mb-4 grid grid-cols-2 gap-3 text-sm">
-        <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
-          <p class="text-gray-300 text-xs mb-1">Total</p>
-          <p id="detailsTotal" class="text-[#d4af37] font-semibold">$0.00</p>
-        </div>
-        <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
-          <p class="text-gray-300 text-xs mb-1">Paid</p>
-          <p id="detailsPaid" class="text-[#d4af37] font-semibold">$0.00</p>
-        </div>
-        <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
-          <p class="text-gray-300 text-xs mb-1">Remaining</p>
-          <p id="detailsRemaining" class="text-[#d4af37] font-semibold">$0.00</p>
-        </div>
-        <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
-          <p class="text-gray-300 text-xs mb-1">Next Due</p>
-          <p id="detailsNextDue" class="text-[#d4af37] font-semibold">—</p>
-        </div>
+      <div id="detailsStats" class="grid grid-cols-2 gap-3 text-sm mb-6">
+        <div class="glass p-3 text-center"><p>Total</p><p id="detailsTotal" class="text-[#d4af37] font-semibold">$0.00</p></div>
+        <div class="glass p-3 text-center"><p>Paid</p><p id="detailsPaid" class="text-[#d4af37] font-semibold">$0.00</p></div>
+        <div class="glass p-3 text-center"><p>Remaining</p><p id="detailsRemaining" class="text-[#d4af37] font-semibold">$0.00</p></div>
+        <div class="glass p-3 text-center"><p>Next Due</p><p id="detailsNextDue" class="text-[#d4af37] font-semibold">—</p></div>
       </div>
-
-      <!-- Tables -->
-      <div id="loanPayments" class="space-y-6">
+      <div class="space-y-6">
         <div>
           <h3 class="text-[#d4af37] font-semibold mb-2">Payment History</h3>
           <table id="detailsHistory" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
@@ -94,51 +88,34 @@
           <table id="detailsUpcoming" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
         </div>
       </div>
+    </div>
 
-      <!-- Buttons -->
-      <div class="mt-6 flex flex-wrap justify-between gap-3 border-t border-[rgba(255,255,255,0.1)] pt-4">
-        <button id="editLoanBtn" class="bg-[#d4af37] text-black font-semibold rounded-md px-4 py-2 hover:opacity-90 transition">Edit Loan</button>
-        <button id="addPaymentBtn" class="border border-[#d4af37] text-[#d4af37] rounded-md px-4 py-2 hover:bg-[#d4af37]/10 transition">Add Payment</button>
-        <button id="deleteLoanBtn" class="border border-red-500 text-red-400 rounded-md px-4 py-2 hover:bg-red-600/10 transition">Delete Loan</button>
-      </div>
+    <!-- EDIT PANEL -->
+    <div id="editPanel" class="panel editPanel hidden">
+      <h3 class="text-[#d4af37] font-semibold mb-3">Edit Loan</h3>
+      <form id="editLoanForm" class="flex flex-col gap-3">
+        <input id="editLoanName" placeholder="Loan Name" class="form-input" />
+        <input id="editTotalAmount" type="number" placeholder="Total Amount" class="form-input" />
+        <select id="editFrequency" class="form-input">
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="biweekly">Biweekly</option>
+        </select>
+        <button id="saveEditBtn" type="button" class="btn-primary">Save Changes</button>
+      </form>
+      <button id="deleteLoanBtn" class="btn-danger mt-6 opacity-0 translate-y-6 transition-all duration-300">Delete Loan</button>
+    </div>
 
-      <!-- Edit Loan -->
-      <div id="editSection" class="hidden mt-6 border-t border-[rgba(255,255,255,0.1)] pt-4 animate-slideUp">
-        <h3 class="text-[#d4af37] font-semibold mb-2">Edit Loan Details</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-          <div>
-            <label class="block text-gray-300 text-xs mb-1">Loan Name</label>
-            <input id="editLoanName" type="text" class="form-input w-full" placeholder="Loan name" />
-          </div>
-          <div>
-            <label class="block text-gray-300 text-xs mb-1">Total Amount</label>
-            <input id="editTotalAmount" type="number" step="0.01" class="form-input w-full" placeholder="Total" />
-          </div>
-          <div>
-            <label class="block text-gray-300 text-xs mb-1">Payment Frequency</label>
-            <select id="editFrequency" class="form-input w-full">
-              <option value="monthly">Monthly</option>
-              <option value="biweekly">Biweekly</option>
-              <option value="weekly">Weekly</option>
-            </select>
-          </div>
-        </div>
-        <div class="flex justify-end gap-2 mt-4">
-          <button id="cancelEditBtn" class="btn-secondary">Cancel</button>
-          <button id="saveEditBtn" class="btn-primary">Save Changes</button>
-        </div>
-      </div>
-
-      <!-- Add Payment -->
-      <div id="addPaymentSection" class="hidden mt-6 border-t border-[rgba(255,255,255,0.1)] pt-4 animate-slideUp">
-        <h3 class="text-[#d4af37] font-semibold mb-2">Add Payment</h3>
-        <form id="addPaymentForm" class="flex flex-wrap gap-2 text-sm">
-          <input id="paymentAmount" type="number" step="0.01" placeholder="Amount" class="form-input w-28" required />
-          <input id="paymentNote" type="text" placeholder="Note" class="form-input flex-1" />
-          <button type="submit" class="btn-primary">Add</button>
-        </form>
-      </div>
-
+    <!-- PAYMENT PANEL -->
+    <div id="paymentPanel" class="panel paymentPanel hidden">
+      <h3 class="text-[#d4af37] font-semibold mb-3">Add Payment</h3>
+      <form id="addPaymentForm" class="flex flex-col gap-3">
+        <input id="paymentAmount" type="number" step="0.01" placeholder="Amount" class="form-input" required />
+        <input id="paymentNote" placeholder="Note" class="form-input" />
+        <button type="submit" class="btn-primary">Add Payment</button>
+      </form>
+    </div>
+  </div>
     </div>
   </div>
 
