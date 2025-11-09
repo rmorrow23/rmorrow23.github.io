@@ -486,5 +486,63 @@ document.addEventListener("keydown", (e) => {
 loanDetailsModal?.addEventListener("click", (e) => {
   if (e.target === loanDetailsModal) closeModal();
 });
+/* ───────── TAB + PANEL ANIMATIONS ───────── */
+const tabs = {
+  view: document.getElementById("tabView"),
+  edit: document.getElementById("tabEdit"),
+  pay: document.getElementById("tabPayment")
+};
+const panels = {
+  view: document.getElementById("detailsPanel"),
+  edit: document.getElementById("editPanel"),
+  pay: document.getElementById("paymentPanel")
+};
+const deleteBtn = document.getElementById("deleteLoanBtn");
 
+let currentTab = "view";
+
+function switchTab(target) {
+  if (target === currentTab) return;
+  Object.values(tabs).forEach(t => t.classList.remove("active"));
+  tabs[target].classList.add("active");
+
+  // animate transitions
+  const prev = panels[currentTab];
+  const next = panels[target];
+  prev.classList.remove("active");
+  next.classList.add("active");
+
+  // Assign directional animations
+  if (currentTab === "view" && target === "edit") {
+    prev.classList.add("animate-slideUp");
+    next.classList.add("animate-slideLeftIn");
+  } else if (currentTab === "view" && target === "pay") {
+    prev.classList.add("animate-slideUp");
+    next.classList.add("animate-slideRightIn");
+  } else if (target === "view") {
+    // slide details back down
+    prev.classList.add("animate-slideDown");
+    next.classList.add("animate-slideDown");
+  }
+
+  // delete button visibility logic
+  if (target === "edit") {
+    deleteBtn.classList.remove("opacity-0", "translate-y-6");
+  } else {
+    deleteBtn.classList.add("opacity-0", "translate-y-6");
+  }
+
+  // cleanup previous animations
+  setTimeout(() => {
+    prev.className = prev.className.replace(/animate-\S+/g, "");
+    next.className = next.className.replace(/animate-\S+/g, "");
+  }, 400);
+
+  currentTab = target;
+}
+
+// Tab event bindings
+tabs.view.addEventListener("click", () => switchTab("view"));
+tabs.edit.addEventListener("click", () => switchTab("edit"));
+tabs.pay.addEventListener("click", () => switchTab("pay"));
 /* End */
