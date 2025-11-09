@@ -8,9 +8,19 @@
   <link rel="stylesheet" href="/assets/css/family-tracker.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="module" src="/assets/js/firebase-init.js"></script>
+  <style>
+    /* Modal animation helpers */
+    #loanDetailsCard { transition: transform 0.3s ease-in-out; }
+    #loanDetailsModal { transition: opacity 0.3s ease; }
+    #loanDetailsModal:not(.hidden) { opacity: 1; }
+
+    @keyframes slideUp { from {opacity: 0; transform: translateY(20px);} to {opacity: 1; transform: translateY(0);} }
+    .animate-slideUp { animation: slideUp 0.3s ease-out; }
+  </style>
 </head>
 
 <body class="min-h-screen flex flex-col bg-gradient-to-b from-black to-[#0a0b0f] text-[#e9eef8] font-[Inter] p-6">
+
   <!-- Header -->
   <header class="flex justify-between items-center mb-6">
     <div class="flex items-center gap-3">
@@ -20,15 +30,7 @@
     <button id="logoutBtn" class="bg-[#d4af37] text-black font-semibold rounded-md px-3 py-1 hover:opacity-80 transition">Sign Out</button>
   </header>
 
-  <!-- Summary -->
-  <section id="summary" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" style="display:hidden;">
-    <div class="summary-card"><h3>Total Balance</h3><p id="totalBalance" class="card-value">$0.00</p></div>
-    <div class="summary-card"><h3>Next Due Date</h3><p id="nextDueDate" class="card-value">—</p></div>
-    <div class="summary-card"><h3>Next Amount Due</h3><p id="nextAmountDue" class="card-value">$0.00</p></div>
-    <div class="summary-card"><h3>Active Loans</h3><p id="activeLoans" class="card-value">0</p></div>
-  </section>
-
-  <!-- Panel -->
+  <!-- Admin Panel -->
   <div id="adminPanel" class="grid md:grid-cols-3 gap-6">
     <!-- Users -->
     <div class="glass p-4">
@@ -47,121 +49,88 @@
     </div>
   </div>
 
-  <!-- Add Loan Modal -->
-  <div id="addLoanModal" class="modal hidden">
-    <div class="modal-content glass p-6 w-[90%] max-w-lg">
-      <h2 class="text-xl font-semibold text-[#d4af37] mb-4">Add New Loan</h2>
-      <form id="addLoanForm" class="space-y-3">
-        <div><label class="block text-sm mb-1">Loan Name</label>
-          <input type="text" name="loanName" required class="form-input" placeholder="e.g. Camry Purchase" />
+  <!-- Full-Screen Loan Details Modal (Admin) -->
+  <div id="loanDetailsModal" class="fixed inset-0 hidden flex flex-col justify-end bg-black/80 backdrop-blur-xl z-50 transition-transform duration-300 ease-out">
+    <div class="glass w-full max-h-[90vh] rounded-t-2xl overflow-y-auto p-6 transform translate-y-full transition-all duration-300" id="loanDetailsCard">
+
+      <!-- Header -->
+      <div class="flex justify-between items-start mb-4">
+        <button id="closeLoanDetails" class="text-gray-400 hover:text-[#d4af37] text-xl font-bold">✕</button>
+        <div class="flex flex-col items-center gap-3 mx-auto">
+          <img id="detailsIcon" src="/assets/icons/default-loan.png" class="w-40 h-40 sm:w-32 sm:h-32 object-cover rounded-lg border border-[rgba(255,255,255,0.1)]" />
+          <h2 id="detailsName" class="text-xl font-semibold text-[#d4af37]">Loan Title</h2>
         </div>
-        <div><label class="block text-sm mb-1">Total Amount</label>
-          <input type="number" name="totalAmount" required class="form-input" placeholder="e.g. 12000" />
+        <div class="w-8"></div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div id="detailsStats" class="mb-4 grid grid-cols-2 gap-3 text-sm">
+        <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
+          <p class="text-gray-300 text-xs mb-1">Total</p>
+          <p id="detailsTotal" class="text-[#d4af37] font-semibold">$0.00</p>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div><label class="block text-sm mb-1">Start Date</label><input type="date" name="startDate" class="form-input" /></div>
-          <div><label class="block text-sm mb-1">First Payment Date</label><input type="date" name="firstPaymentDate" class="form-input" /></div>
+        <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
+          <p class="text-gray-300 text-xs mb-1">Paid</p>
+          <p id="detailsPaid" class="text-[#d4af37] font-semibold">$0.00</p>
         </div>
-        <div><label class="block text-sm mb-1">Payment Frequency</label>
-          <select name="paymentFrequency" class="form-input">
-            <option value="monthly">Monthly</option>
-            <option value="biweekly">Biweekly</option>
-            <option value="weekly">Weekly</option>
-          </select>
+        <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
+          <p class="text-gray-300 text-xs mb-1">Remaining</p>
+          <p id="detailsRemaining" class="text-[#d4af37] font-semibold">$0.00</p>
         </div>
-        <div><label class="block text-sm mb-1">Loan Icon</label>
-          <input type="file" id="loanIconInput" accept="image/*" class="form-input" />
-          <img id="loanIconPreview" src="/assets/icons/default-loan.png" class="w-16 h-16 mt-2 rounded-md object-cover border border-[rgba(255,255,255,0.1)]" />
+        <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
+          <p class="text-gray-300 text-xs mb-1">Next Due</p>
+          <p id="detailsNextDue" class="text-[#d4af37] font-semibold">—</p>
         </div>
-        <div class="flex justify-end gap-2 pt-4">
-          <button type="button" id="cancelAddLoan" class="btn-secondary">Cancel</button>
-          <button type="submit" class="btn-primary">Save Loan</button>
+      </div>
+
+      <!-- Tables -->
+      <div id="loanPayments" class="space-y-6">
+        <div>
+          <h3 class="text-[#d4af37] font-semibold mb-2">Payment History</h3>
+          <table id="detailsHistory" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
         </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Upload Icon Modal -->
-  <div id="iconUploadModal" class="modal hidden">
-    <div class="modal-content glass p-6 w-[90%] max-w-md text-center">
-      <h2 class="text-xl font-semibold text-[#d4af37] mb-4">Change Loan Icon</h2>
-      <img id="iconPreview" src="/assets/icons/default-loan.png" class="w-24 h-24 mx-auto rounded-md border border-[rgba(255,255,255,0.1)] object-cover mb-4" />
-      <input type="file" id="iconFileInput" accept="image/*" class="form-input mb-4" />
-      <div class="flex justify-center gap-3">
-        <button id="cancelIconUpload" class="btn-secondary">Cancel</button>
-        <button id="confirmIconUpload" class="btn-primary">Upload</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Full-Screen Loan Details Modal -->
- <!-- Full-Screen Loan Details Modal (Admin) -->
-<div id="loanDetailsModal" class="fixed inset-0 hidden flex flex-col justify-end bg-black/80 backdrop-blur-xl z-50 transition-transform duration-300 ease-out">
-
-  <div class="glass w-full max-h-[90vh] rounded-t-2xl overflow-y-auto p-6 transform translate-y-full transition-all duration-300" id="loanDetailsCard">
-
-    <!-- Header -->
-    <div class="flex justify-between items-start mb-4">
-      <button id="closeLoanDetails" class="text-gray-400 hover:text-[#d4af37] text-xl font-bold">✕</button>
-      <div class="flex flex-col items-center gap-3 mx-auto">
-        <img id="detailsIcon" src="/assets/icons/default-loan.png" class="w-40 h-40 sm:w-32 sm:h-32 object-cover rounded-lg border border-[rgba(255,255,255,0.1)]" />
-        <h2 id="detailsName" class="text-xl font-semibold text-[#d4af37]">Loan Title</h2>
-      </div>
-      <!-- Placeholder to balance close button spacing -->
-      <div class="w-8"></div>
-    </div>
-
-    <!-- Stats Grid -->
-    <div id="detailsStats" class="mb-4 grid grid-cols-2 gap-3 text-sm">
-      <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
-        <p class="text-gray-300 text-xs mb-1">Total</p>
-        <p id="detailsTotal" class="text-[#d4af37] font-semibold">$0.00</p>
+        <div>
+          <h3 class="text-[#d4af37] font-semibold mb-2">Upcoming Payments</h3>
+          <table id="detailsUpcoming" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
+        </div>
       </div>
 
-      <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
-        <p class="text-gray-300 text-xs mb-1">Paid</p>
-        <p id="detailsPaid" class="text-[#d4af37] font-semibold">$0.00</p>
+      <!-- Buttons -->
+      <div class="mt-6 flex flex-wrap justify-between gap-3 border-t border-[rgba(255,255,255,0.1)] pt-4">
+        <button id="editLoanBtn" class="bg-[#d4af37] text-black font-semibold rounded-md px-4 py-2 hover:opacity-90 transition">Edit Loan</button>
+        <button id="addPaymentBtn" class="border border-[#d4af37] text-[#d4af37] rounded-md px-4 py-2 hover:bg-[#d4af37]/10 transition">Add Payment</button>
+        <button id="deleteLoanBtn" class="border border-red-500 text-red-400 rounded-md px-4 py-2 hover:bg-red-600/10 transition">Delete Loan</button>
       </div>
 
-      <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
-        <p class="text-gray-300 text-xs mb-1">Remaining</p>
-        <p id="detailsRemaining" class="text-[#d4af37] font-semibold">$0.00</p>
+      <!-- Edit Loan -->
+      <div id="editSection" class="hidden mt-6 border-t border-[rgba(255,255,255,0.1)] pt-4 animate-slideUp">
+        <h3 class="text-[#d4af37] font-semibold mb-2">Edit Loan Details</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+          <div>
+            <label class="block text-gray-300 text-xs mb-1">Loan Name</label>
+            <input id="editLoanName" type="text" class="form-input w-full" placeholder="Loan name" />
+          </div>
+          <div>
+            <label class="block text-gray-300 text-xs mb-1">Total Amount</label>
+            <input id="editTotalAmount" type="number" step="0.01" class="form-input w-full" placeholder="Total" />
+          </div>
+          <div>
+            <label class="block text-gray-300 text-xs mb-1">Payment Frequency</label>
+            <select id="editFrequency" class="form-input w-full">
+              <option value="monthly">Monthly</option>
+              <option value="biweekly">Biweekly</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-4">
+          <button id="cancelEditBtn" class="btn-secondary">Cancel</button>
+          <button id="saveEditBtn" class="btn-primary">Save Changes</button>
+        </div>
       </div>
 
-      <div class="glass rounded-md p-3 text-center flex flex-col justify-center">
-        <p class="text-gray-300 text-xs mb-1">Next Due</p>
-        <p id="detailsNextDue" class="text-[#d4af37] font-semibold">—</p>
-      </div>
-    </div>
-
-    <!-- Payment Tables -->
-    <div id="loanPayments" class="space-y-6">
-
-      <div>
-        <h3 class="text-[#d4af37] font-semibold mb-2">Payment History</h3>
-        <table id="detailsHistory" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
-      </div>
-
-      <div>
-        <h3 class="text-[#d4af37] font-semibold mb-2">Upcoming Payments</h3>
-        <table id="detailsUpcoming" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
-      </div>
-
-    </div>
-
-    <!-- Admin Actions (future integration) -->
-    <div class="mt-6 flex flex-wrap justify-between gap-3 border-t border-[rgba(255,255,255,0.1)] pt-4">
-      <button id="editLoanBtn" class="bg-[#d4af37] text-black font-semibold rounded-md px-4 py-2 hover:opacity-90 transition">Edit Loan</button>
-      <button id="addPaymentBtn" class="border border-[#d4af37] text-[#d4af37] rounded-md px-4 py-2 hover:bg-[#d4af37]/10 transition">Add Payment</button>
-      <button id="deleteLoanBtn" class="border border-red-500 text-red-400 rounded-md px-4 py-2 hover:bg-red-600/10 transition">Delete Loan</button>
-    </div>
-
-  </div>
-</div>
-        
-          
-      <!-- Add Payment (in Edit Mode) -->
-      <div id="addPaymentSection" class="hidden mt-6">
+      <!-- Add Payment -->
+      <div id="addPaymentSection" class="hidden mt-6 border-t border-[rgba(255,255,255,0.1)] pt-4 animate-slideUp">
         <h3 class="text-[#d4af37] font-semibold mb-2">Add Payment</h3>
         <form id="addPaymentForm" class="flex flex-wrap gap-2 text-sm">
           <input id="paymentAmount" type="number" step="0.01" placeholder="Amount" class="form-input w-28" required />
@@ -169,11 +138,11 @@
           <button type="submit" class="btn-primary">Add</button>
         </form>
       </div>
+
     </div>
   </div>
 
   <!-- Delete Confirmation Modals -->
-  <!-- Passcode -->
   <div id="passcodeModal" class="modal hidden">
     <div class="modal-content glass p-6 w-[90%] max-w-sm text-center">
       <h2 class="text-lg font-semibold text-[#d4af37] mb-2">Enter Admin Passcode</h2>
@@ -185,7 +154,6 @@
     </div>
   </div>
 
-  <!-- Override -->
   <div id="overrideModal" class="modal hidden">
     <div class="modal-content glass p-6 w-[90%] max-w-sm text-center">
       <h2 class="text-lg font-semibold text-[#d4af37] mb-3">Admin Override Required</h2>
@@ -197,7 +165,6 @@
     </div>
   </div>
 
-  <!-- Name Match -->
   <div id="nameMatchModal" class="modal hidden">
     <div class="modal-content glass p-6 w-[90%] max-w-sm text-center">
       <h2 class="text-lg font-semibold text-[#d4af37] mb-3">Final Confirmation</h2>
@@ -213,272 +180,7 @@
   <!-- Overlay -->
   <div id="overlay" class="overlay hidden"></div>
 
-  <!-- JS Logic will follow -->
-<script type="module">
-import {
-  auth, db,
-  GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut,
-  collection, doc, getDoc, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc
-} from "/assets/js/firebase-init.js";
-
-/* ───────────── GLOBAL ELEMENTS ───────────── */
-const userListEl = document.getElementById("userList");
-const loanListEl = document.getElementById("loanList");
-const logoutBtn = document.getElementById("logoutBtn");
-const selectedUserInfo = document.getElementById("selectedUserInfo");
-
-/* Modals & Buttons */
-const loanDetailsModal = document.getElementById("loanDetailsModal");
-const loanDetailsCard  = document.getElementById("loanDetailsCard");
-const closeLoanDetails = document.getElementById("closeLoanDetails");
-const editLoanBtn      = document.getElementById("editLoanBtn");
-const editSection      = document.getElementById("editSection");
-const cancelEditBtn    = document.getElementById("cancelEditBtn");
-const saveEditBtn      = document.getElementById("saveEditBtn");
-const deleteLoanBtn    = document.getElementById("deleteLoanBtn");
-const addPaymentSection= document.getElementById("addPaymentSection");
-const addPaymentForm   = document.getElementById("addPaymentForm");
-
-/* Delete sequence modals */
-const passcodeModal    = document.getElementById("passcodeModal");
-const overrideModal    = document.getElementById("overrideModal");
-const nameMatchModal   = document.getElementById("nameMatchModal");
-const adminPassInput   = document.getElementById("adminPassInput");
-const verifyPasscode   = document.getElementById("verifyPasscode");
-const confirmOverride  = document.getElementById("confirmOverride");
-const finalDeleteBtn   = document.getElementById("finalDeleteBtn");
-const confirmLoanNameInput = document.getElementById("confirmLoanNameInput");
-
-/* Summary */
-const totalBalanceEl   = document.getElementById("totalBalance");
-const nextDueDateEl    = document.getElementById("nextDueDate");
-const nextAmountDueEl  = document.getElementById("nextAmountDue");
-const activeLoansEl    = document.getElementById("activeLoans");
-
-let selectedUser = null;
-let currentLoan  = null;
-let verifiedPass = false;
-
-/* ───────────── AUTHENTICATION ───────────── */
-logoutBtn.onclick = () => signOut(auth);
-
-onAuthStateChanged(auth, async user => {
-  if (!user) {
-    await signInWithPopup(auth,new GoogleAuthProvider());
-    return;
-  }
-  const u = await getDoc(doc(db,"users",user.uid));
-  if (!u.exists() || u.data().role_familyTracker!=="admin"){
-    window.location="unauthorized.html"; return;
-  }
-  loadUsers();
-});
-
-/* ───────────── LOAD USERS ───────────── */
-async function loadUsers(){
-  userListEl.innerHTML="";
-  const users=await getDocs(collection(db,"users"));
-  users.forEach(u=>{
-    const data=u.data();
-    const row=document.createElement("div");
-    row.className="p-2 rounded hover:bg-[var(--border)] cursor-pointer";
-    row.innerHTML=`
-      <div class="flex justify-between items-center">
-        <span>${data.name||data.email}</span>
-        <select data-uid="${u.id}" class="bg-transparent border border-[var(--border)] rounded px-1 text-xs">
-          <option value="">none</option>
-          <option value="admin" ${data.role_familyTracker==="admin"?"selected":""}>admin</option>
-          <option value="viewer" ${data.role_familyTracker==="viewer"?"selected":""}>viewer</option>
-        </select>
-      </div>`;
-    row.querySelector("select").onchange=e=>updateUserRole(u.id,e.target.value);
-    row.onclick=()=>selectUser(u.id,data);
-    userListEl.appendChild(row);
-  });
-}
-async function updateUserRole(uid,role){
-  await updateDoc(doc(db,"users",uid),{role_familyTracker:role||null});
-}
-
-/* ───────────── SELECT USER ───────────── */
-function selectUser(uid,data){
-  selectedUser=uid;
-  selectedUserInfo.textContent=`Managing loans for: ${data.name||data.email}`;
-  watchLoans(uid);
-}
-
-/* ───────────── WATCH LOANS ───────────── */
-function watchLoans(uid){
-  loanListEl.innerHTML="";
-  const ref=collection(db,"loans",uid,"userLoans");
-  onSnapshot(ref,snap=>{
-    loanListEl.innerHTML="";
-    if(snap.empty){
-      loanListEl.innerHTML=`<p class="text-center text-gray-400 italic p-4">No loans yet</p>`;
-      updateSummary(0,[],0);
-      return;
-    }
-    let total=0, future=[];
-    snap.forEach(d=>{
-      const loan=d.data(); loan.id=d.id;
-      total+=calcBalance(loan).remaining;
-      if(loan.futurePayments) future.push(...loan.futurePayments);
-      renderLoanCard(uid,loan);
-    });
-    updateSummary(total,future,snap.size);
-  });
-}
-
-/* ───────────── DASHBOARD SUMMARY ───────────── */
-function updateSummary(total,futures,count){
-  totalBalanceEl.textContent=`$${total.toFixed(2)}`;
-  activeLoansEl.textContent=count;
-  if(futures.length){
-    futures.sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
-    const n=futures[0];
-    nextDueDateEl.textContent=new Date(n.dueDate).toLocaleDateString();
-    nextAmountDueEl.textContent=`$${n.amount.toFixed(2)}`;
-  }else{
-    nextDueDateEl.textContent="—"; nextAmountDueEl.textContent="$0.00";
-  }
-}
-
-/* ───────────── RENDER LOAN CARD ───────────── */
-function renderLoanCard(uid,loan){
-  const bal=calcBalance(loan);
-  const percent=(loan.totalAmount?(bal.paid/loan.totalAmount)*100:0);
-  const card=document.createElement("div");
-  card.className="glass p-4 rounded-md cursor-pointer hover:shadow-lg transition";
-  card.innerHTML=`
-    <div class="flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <img src="${loan.loanIcon||"/assets/icons/default-loan.png"}" class="w-12 h-12 rounded-md border border-[rgba(255,255,255,0.1)]"/>
-        <div>
-          <h3 class="text-[#d4af37] font-semibold">${loan.loanName}</h3>
-          <p class="text-sm text-gray-400">Remaining $${bal.remaining.toFixed(2)}</p>
-        </div>
-      </div>
-      <div class="text-right text-sm">
-        <p class="text-gray-400">Next</p>
-        <p>${bal.nextDue||"—"}</p>
-      </div>
-    </div>
-    <div class="h-2 bg-[rgba(255,255,255,0.1)] rounded mt-3">
-      <div class="h-2 bg-[#d4af37] rounded" style="width:${percent}%"></div>
-    </div>`;
-  card.onclick=()=>openLoanModal(uid,loan);
-  loanListEl.appendChild(card);
-}
-
-/* ───────────── LOAN MODAL HANDLING ───────────── */
-function openLoanModal(uid,loan){
-  currentLoan={uid,id:loan.id,data:loan};
-  fillLoanDetails(loan);
-  loanDetailsModal.classList.remove("hidden");
-  setTimeout(()=>loanDetailsCard.classList.remove("translate-y-full"),10);
-}
-closeLoanDetails.onclick=()=>closeModal();
-function closeModal(){
-  loanDetailsCard.classList.add("translate-y-full");
-  setTimeout(()=>loanDetailsModal.classList.add("hidden"),250);
-  editSection.classList.add("hidden");
-  addPaymentSection.classList.add("hidden");
-}
-
-/* ───────────── FILL DETAILS ───────────── */
-function fillLoanDetails(loan){
-  document.getElementById("detailsIcon").src=loan.loanIcon||"/assets/icons/default-loan.png";
-  document.getElementById("detailsName").textContent=loan.loanName;
-  const bal=calcBalance(loan);
-  document.getElementById("detailsTotal").textContent=`$${loan.totalAmount?.toFixed(2)||0}`;
-  document.getElementById("detailsPaid").textContent=`$${bal.paid.toFixed(2)}`;
-  document.getElementById("detailsRemaining").textContent=`$${bal.remaining.toFixed(2)}`;
-  document.getElementById("detailsNextDue").textContent=bal.nextDue||"—";
-  renderTables(loan);
-}
-function renderTables(loan){
-  const hist=document.getElementById("detailsHistory");
-  const fut=document.getElementById("detailsUpcoming");
-  const pay=loan.transactions||[];
-  const futs=loan.futurePayments||[];
-  let run=loan.totalAmount||0;
-  hist.innerHTML="<tr class='text-[#d4af37]'><th>Date</th><th>Amt</th><th>Note</th><th>Remain</th></tr>"+
-    (pay.map(p=>{run-=p.amount;
-      const d=p.date?.toDate?.()||new Date(p.date);
-      return `<tr><td>${d.toLocaleDateString()}</td><td>$${p.amount.toFixed(2)}</td><td>${p.note||""}</td><td>$${run.toFixed(2)}</td></tr>`;
-    }).join("")||"<tr><td colspan='4' class='text-center py-1 text-xs'>No payments</td></tr>");
-  fut.innerHTML="<tr class='text-[#d4af37]'><th>Due</th><th>Amt</th></tr>"+
-    (futs.map(f=>`<tr><td>${new Date(f.dueDate).toLocaleDateString()}</td><td>$${f.amount.toFixed(2)}</td></tr>`).join("")||
-     "<tr><td colspan='2' class='text-center py-1 text-xs'>No future</td></tr>");
-}
-
-/* ───────────── EDIT MODE ───────────── */
-editLoanBtn.onclick=()=>{
-  editSection.classList.remove("hidden");
-  addPaymentSection.classList.remove("hidden");
-  document.getElementById("editLoanName").value=currentLoan.data.loanName;
-  document.getElementById("editTotalAmount").value=currentLoan.data.totalAmount;
-  document.getElementById("editFrequency").value=currentLoan.data.paymentFrequency||"monthly";
-};
-cancelEditBtn.onclick=()=>{editSection.classList.add("hidden");addPaymentSection.classList.add("hidden");};
-
-/* SAVE CHANGES */
-saveEditBtn.onclick=async()=>{
-  const ref=doc(db,"loans",currentLoan.uid,"userLoans",currentLoan.id);
-  await updateDoc(ref,{
-    loanName:document.getElementById("editLoanName").value,
-    totalAmount:parseFloat(document.getElementById("editTotalAmount").value)||0,
-    paymentFrequency:document.getElementById("editFrequency").value
-  });
-  editSection.classList.add("hidden"); addPaymentSection.classList.add("hidden");
-};
-
-/* ADD PAYMENT */
-addPaymentForm.onsubmit=async e=>{
-  e.preventDefault();
-  const amt=parseFloat(document.getElementById("paymentAmount").value);
-  const note=document.getElementById("paymentNote").value;
-  if(!amt)return;
-  const ref=doc(db,"loans",currentLoan.uid,"userLoans",currentLoan.id);
-  const snap=await getDoc(ref);
-  const existing=snap.data().transactions||[];
-  existing.push({amount:amt,note,date:new Date()});
-  await updateDoc(ref,{transactions:existing});
-  addPaymentForm.reset();
-};
-
-/* ───────────── SECURE DELETE FLOW ───────────── */
-deleteLoanBtn.onclick=()=>showModal(passcodeModal);
-verifyPasscode.onclick=async()=>{
-  const adminPass=adminPassInput.value.trim();
-  const passRef=await getDoc(doc(db,"adminSettings","familyTracker"));
-  if(!passRef.exists()){alert("Passcode not set");return;}
-  if(adminPass!==passRef.data().passcode){alert("Incorrect passcode");return;}
-  verifiedPass=true; hideModal(passcodeModal); showModal(overrideModal);
-};
-confirmOverride.onclick=()=>{
-  hideModal(overrideModal);
-  if(!verifiedPass){alert("Unauthorized");return;}
-  showModal(nameMatchModal);
-};
-finalDeleteBtn.onclick=async()=>{
-  const match=confirmLoanNameInput.value.trim();
-  if(match!==currentLoan.data.loanName){alert("Name mismatch");return;}
-  await deleteDoc(doc(db,"loans",currentLoan.uid,"userLoans",currentLoan.id));
-  hideModal(nameMatchModal); closeModal();
-  alert("Loan deleted successfully");
-};
-
-/* ───────────── UTILS ───────────── */
-function calcBalance(loan){
-  const pay=loan.transactions||[], fut=loan.futurePayments||[];
-  const paid=pay.reduce((a,b)=>a+b.amount,0);
-  const remaining=(loan.totalAmount||0)-paid;
-  const nextDue=fut.length?fut.sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate))[0].dueDate:null;
-  return {paid,remaining,nextDue:nextDue?new Date(nextDue).toLocaleDateString():"—"};
-}
-function showModal(m){m.classList.remove("hidden");}
-function hideModal(m){m.classList.add("hidden");}
-</script>
+  <!-- Script -->
+  <script type="module" src="/assets/js/family-tracker-admin.js"></script>
 </body>
 </html>
