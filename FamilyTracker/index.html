@@ -208,20 +208,15 @@ onAuthStateChanged(auth, async user => {
 
   const userDoc = await getDoc(doc(db,"users",user.uid));
 
-  if (
-
-  !userDoc.exists() ||
-
-  (userDoc.data().role_familyTracker !== "viewer" &&
-
-   userDoc.data().role_familyTracker !== "admin")
-
-) {
-
+  if (!userDoc.exists()) {
   window.location = "unauthorized.html";
-
   return;
+}
 
+const role = userDoc.data().role_familyTracker || "";
+if (role !== "viewer" && role !== "admin") {
+  window.location = "unauthorized.html";
+  return;
 }
 
   watchLoans(user.uid);
