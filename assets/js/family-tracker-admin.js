@@ -1,5 +1,6 @@
 // ============================
 // Morrow Industries — Family Tracker (Admin)
+// Touch-Optimized Version
 // ============================
 
 import {
@@ -33,8 +34,29 @@ let selectedUser = null;
 let currentLoan  = null;
 let verifiedPass = false;
 
+/* ───────────── TOUCH OPTIMIZED CLICK HANDLER ───────────── */
+function addTapListener(el, fn) {
+  if (!el) return;
+  let active = false;
+  const handle = e => {
+    if (active) return;
+    active = true;
+    fn(e);
+    setTimeout(() => (active = false), 250);
+  };
+  el.addEventListener("click", handle);
+  el.addEventListener(
+    "touchstart",
+    e => {
+      e.preventDefault();
+      handle(e);
+    },
+    { passive: false }
+  );
+}
+
 /* ───────────── AUTHENTICATION ───────────── */
-logoutBtn.onclick = () => signOut(auth);
+addTapListener(logoutBtn, () => signOut(auth));
 
 onAuthStateChanged(auth, async user => {
   if (!user) {
@@ -67,7 +89,7 @@ async function loadUsers() {
         </select>
       </div>`;
     row.querySelector("select").onchange = e => updateUserRole(u.id, e.target.value);
-    row.onclick = () => selectUser(u.id, data);
+    addTapListener(row, () => selectUser(u.id, data));
     userListEl.appendChild(row);
   });
 }
@@ -93,7 +115,6 @@ function watchLoans(uid) {
       loanListEl.innerHTML = `<p class="text-center text-gray-400 italic p-4">No loans yet</p>`;
       return;
     }
-
     snap.forEach(d => {
       const loan = d.data();
       loan.id = d.id;
@@ -125,7 +146,7 @@ function renderLoanCard(uid, loan) {
     <div class="h-2 bg-[rgba(255,255,255,0.1)] rounded mt-3">
       <div class="h-2 bg-[#d4af37] rounded" style="width:${percent}%"></div>
     </div>`;
-  card.onclick = () => openLoanModal(uid, loan);
+  addTapListener(card, () => openLoanModal(uid, loan));
   loanListEl.appendChild(card);
 }
 
@@ -135,10 +156,10 @@ function openLoanModal(uid, loan) {
   fillLoanDetails(loan);
   loanDetailsModal.classList.remove("hidden");
   setTimeout(() => loanDetailsCard.classList.remove("translate-y-full"), 10);
-  setTimeout(initTabs, 300); // wait for modal to be visible
+  setTimeout(initTabs, 300); // initialize tab system after modal is visible
 }
 
-closeLoanDetails.onclick = () => closeModal();
+addTapListener(closeLoanDetails, () => closeModal());
 
 function closeModal() {
   loanDetailsCard.classList.add("translate-y-full");
@@ -181,45 +202,11 @@ function renderTables(loan) {
       .join("") || "<tr><td colspan='2' class='text-center py-1 text-xs'>No future</td></tr>");
 }
 
-/* ───────────── EDIT & PAYMENT FORMS ───────────── */
-const editForm = document.getElementById("editLoanForm");
-const paymentForm = document.getElementById("addPaymentForm");
-
-if (editForm) {
-  document.getElementById("saveEditBtn").onclick = async () => {
-    const ref = doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id);
-    await updateDoc(ref, {
-      loanName: document.getElementById("editLoanName").value,
-      totalAmount: parseFloat(document.getElementById("editTotalAmount").value) || 0,
-      paymentFrequency: document.getElementById("editFrequency").value,
-    });
-    alert("Changes saved.");
-  };
-}
-
-if (paymentForm) {
-  paymentForm.onsubmit = async e => {
-    e.preventDefault();
-    const amt = parseFloat(document.getElementById("paymentAmount").value);
-    const note = document.getElementById("paymentNote").value;
-    if (!amt) return;
-    const ref = doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id);
-    const snap = await getDoc(ref);
-    const existing = Array.isArray(snap.data().transactions) ? snap.data().transactions : [];
-    existing.push({ amount: amt, note, date: new Date() });
-    await updateDoc(ref, { transactions: existing });
-    paymentForm.reset();
-    alert("Payment added.");
-  };
-}
-
 /* ───────────── SECURE DELETE FLOW ───────────── */
 const deleteLoanBtn = document.getElementById("deleteLoanBtn");
-if (deleteLoanBtn) {
-  deleteLoanBtn.onclick = () => showModal(passcodeModal);
-}
+addTapListener(deleteLoanBtn, () => showModal(passcodeModal));
 
-verifyPasscode.onclick = async () => {
+addTapListener(verifyPasscode, async () => {
   const adminPass = adminPassInput.value.trim();
   const passRef = await getDoc(doc(db, "adminSettings", "familyTracker"));
   if (!passRef.exists()) {
@@ -233,18 +220,18 @@ verifyPasscode.onclick = async () => {
   verifiedPass = true;
   hideModal(passcodeModal);
   showModal(overrideModal);
-};
+});
 
-confirmOverride.onclick = () => {
+addTapListener(confirmOverride, () => {
   hideModal(overrideModal);
   if (!verifiedPass) {
     alert("Unauthorized");
     return;
   }
   showModal(nameMatchModal);
-};
+});
 
-finalDeleteBtn.onclick = async () => {
+addTapListener(finalDeleteBtn, async () => {
   const match = confirmLoanNameInput.value.trim();
   if (match !== currentLoan.data.loanName) {
     alert("Name mismatch");
@@ -254,7 +241,7 @@ finalDeleteBtn.onclick = async () => {
   hideModal(nameMatchModal);
   closeModal();
   alert("Loan deleted successfully");
-};
+});
 
 /* ───────────── TABS & ANIMATIONS ───────────── */
 function initTabs() {
@@ -277,20 +264,19 @@ function initTabs() {
     Object.values(tabs).forEach(t => t.classList.remove("active"));
     tabs[target].classList.add("active");
 
-    const prev = panels[currentTab];
-    const next = panels[target];
     Object.values(panels).forEach(p => p.classList.add("hidden"));
-    next.classList.remove("hidden");
+    panels[target].classList.remove("hidden");
 
+    // animations
     if (currentTab === "view" && target === "edit") {
-      next.classList.add("animate-slideLeftIn");
+      panels[target].classList.add("animate-slideLeftIn");
     } else if (currentTab === "view" && target === "pay") {
-      next.classList.add("animate-slideRightIn");
+      panels[target].classList.add("animate-slideRightIn");
     } else if (target === "view") {
-      next.classList.add("animate-slideDown");
+      panels[target].classList.add("animate-slideDown");
     }
 
-    // delete button visibility
+    // delete button animation
     if (target === "edit") {
       deleteBtn.classList.remove("opacity-0", "translate-y-6");
     } else {
@@ -300,9 +286,9 @@ function initTabs() {
     currentTab = target;
   }
 
-  tabView.onclick = () => switchTab("view");
-  tabEdit.onclick = () => switchTab("edit");
-  tabPayment.onclick = () => switchTab("pay");
+  addTapListener(tabView, () => switchTab("view"));
+  addTapListener(tabEdit, () => switchTab("edit"));
+  addTapListener(tabPayment, () => switchTab("pay"));
 }
 
 /* ───────────── HELPERS ───────────── */
