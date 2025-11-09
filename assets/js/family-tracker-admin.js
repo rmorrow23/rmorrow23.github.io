@@ -37,19 +37,21 @@ let verifiedPass = false;
 /* ───────────── TOUCH OPTIMIZED CLICK HANDLER ───────────── */
 function addTapListener(el, fn) {
   if (!el) return;
-  let active = false;
-  const handle = e => {
-    if (active) return;
-    active = true;
+  let locked = false;
+
+  const run = e => {
+    if (locked) return;
+    locked = true;
     fn(e);
-    setTimeout(() => (active = false), 250);
+    setTimeout(() => (locked = false), 250);
   };
-  el.addEventListener("click", handle);
+
+  el.addEventListener("click", run);
   el.addEventListener(
-    "touchstart",
+    "touchend",
     e => {
-      e.preventDefault();
-      handle(e);
+      e.preventDefault();   // stop ghost click
+      run(e);
     },
     { passive: false }
   );
