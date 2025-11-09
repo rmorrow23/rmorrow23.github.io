@@ -196,3 +196,76 @@ nav.glass {
     font-size: 1.1rem;
   }
 }
+.tab-btn {
+  @apply px-4 py-2 rounded-lg border border-[rgba(255,255,255,0.1)] text-sm text-gray-300 hover:text-[#d4af37] transition-all;
+}
+.tab-btn.active {
+  @apply text-[#d4af37] bg-[rgba(255,255,255,0.05)] border-[#d4af37];
+}
+
+.panel {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s ease;
+}
+.panel.active {
+  opacity: 1;
+  transform: translateY(0);
+  z-index: 10;
+}
+
+.animate-slideLeftIn {
+  animation: slideLeftIn 0.4s forwards;
+}
+.animate-slideRightIn {
+  animation: slideRightIn 0.4s forwards;
+}
+.animate-slideLeftOut {
+  animation: slideLeftOut 0.4s forwards;
+}
+.animate-slideRightOut {
+  animation: slideRightOut 0.4s forwards;
+}
+.animate-slideDown {
+  animation: slideDown 0.4s forwards;
+}
+.animate-slideUp {
+  animation: slideUp 0.4s forwards;
+}
+
+@keyframes slideLeftIn {
+  from { opacity: 0; transform: translateX(-100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideRightIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideLeftOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-100%); }
+}
+@keyframes slideRightOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(100%); }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-20px); }
+}
+
+.btn-primary {
+  @apply bg-[#d4af37] text-black font-semibold py-2 rounded-lg hover:opacity-90 transition;
+}
+.btn-danger {
+  @apply bg-red-600 text-white font-semibold py-2 rounded-lg hover:bg-red-700 transition;
+}
+.form-input {
+  @apply bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg px-3 py-2 text-sm text-[#e9eef8] placeholder-gray-500;
+}
