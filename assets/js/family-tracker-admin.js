@@ -9,6 +9,9 @@ import {
   collection, doc, getDoc, getDocs, onSnapshot, updateDoc, deleteDoc
 } from "/assets/js/firebase-init.js";
 
+import { enableLiveStyle } from "/assets/js/family-tracker-livestyle.js";
+enableLiveStyle();
+
 /* ───────────── GLOBAL ELEMENTS ───────────── */
 const userListEl = document.getElementById("userList");
 const loanListEl = document.getElementById("loanList");
