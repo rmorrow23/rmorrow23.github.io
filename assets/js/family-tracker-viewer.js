@@ -12,13 +12,13 @@ let userRole = null;
 let currentLoan = null;
 
 /* ───────── UI References ───────── */
-const logoutBtn       = document.getElementById("logoutBtn");
-const loanContainer   = document.getElementById("loanContainer");
-const loadingEl       = document.getElementById("loading");
-const totalBalanceEl  = document.getElementById("totalBalance");
-const nextDueDateEl   = document.getElementById("nextDueDate");
-const nextAmountDueEl = document.getElementById("nextAmountDue");
-const activeLoansEl   = document.getElementById("activeLoans");
+const logoutBtn        = document.getElementById("logoutBtn");
+const loanContainer    = document.getElementById("loanContainer");
+const loadingEl        = document.getElementById("loading");
+const totalBalanceEl   = document.getElementById("totalBalance");
+const nextDueDateEl    = document.getElementById("nextDueDate");
+const nextAmountDueEl  = document.getElementById("nextAmountDue");
+const activeLoansEl    = document.getElementById("activeLoans");
 const loanDetailsModal = document.getElementById("loanDetailsModal");
 const loanDetailsCard  = document.getElementById("loanDetailsCard");
 const closeLoanDetails = document.getElementById("closeLoanDetails");
@@ -66,10 +66,11 @@ function watchLoans(uid) {
 
     let total = 0, future = [];
     snap.forEach(docSnap => {
-      const loan = docSnap.data(); loan.id = docSnap.id;
+      const loan = docSnap.data();
+      loan.id = docSnap.id;
       total += calcBalance(loan).remaining;
       if (loan.futurePayments) future.push(...loan.futurePayments);
-      renderLoanCard(loan);
+      renderLoanCard(uid, loan); // ✅ Pass uid explicitly
     });
     updateSummary(total, future, snap.size);
   });
@@ -117,8 +118,8 @@ function renderLoanCard(uid, loan) {
       <div class="loan-progress-bar" style="--progress:${percent}%"></div>
     </div>`;
 
-  addTapListener(card, () => openLoanModal(uid, loan));
-  loanListEl.appendChild(card);
+  addTapListener(card, () => openLoanModal(loan));
+  loanContainer.appendChild(card); // ✅ Correct container
 }
 
 /* ───────── Loan Details Modal ───────── */
@@ -128,7 +129,9 @@ function openLoanModal(loan) {
   loanDetailsModal.classList.remove("hidden");
   setTimeout(() => loanDetailsCard.classList.remove("translate-y-full"), 10);
 }
+
 closeLoanDetails.onclick = () => closeModal();
+
 function closeModal() {
   loanDetailsCard.classList.add("translate-y-full");
   setTimeout(() => loanDetailsModal.classList.add("hidden"), 250);
@@ -154,14 +157,16 @@ function renderTables(loan) {
   const futs = loan.futurePayments || [];
   let run = loan.totalAmount || 0;
 
-  hist.innerHTML = "<tr class='text-[#d4af37]'><th>Date</th><th>Amt</th><th>Note</th><th>Remain</th></tr>" +
+  hist.innerHTML =
+    "<tr class='text-[#d4af37]'><th>Date</th><th>Amt</th><th>Note</th><th>Remain</th></tr>" +
     (pay.map(p => {
       run -= p.amount;
       const d = p.date?.toDate?.() || new Date(p.date);
       return `<tr><td>${d.toLocaleDateString()}</td><td>$${p.amount.toFixed(2)}</td><td>${p.note || ""}</td><td>$${run.toFixed(2)}</td></tr>`;
     }).join("") || "<tr><td colspan='4' class='text-center py-1 text-xs'>No payments</td></tr>");
 
-  fut.innerHTML = "<tr class='text-[#d4af37]'><th>Due</th><th>Amt</th></tr>" +
+  fut.innerHTML =
+    "<tr class='text-[#d4af37]'><th>Due</th><th>Amt</th></tr>" +
     (futs.map(f => `<tr><td>${new Date(f.dueDate).toLocaleDateString()}</td><td>$${f.amount.toFixed(2)}</td></tr>`).join("") ||
       "<tr><td colspan='2' class='text-center py-1 text-xs'>No future</td></tr>");
 }
@@ -173,4 +178,20 @@ function calcBalance(loan) {
   const remaining = (loan.totalAmount || 0) - paid;
   const nextDue = fut.length ? fut.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))[0].dueDate : null;
   return { paid, remaining, nextDue: nextDue ? new Date(nextDue).toLocaleDateString() : "—" };
+}
+
+function addTapListener(el, fn) {
+  if (!el) return;
+  let locked = false;
+  const run = e => {
+    if (locked) return;
+    locked = true;
+    fn(e);
+    setTimeout(() => (locked = false), 250);
+  };
+  el.addEventListener("click", run);
+  el.addEventListener("touchend", e => {
+    e.preventDefault();
+    run(e);
+  }, { passive: false });
 }
