@@ -63,10 +63,22 @@ function categorizeSelector(selector) {
 }
 
 // --- Autosave debounce ---
+// --- Smarter Autosave Debounce (3s idle delay) ---
 let saveTimeout;
+let lastChange = 0;
+
 function scheduleAutosave(rules) {
+  lastChange = Date.now();
   clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => saveCSS(rules), 1500);
+
+  // Wait at least 3 seconds since the last keystroke or change
+  saveTimeout = setTimeout(() => {
+    const now = Date.now();
+    if (now - lastChange >= 3000) {
+      console.log("💾 Autosaving after idle delay...");
+      saveCSS(rules);
+    }
+  }, 3000);
 }
 
 // --- Render grouped editor ---
