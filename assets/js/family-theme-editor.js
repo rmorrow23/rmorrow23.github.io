@@ -1,28 +1,27 @@
-// ================================
-// Morrow Industries — Theme Editor
-// ================================
+// ==============================================
+// Morrow Industries — Family Tracker Theme Editor
+// Advanced grouped + searchable + autosave version
+// ==============================================
 import { db, doc, getDoc, setDoc, updateDoc, onSnapshot } from "/assets/js/firebase-init.js";
 
 const editorContainer = document.getElementById("cssEditor");
-const saveBtn = document.getElementById("saveCSSBtn");
 const reloadBtn = document.getElementById("reloadCSSBtn");
+const saveBtn = document.getElementById("saveCSSBtn");
 
-// Firestore document where the theme CSS is stored
 const themeRef = doc(db, "familyTrackerSettings", "themeCSS");
 
-// Default fallback CSS (in case Firestore is empty)
+// --- Default CSS (if none exists) ---
 const defaultCSS = `
 :root {
   --gold:#d4af37;
   --bg:#0a0b0f;
   --text:#e9eef8;
   --border:rgba(255,255,255,0.08);
-  --surface:rgba(18,20,27,.75);
 }
 /* Add your CSS below */
 `;
 
-// --- Utility: Parse CSS string into structured object ---
+// --- Parse CSS into object ---
 function parseCSS(cssText) {
   const rules = {};
   const regex = /([^{}]+)\{([^{}]*)\}/g;
@@ -40,7 +39,7 @@ function parseCSS(cssText) {
   return rules;
 }
 
-// --- Utility: Convert structured object back into CSS text ---
+// --- Rebuild CSS from object ---
 function stringifyCSS(rules) {
   return Object.entries(rules)
     .map(([sel, props]) => {
@@ -52,91 +51,127 @@ function stringifyCSS(rules) {
     .join("\n\n");
 }
 
-// --- Render the editable CSS UI ---
-function renderEditor(rules) {
-  editorContainer.innerHTML = "";
-
-  for (const [selector, props] of Object.entries(rules)) {
-    const block = document.createElement("div");
-    block.className = "glass p-3 rounded-md space-y-2";
-
-    const header = document.createElement("div");
-    header.className = "flex justify-between items-center";
-    header.innerHTML = `
-      <input class="form-input flex-1 selectorInput" value="${selector}" />
-      <button class="bg-red-600 text-white px-2 py-1 rounded ml-2 deleteSelector">✕</button>
-    `;
-    block.appendChild(header);
-
-    const propsList = document.createElement("div");
-    propsList.className = "space-y-1";
-    for (const [key, val] of Object.entries(props)) {
-      const row = document.createElement("div");
-      row.className = "flex gap-2";
-      row.innerHTML = `
-        <input class="form-input flex-1 propKey" placeholder="property" value="${key}" />
-        <input class="form-input flex-1 propVal" placeholder="value" value="${val}" />
-        <button class="bg-red-500 text-white rounded px-2 removeProp">–</button>
-      `;
-      propsList.appendChild(row);
-    }
-
-    const addPropBtn = document.createElement("button");
-    addPropBtn.textContent = "+ Add Property";
-    addPropBtn.className = "btn-secondary w-full mt-2";
-    addPropBtn.onclick = () => {
-      const row = document.createElement("div");
-      row.className = "flex gap-2";
-      row.innerHTML = `
-        <input class="form-input flex-1 propKey" placeholder="property" />
-        <input class="form-input flex-1 propVal" placeholder="value" />
-        <button class="bg-red-500 text-white rounded px-2 removeProp">–</button>
-      `;
-      propsList.appendChild(row);
-    };
-
-    block.appendChild(propsList);
-    block.appendChild(addPropBtn);
-
-    const removeSelector = header.querySelector(".deleteSelector");
-    removeSelector.onclick = () => block.remove();
-
-    editorContainer.appendChild(block);
-  }
-
-  // Add button to create a new selector
-  const addSelectorBtn = document.createElement("button");
-  addSelectorBtn.textContent = "+ Add New Selector";
-  addSelectorBtn.className = "btn-primary w-full mt-4";
-  addSelectorBtn.onclick = () => {
-    const newBlock = document.createElement("div");
-    newBlock.className = "glass p-3 rounded-md space-y-2";
-    newBlock.innerHTML = `
-      <div class="flex justify-between items-center">
-        <input class="form-input flex-1 selectorInput" placeholder="New selector (e.g., .myClass)" />
-        <button class="bg-red-600 text-white px-2 py-1 rounded ml-2 deleteSelector">✕</button>
-      </div>
-      <div class="space-y-1 propsList"></div>
-      <button class="btn-secondary w-full mt-2 addProp">+ Add Property</button>
-    `;
-    newBlock.querySelector(".deleteSelector").onclick = () => newBlock.remove();
-    newBlock.querySelector(".addProp").onclick = () => {
-      const propsList = newBlock.querySelector(".propsList");
-      const row = document.createElement("div");
-      row.className = "flex gap-2";
-      row.innerHTML = `
-        <input class="form-input flex-1 propKey" placeholder="property" />
-        <input class="form-input flex-1 propVal" placeholder="value" />
-        <button class="bg-red-500 text-white rounded px-2 removeProp">–</button>
-      `;
-      propsList.appendChild(row);
-    };
-    editorContainer.insertBefore(newBlock, addSelectorBtn);
-  };
-  editorContainer.appendChild(addSelectorBtn);
+// --- Categorize selectors ---
+function categorizeSelector(selector) {
+  if (selector.startsWith(":root")) return "Global";
+  if (selector.includes("btn")) return "Buttons";
+  if (selector.includes("form") || selector.includes("input")) return "Forms";
+  if (selector.includes("loan") || selector.includes("details")) return "Loans";
+  if (selector.includes("modal")) return "Modals";
+  if (selector.includes("tab") || selector.includes("panel")) return "Tabs";
+  return "Other";
 }
 
-// --- Collect updated CSS from UI ---
+// --- Autosave debounce ---
+let saveTimeout;
+function scheduleAutosave(rules) {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => saveCSS(rules), 1500);
+}
+
+// --- Render grouped editor ---
+function renderEditor(rules, search = "") {
+  editorContainer.innerHTML = "";
+
+  // Group selectors by category
+  const grouped = {};
+  for (const [sel, props] of Object.entries(rules)) {
+    if (search && !sel.toLowerCase().includes(search.toLowerCase())) continue;
+    const category = categorizeSelector(sel);
+    if (!grouped[category]) grouped[category] = [];
+    grouped[category].push([sel, props]);
+  }
+
+  // Build search bar
+  const searchBar = document.createElement("input");
+  searchBar.placeholder = "Search selector...";
+  searchBar.className =
+    "form-input w-full mb-4 text-sm border border-[rgba(255,255,255,0.1)]";
+  searchBar.value = search;
+  searchBar.oninput = e => renderEditor(rules, e.target.value);
+  editorContainer.appendChild(searchBar);
+
+  // Build categories
+  for (const [category, selectors] of Object.entries(grouped)) {
+    const catSection = document.createElement("div");
+    catSection.className = "mb-6";
+    const title = document.createElement("h3");
+    title.className = "text-[#d4af37] text-lg font-semibold mb-2";
+    title.textContent = category;
+    catSection.appendChild(title);
+
+    selectors.forEach(([selector, props]) => {
+      const block = document.createElement("div");
+      block.className = "glass p-3 rounded-md space-y-2 mb-2";
+
+      const header = document.createElement("div");
+      header.className = "flex justify-between items-center";
+      header.innerHTML = `
+        <input class="form-input flex-1 selectorInput" value="${selector}" />
+        <button class="bg-red-600 text-white px-2 py-1 rounded ml-2 deleteSelector">✕</button>
+      `;
+      block.appendChild(header);
+
+      const propsList = document.createElement("div");
+      propsList.className = "space-y-1";
+      for (const [key, val] of Object.entries(props)) {
+        const row = document.createElement("div");
+        row.className = "flex gap-2";
+        row.innerHTML = `
+          <input class="form-input flex-1 propKey" placeholder="property" value="${key}" />
+          <input class="form-input flex-1 propVal" placeholder="value" value="${val}" />
+          <button class="bg-red-500 text-white rounded px-2 removeProp">–</button>
+        `;
+        propsList.appendChild(row);
+      }
+
+      const addPropBtn = document.createElement("button");
+      addPropBtn.textContent = "+ Add Property";
+      addPropBtn.className = "btn-secondary w-full mt-2";
+      addPropBtn.onclick = () => {
+        const row = document.createElement("div");
+        row.className = "flex gap-2";
+        row.innerHTML = `
+          <input class="form-input flex-1 propKey" placeholder="property" />
+          <input class="form-input flex-1 propVal" placeholder="value" />
+          <button class="bg-red-500 text-white rounded px-2 removeProp">–</button>
+        `;
+        propsList.appendChild(row);
+      };
+
+      block.appendChild(propsList);
+      block.appendChild(addPropBtn);
+
+      const removeSelector = header.querySelector(".deleteSelector");
+      removeSelector.onclick = () => {
+        delete rules[selector];
+        renderEditor(rules, search);
+        scheduleAutosave(rules);
+      };
+
+      // Watch for inline edits (autosave)
+      block.addEventListener("input", () => scheduleAutosave(collectCSSFromUI()));
+
+      catSection.appendChild(block);
+    });
+
+    // Add new selector button under each category
+    const addSelectorBtn = document.createElement("button");
+    addSelectorBtn.textContent = `+ Add Selector to ${category}`;
+    addSelectorBtn.className = "btn-primary w-full mt-3";
+    addSelectorBtn.onclick = () => {
+      const newSel = `.new-${category.toLowerCase()}-${Date.now()}`;
+      rules[newSel] = { "color": "white" };
+      renderEditor(rules, search);
+      scheduleAutosave(rules);
+    };
+
+    catSection.appendChild(addSelectorBtn);
+    editorContainer.appendChild(catSection);
+  }
+}
+
+// --- Collect data from editor ---
 function collectCSSFromUI() {
   const blocks = editorContainer.querySelectorAll(".glass");
   const rules = {};
@@ -144,8 +179,8 @@ function collectCSSFromUI() {
     const selector = block.querySelector(".selectorInput")?.value?.trim();
     if (!selector) return;
     const props = {};
-    const propRows = block.querySelectorAll(".propKey");
-    propRows.forEach((keyEl, i) => {
+    const rows = block.querySelectorAll(".propKey");
+    rows.forEach((keyEl, i) => {
       const key = keyEl.value.trim();
       const val = block.querySelectorAll(".propVal")[i]?.value.trim();
       if (key && val) props[key] = val;
@@ -155,7 +190,7 @@ function collectCSSFromUI() {
   return rules;
 }
 
-// --- Load or create theme CSS document ---
+// --- Load CSS ---
 async function loadCSS() {
   const snap = await getDoc(themeRef);
   if (!snap.exists()) {
@@ -168,25 +203,27 @@ async function loadCSS() {
   }
 }
 
-// --- Save CSS to Firestore ---
-async function saveCSS() {
-  const newRules = collectCSSFromUI();
-  const cssText = stringifyCSS(newRules);
+// --- Save CSS (called by autosave) ---
+async function saveCSS(rules) {
+  const cssText = stringifyCSS(rules);
   await updateDoc(themeRef, { css: cssText });
-  alert("✅ CSS updated successfully!");
+  console.log("✅ Autosaved CSS update");
 }
 
-// --- Live reload listener ---
-onSnapshot(themeRef, docSnap => {
-  const data = docSnap.data();
+// --- Realtime listener (sync between admins) ---
+onSnapshot(themeRef, snap => {
+  const data = snap.data();
   if (!data) return;
   const rules = parseCSS(data.css);
   renderEditor(rules);
 });
 
-// --- Button handlers ---
-saveBtn.onclick = saveCSS;
+// --- Manual reload/save (fallback buttons) ---
 reloadBtn.onclick = loadCSS;
+saveBtn.onclick = () => {
+  const rules = collectCSSFromUI();
+  saveCSS(rules);
+};
 
-// --- Initialize ---
+// --- Start ---
 loadCSS();
