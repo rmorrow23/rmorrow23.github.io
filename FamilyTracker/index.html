@@ -1,423 +1,93 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
-
   <meta charset="UTF-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Morrow Industries — Family Payment Tracker</title>
-
   <link rel="icon" href="/morIcon.png" />
-
   <link rel="stylesheet" href="/assets/css/family-tracker.css" />
-
   <script src="https://cdn.tailwindcss.com"></script>
-
   <script type="module" src="/assets/js/firebase-init.js"></script>
-
+  <script type="module" src="/assets/js/family-tracker-viewer.js"></script>
 </head>
 
 <body class="min-h-screen flex flex-col bg-gradient-to-b from-black to-[#0a0b0f] text-[#e9eef8] font-[Inter] p-6">
 
   <!-- Header -->
-
   <header class="flex justify-between items-center mb-6">
-
     <div class="flex items-center gap-3">
-
       <img src="/morIcon.png" alt="logo" class="h-8 w-8" />
-
-      <h1 class="text-2xl font-semibold text-[#d4af37]" style="margin-left:-1rem; ">orrow Industries</h1>
-
+      <h1 class="text-2xl font-semibold text-[#d4af37]" style="margin-left:-1rem;">orrow Industries</h1>
     </div>
-
-    <button id="logoutBtn" class="border border-[#d4af37] text-[#d4af37] font-semibold rounded-xl px-3 py-1 hover:opacity-80 transition">Sign Out</button>
-
+    <button id="logoutBtn"
+      class="border border-[#d4af37] text-[#d4af37] font-semibold rounded-xl px-3 py-1 hover:opacity-80 transition">
+      Sign Out
+    </button>
   </header>
 
   <!-- Dashboard Summary -->
-
   <section id="summary" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-1 mb-1">
-
     <div class="summary-card"><h3>Total Balance</h3><p id="totalBalance" class="card-value">$0.00</p></div>
-
     <div class="summary-card"><h3>Next Due Date</h3><p id="nextDueDate" class="card-value">—</p></div>
-
     <div class="summary-card"><h3>Next Amount Due</h3><p id="nextAmountDue" class="card-value">$0.00</p></div>
-
     <div class="summary-card"><h3>Active Loans</h3><p id="activeLoans" class="card-value">0</p></div>
-
   </section>
 
   <!-- Loan List -->
-
   <main>
-
     <h2 class="text-xl font-semibold text-[#d4af37] mb-3">Your Loans</h2>
-
     <div id="loanContainer" class="space-y-4">
-
       <div id="loading" class="text-center italic text-[#d4af37]">Loading your loans...</div>
-
     </div>
-
   </main>
 
-  <!-- Full-Screen Loan Details Modal (read-only) -->
+  <!-- Full-Screen Loan Details Modal -->
+  <div id="loanDetailsModal"
+    class="fixed inset-0 hidden flex flex-col justify-end bg-black/80 backdrop-blur-xl z-50 transition-transform duration-300 ease-out pointer-events-none">
 
-  <div id="loanDetailsModal" class="fixed inset-0 hidden flex flex-col justify-end bg-black/80 backdrop-blur-xl z-50 transition-transform duration-300 ease-out">
-
-    <div class="glass w-full max-h-[90vh] rounded-t-2xl overflow-y-auto p-6 transform translate-y-full transition-all duration-300" id="loanDetailsCard">
+    <div id="loanDetailsCard"
+      class="glass pointer-events-auto w-full max-h-[90vh] rounded-t-2xl overflow-y-auto p-6 transform translate-y-full transition-all duration-300">
 
       <div class="flex-1 justify-between items-center mb-4">
         <button id="closeLoanDetails" class="text-gray-400 hover:text-[#d4af37] text-xl font-bold">✕</button>
-
         <div class="flex flex-col items-center gap-3">
-
           <img id="detailsIcon" src="/assets/icons/default-loan.png" class="w-150 h-50 object-cover" />
-
           <h2 id="detailsName" class="text-xl font-semibold text-[#d4af37]">Loan Title</h2>
-
         </div>
-
-        
-
       </div>
 
       <div id="detailsStats" class="mb-4 grid grid-cols-2 gap-3 text-sm">
-
-  <div class=" rounded-md p-3 text-center flex flex-col justify-center">
-
-    <p class="text-gray-300 text-xs mb-1">Total</p>
-
-    <p id="detailsTotal" class="text-[#d4af37] font-semibold">$0.00</p>
-
-  </div>
-
-  <div class=" rounded-md p-3 text-center flex flex-col justify-center">
-
-    <p class="text-gray-300 text-xs mb-1">Paid</p>
-
-    <p id="detailsPaid" class="text-[#d4af37] font-semibold">$0.00</p>
-
-  </div>
-
-  <div class=" rounded-md p-3 text-center flex flex-col justify-center">
-
-    <p class="text-gray-300 text-xs mb-1">Remaining: </p>
-
-    <p id="detailsRemaining" class="text-[#d4af37] font-semibold">$0.00</p>
-
-  </div>
-
-  <div class=" rounded-md p-3 text-center flex flex-col justify-center">
-
-    <p class="text-gray-300 text-xs mb-1">Next Due</p>
-
-    <p id="detailsNextDue" class="text-[#d4af37] font-semibold">—</p>
-
-  </div>
-
-</div>
-
-      <div id="loanPayments" class="space-y-6">
-
-        <div>
-
-          <h3 class="text-[#d4af37] font-semibold mb-2">Payment History</h3>
-
-          <table id="detailsHistory" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
-
+        <div class="rounded-md p-3 text-center flex flex-col justify-center">
+          <p class="text-gray-300 text-xs mb-1">Total</p>
+          <p id="detailsTotal" class="text-[#d4af37] font-semibold">$0.00</p>
         </div>
-
-        <div>
-
-          <h3 class="text-[#d4af37] font-semibold mb-2">Upcoming Payments</h3>
-
-          <table id="detailsUpcoming" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
-
+        <div class="rounded-md p-3 text-center flex flex-col justify-center">
+          <p class="text-gray-300 text-xs mb-1">Paid</p>
+          <p id="detailsPaid" class="text-[#d4af37] font-semibold">$0.00</p>
         </div>
-
+        <div class="rounded-md p-3 text-center flex flex-col justify-center">
+          <p class="text-gray-300 text-xs mb-1">Remaining</p>
+          <p id="detailsRemaining" class="text-[#d4af37] font-semibold">$0.00</p>
+        </div>
+        <div class="rounded-md p-3 text-center flex flex-col justify-center">
+          <p class="text-gray-300 text-xs mb-1">Next Due</p>
+          <p id="detailsNextDue" class="text-[#d4af37] font-semibold">—</p>
+        </div>
       </div>
 
+      <div id="loanPayments" class="space-y-6">
+        <div>
+          <h3 class="text-[#d4af37] font-semibold mb-2">Payment History</h3>
+          <table id="detailsHistory" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
+        </div>
+
+        <div>
+          <h3 class="text-[#d4af37] font-semibold mb-2">Upcoming Payments</h3>
+          <table id="detailsUpcoming" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
+        </div>
+      </div>
     </div>
-
   </div>
-
-  <!-- Overlay -->
-
-  <div id="overlay" class="overlay hidden"></div>
-
-  <!-- Logic to follow in Part 2 -->
-<script type="module">
-
-import {
-
-  auth, db,
-
-  GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut,
-
-  collection, doc, getDoc, onSnapshot
-
-} from "/assets/js/firebase-init.js";
-
-/* ───────── UI References ───────── */
-
-const logoutBtn       = document.getElementById("logoutBtn");
-
-const loanContainer   = document.getElementById("loanContainer");
-
-const loadingEl       = document.getElementById("loading");
-
-/* Summary */
-
-const totalBalanceEl  = document.getElementById("totalBalance");
-
-const nextDueDateEl   = document.getElementById("nextDueDate");
-
-const nextAmountDueEl = document.getElementById("nextAmountDue");
-
-const activeLoansEl   = document.getElementById("activeLoans");
-
-/* Modal */
-
-const loanDetailsModal = document.getElementById("loanDetailsModal");
-
-const loanDetailsCard  = document.getElementById("loanDetailsCard");
-
-const closeLoanDetails = document.getElementById("closeLoanDetails");
-
-let currentLoan = null;
-
-/* ───────── Auth Flow ───────── */
-
-logoutBtn.onclick = () => signOut(auth);
-
-onAuthStateChanged(auth, async user => {
-
-  if (!user) {
-
-    await signInWithPopup(auth,new GoogleAuthProvider());
-
-    return;
-
-  }
-
-  const userDoc = await getDoc(doc(db,"users",user.uid));
-
-  if (
-
-  !userDoc.exists() ||
-
-  (userDoc.data().role_familyTracker !== "viewer" &&
-
-   userDoc.data().role_familyTracker !== "admin")
-
-) {
-
-  window.location = "unauthorized.html";
-
-  return;
-
-}
-
-  watchLoans(user.uid);
-
-});
-
-/* ───────── Watch User Loans ───────── */
-
-function watchLoans(uid){
-
-  const ref = collection(db,"loans",uid,"userLoans");
-
-  onSnapshot(ref,snap=>{
-
-    loanContainer.innerHTML="";
-
-    if (snap.empty){
-
-      loanContainer.innerHTML=`<div class="glass p-6 text-center"><h2 class="text-lg font-semibold text-[#d4af37] mb-2">No Loans Found</h2><p class="text-sm text-gray-300">It looks like you don't have any active loans yet.</p></div>`;
-
-      updateSummary(0,[],0);
-
-      return;
-
-    }
-
-    let total=0, future=[];
-
-    snap.forEach(docSnap=>{
-
-      const loan=docSnap.data(); loan.id=docSnap.id;
-
-      total+=calcBalance(loan).remaining;
-
-      if(loan.futurePayments) future.push(...loan.futurePayments);
-
-      renderLoanCard(loan);
-
-    });
-
-    updateSummary(total,future,snap.size);
-
-  });
-
-}
-
-/* ───────── Summary Update ───────── */
-
-function updateSummary(total,futures,count){
-
-  totalBalanceEl.textContent=`$${total.toFixed(2)}`;
-
-  activeLoansEl.textContent=count;
-
-  if(futures.length){
-
-    futures.sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
-
-    const n=futures[0];
-
-    nextDueDateEl.textContent=new Date(n.dueDate).toLocaleDateString();
-
-    nextAmountDueEl.textContent=`$${n.amount.toFixed(2)}`;
-
-  }else{
-
-    nextDueDateEl.textContent="—";
-
-    nextAmountDueEl.textContent="$0.00";
-
-  }
-
-}
-
-/* ───────── Render Cards ───────── */
-
-function renderLoanCard(loan){
-
-  const bal=calcBalance(loan);
-
-  const percent=(loan.totalAmount?(bal.paid/loan.totalAmount)*100:0);
-
-  const card=document.createElement("div");
-
-  card.className="glass p-4 rounded-md cursor-pointer hover:shadow-lg transition";
-
-  if (!userDoc.exists()) {
-  window.location = "unauthorized.html";
-  return;
-}
-
-const role = userDoc.data().role_familyTracker || "";
-if (role !== "viewer" && role !== "admin") {
-  window.location = "unauthorized.html";
-  return;
-}
-
-  card.onclick=()=>openLoanModal(loan);
-
-  loanContainer.appendChild(card);
-
-}
-
-/* ───────── Loan Details Modal ───────── */
-
-function openLoanModal(loan){
-
-  currentLoan=loan;
-
-  fillLoanDetails(loan);
-
-  loanDetailsModal.classList.remove("hidden");
-
-  setTimeout(()=>loanDetailsCard.classList.remove("translate-y-full"),10);
-
-}
-
-closeLoanDetails.onclick=()=>closeModal();
-
-function closeModal(){
-
-  loanDetailsCard.classList.add("translate-y-full");
-
-  setTimeout(()=>loanDetailsModal.classList.add("hidden"),250);
-
-}
-
-/* ───────── Fill Modal ───────── */
-
-function fillLoanDetails(loan){
-
-  document.getElementById("detailsIcon").src=loan.loanIcon||"/assets/icons/default-loan.png";
-
-  document.getElementById("detailsName").textContent=loan.loanName;
-
-  const bal=calcBalance(loan);
-
-  document.getElementById("detailsTotal").textContent=`$${loan.totalAmount?.toFixed(2)||0}`;
-
-  document.getElementById("detailsPaid").textContent=`$${bal.paid.toFixed(2)}`;
-
-  document.getElementById("detailsRemaining").textContent=`$${bal.remaining.toFixed(2)}`;
-
-  document.getElementById("detailsNextDue").textContent=bal.nextDue||"—";
-
-  renderTables(loan);
-
-}
-
-/* ───────── Tables ───────── */
-
-function renderTables(loan){
-
-  const hist=document.getElementById("detailsHistory");
-
-  const fut=document.getElementById("detailsUpcoming");
-
-  const pay=loan.transactions||[];
-
-  const futs=loan.futurePayments||[];
-
-  let run=loan.totalAmount||0;
-
-  hist.innerHTML="<tr class='text-[#d4af37]'><th>Date</th><th>Amt</th><th>Note</th><th>Remain</th></tr>"+
-
-    (pay.map(p=>{run-=p.amount;const d=p.date?.toDate?.()||new Date(p.date);
-
-      return `<tr><td>${d.toLocaleDateString()}</td><td>$${p.amount.toFixed(2)}</td><td>${p.note||""}</td><td>$${run.toFixed(2)}</td></tr>`;
-
-    }).join("")||"<tr><td colspan='4' class='text-center py-1 text-xs'>No payments</td></tr>");
-
-  fut.innerHTML="<tr class='text-[#d4af37]'><th>Due</th><th>Amt</th></tr>"+
-
-    (futs.map(f=>`<tr><td>${new Date(f.dueDate).toLocaleDateString()}</td><td>$${f.amount.toFixed(2)}</td></tr>`).join("")||
-
-     "<tr><td colspan='2' class='text-center py-1 text-xs'>No future</td></tr>");
-
-}
-
-/* ───────── Helpers ───────── */
-
-function calcBalance(loan){
-
-  const pay=loan.transactions||[], fut=loan.futurePayments||[];
-
-  const paid=pay.reduce((a,b)=>a+b.amount,0);
-
-  const remaining=(loan.totalAmount||0)-paid;
-
-  const nextDue=fut.length?fut.sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate))[0].dueDate:null;
-
-  return {paid,remaining,nextDue:nextDue?new Date(nextDue).toLocaleDateString():"—"};
-
-}
-
-</script>
 </body>
-
 </html>
