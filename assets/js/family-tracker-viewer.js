@@ -4,6 +4,9 @@ import {
   collection, doc, getDoc, onSnapshot
 } from "/assets/js/firebase-init.js";
 
+import { enableLiveStyle } from "/assets/js/family-tracker-livestyle.js";
+enableLiveStyle();
+
 /* ───────── GLOBALS ───────── */
 let userRole = null;
 let currentLoan = null;
