@@ -132,25 +132,28 @@ function watchLoans(uid) {
 function renderLoanCard(uid, loan) {
   const bal = calcBalance(loan);
   const percent = loan.totalAmount ? (bal.paid / loan.totalAmount) * 100 : 0;
+
   const card = document.createElement("div");
-  card.className = "glass p-4 rounded-md cursor-pointer hover:shadow-lg transition";
+  card.className = "loan-card"; // <-- controlled by CSS now
+
   card.innerHTML = `
-    <div class="flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <img src="${loan.loanIcon || "/assets/icons/default-loan.png"}" class="w-12 h-12 rounded-md border border-[rgba(255,255,255,0.1)]"/>
-        <div>
-          <h3 class="text-[#d4af37] font-semibold">${loan.loanName}</h3>
-          <p class="text-sm text-gray-400">Remaining $${bal.remaining.toFixed(2)}</p>
+    <div class="loan-header">
+      <div class="loan-left">
+        <img src="${loan.loanIcon || "/assets/icons/default-loan.png"}" class="loan-icon"/>
+        <div class="loan-info">
+          <h3 class="loan-name">${loan.loanName}</h3>
+          <p class="loan-remaining">Remaining $${bal.remaining.toFixed(2)}</p>
         </div>
       </div>
-      <div class="text-right text-sm">
-        <p class="text-gray-400">Next</p>
-        <p>${bal.nextDue || "—"}</p>
+      <div class="loan-right">
+        <p class="loan-next-label">Next</p>
+        <p class="loan-next-date">${bal.nextDue || "—"}</p>
       </div>
     </div>
-    <div class="h-2 bg-[rgba(255,255,255,0.1)] rounded mt-3">
-      <div class="h-2 bg-[#d4af37] rounded" style="width:${percent}%"></div>
+    <div class="loan-progress">
+      <div class="loan-progress-bar" style="--progress:${percent}%"></div>
     </div>`;
+
   addTapListener(card, () => openLoanModal(uid, loan));
   loanListEl.appendChild(card);
 }
