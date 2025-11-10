@@ -1,197 +1,192 @@
-// /assets/js/family-theme-editor.js
-import { db, doc, getDoc, updateDoc, onSnapshot } from "/assets/js/firebase-init.js";
-import { enableLiveStyle } from "/assets/js/family-tracker-livestyle.js";
+// ================================
+// Morrow Industries — Theme Editor
+// ================================
+import { db, doc, getDoc, setDoc, updateDoc, onSnapshot } from "/assets/js/firebase-init.js";
 
-/* ───────────── Initialize Live Preview (injects CSS on any change) ───────────── */
-enableLiveStyle();
-
-/* ───────────── Robust CSS Parsing & Building ───────────── */
-/**
- * Safely parse a CSS string into a map of selectors -> { prop: value }
- * - Handles comments, line breaks, minified CSS, extra whitespace
- * - Ignores empty blocks and malformed lines gracefully
- */
-function safeParseCSS(cssText) {
-  if (!cssText || typeof cssText !== "string") return {};
-  // strip comments
-  let css = cssText.replace(/\/\*[\s\S]*?\*\//g, "");
-  // collapse whitespace for safety around braces/semicolons (but keep values intact)
-  css = css.replace(/\s+/g, " ").replace(/\s*{\s*/g, "{").replace(/\s*}\s*/g, "}").replace(/\s*;\s*/g, ";").trim();
-
-  // split into blocks like "selector{props}"
-  const blocks = css.match(/[^{}]+{[^{}]*}/g);
-  if (!blocks) return {};
-
-  const rules = {};
-  for (const block of blocks) {
-    const idx = block.indexOf("{");
-    if (idx === -1) continue;
-    const selector = block.slice(0, idx).trim();
-    const body = block.slice(idx + 1, -1).trim(); // remove trailing "}"
-
-    if (!selector || !body) continue;
-
-    const props = {};
-    // split properties by semicolon (filter out empties)
-    const pairs = body.split(";").map(s => s.trim()).filter(Boolean);
-    for (const pair of pairs) {
-      const colonIdx = pair.indexOf(":");
-      if (colonIdx === -1) continue;
-      const key = pair.slice(0, colonIdx).trim();
-      const value = pair.slice(colonIdx + 1).trim();
-      if (key) props[key] = value;
-    }
-
-    if (Object.keys(props).length) {
-      rules[selector] = props;
-    }
-  }
-
-  return rules;
-}
-
-/** Build a CSS string back from a rules map { selector: { prop: value } } */
-function buildCSS(rules) {
-  let css = "";
-  for (const selector of Object.keys(rules)) {
-    css += `${selector} {\n`;
-    const props = rules[selector];
-    for (const prop of Object.keys(props)) {
-      css += `  ${prop}: ${props[prop]};\n`;
-    }
-    css += `}\n\n`;
-  }
-  return css.trim() + "\n";
-}
-
-/* ───────────── DOM Elements ───────────── */
-const cssEditor = document.getElementById("cssEditor");
+const editorContainer = document.getElementById("cssEditor");
 const saveBtn = document.getElementById("saveCSSBtn");
 const reloadBtn = document.getElementById("reloadCSSBtn");
 
-/* ───────────── Firestore Ref ───────────── */
-const ref = doc(db, "familyTrackerSettings", "themeCSS");
+// Firestore document where the theme CSS is stored
+const themeRef = doc(db, "familyTrackerSettings", "themeCSS");
 
-/* ───────────── Local State ───────────── */
-let cssRules = {};
-let liveCSS = "";
+// Default fallback CSS (in case Firestore is empty)
+const defaultCSS = `
+:root {
+  --gold:#d4af37;
+  --bg:#0a0b0f;
+  --text:#e9eef8;
+  --border:rgba(255,255,255,0.08);
+  --surface:rgba(18,20,27,.75);
+}
+/* Add your CSS below */
+`;
 
-/* ───────────── Render the CSS Editor ───────────── */
-function renderEditor() {
-  cssEditor.innerHTML = "";
-
-  if (!cssRules || !Object.keys(cssRules).length) {
-    cssEditor.innerHTML = `<p class="text-gray-400 italic">⚠️ CSS found but no parsable rules. Check console for the raw CSS.</p>`;
-    console.warn("[ThemeEditor] Raw CSS that failed to parse:", liveCSS);
-    return;
-  }
-
-  for (const selector of Object.keys(cssRules)) {
-    const container = document.createElement("div");
-    container.className = "glass p-3 rounded-md";
-
-    // Header with selector name (click to toggle)
-    const header = document.createElement("div");
-    header.className = "flex items-center justify-between cursor-pointer mb-2";
-    header.innerHTML = `
-      <h3 class="text-[#d4af37] font-semibold break-all">${selector}</h3>
-      <span class="text-xs text-gray-400">tap to expand</span>
-    `;
-    container.appendChild(header);
-
-    // Properties grid (collapsed by default)
-    const propList = document.createElement("div");
-    propList.className = "grid grid-cols-2 gap-2";
-    propList.style.display = "none";
-
-    const props = cssRules[selector];
-    for (const prop of Object.keys(props)) {
-      const value = props[prop];
-      const row = document.createElement("label");
-      row.className = "flex flex-col text-xs";
-      row.innerHTML = `
-        <span class="text-gray-400">${prop}</span>
-        <input
-          data-selector="${selector}"
-          data-prop="${prop}"
-          class="form-input text-xs bg-black/40 border border-[rgba(255,255,255,0.1)] rounded-md px-2 py-1 text-white focus:border-[#d4af37] transition"
-          value="${value.replace(/"/g, "&quot;")}"
-        />
-      `;
-      propList.appendChild(row);
-    }
-
-    header.addEventListener("click", () => {
-      propList.style.display = propList.style.display === "none" ? "grid" : "none";
+// --- Utility: Parse CSS string into structured object ---
+function parseCSS(cssText) {
+  const rules = {};
+  const regex = /([^{}]+)\{([^{}]*)\}/g;
+  let match;
+  while ((match = regex.exec(cssText))) {
+    const selector = match[1].trim();
+    const body = match[2].trim();
+    const props = {};
+    body.split(";").forEach(line => {
+      const [key, value] = line.split(":").map(s => s?.trim());
+      if (key && value) props[key] = value;
     });
-
-    container.appendChild(propList);
-    cssEditor.appendChild(container);
+    rules[selector] = props;
   }
+  return rules;
 }
 
-/* ───────────── Save Edits Back to Firestore ───────────── */
-async function saveEdits() {
-  // Read inputs back into cssRules
-  const inputs = cssEditor.querySelectorAll("input[data-selector][data-prop]");
-  inputs.forEach(input => {
-    const selector = input.getAttribute("data-selector");
-    const prop = input.getAttribute("data-prop");
-    const val = input.value;
-    if (!cssRules[selector]) cssRules[selector] = {};
-    cssRules[selector][prop] = val;
-  });
-
-  const newCSS = buildCSS(cssRules);
-
-  try {
-    await updateDoc(ref, { css: newCSS });
-    console.info("[ThemeEditor] CSS updated, length:", newCSS.length);
-    alert("✅ CSS updated successfully! Live preview refreshed.");
-  } catch (err) {
-    console.error("[ThemeEditor] Error saving CSS:", err);
-    alert("❌ Failed to save CSS. Check console for details.");
-  }
+// --- Utility: Convert structured object back into CSS text ---
+function stringifyCSS(rules) {
+  return Object.entries(rules)
+    .map(([sel, props]) => {
+      const body = Object.entries(props)
+        .map(([k, v]) => `  ${k}: ${v};`)
+        .join("\n");
+      return `${sel} {\n${body}\n}`;
+    })
+    .join("\n\n");
 }
 
-/* ───────────── Manual Reload ───────────── */
-async function reloadFromFirestore() {
-  try {
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      cssEditor.innerHTML = `<p class="text-gray-400 italic">No CSS found in Firestore.</p>`;
-      return;
+// --- Render the editable CSS UI ---
+function renderEditor(rules) {
+  editorContainer.innerHTML = "";
+
+  for (const [selector, props] of Object.entries(rules)) {
+    const block = document.createElement("div");
+    block.className = "glass p-3 rounded-md space-y-2";
+
+    const header = document.createElement("div");
+    header.className = "flex justify-between items-center";
+    header.innerHTML = `
+      <input class="form-input flex-1 selectorInput" value="${selector}" />
+      <button class="bg-red-600 text-white px-2 py-1 rounded ml-2 deleteSelector">✕</button>
+    `;
+    block.appendChild(header);
+
+    const propsList = document.createElement("div");
+    propsList.className = "space-y-1";
+    for (const [key, val] of Object.entries(props)) {
+      const row = document.createElement("div");
+      row.className = "flex gap-2";
+      row.innerHTML = `
+        <input class="form-input flex-1 propKey" placeholder="property" value="${key}" />
+        <input class="form-input flex-1 propVal" placeholder="value" value="${val}" />
+        <button class="bg-red-500 text-white rounded px-2 removeProp">–</button>
+      `;
+      propsList.appendChild(row);
     }
-    const newCSS = (snap.data().css || "").toString();
-    console.log("🔄 Reloaded CSS, length:", newCSS.length);
-    liveCSS = newCSS;
-    cssRules = safeParseCSS(liveCSS);
-    renderEditor();
-  } catch (e) {
-    console.error("[ThemeEditor] Reload error:", e);
-    alert("❌ Failed to reload CSS from Firestore.");
+
+    const addPropBtn = document.createElement("button");
+    addPropBtn.textContent = "+ Add Property";
+    addPropBtn.className = "btn-secondary w-full mt-2";
+    addPropBtn.onclick = () => {
+      const row = document.createElement("div");
+      row.className = "flex gap-2";
+      row.innerHTML = `
+        <input class="form-input flex-1 propKey" placeholder="property" />
+        <input class="form-input flex-1 propVal" placeholder="value" />
+        <button class="bg-red-500 text-white rounded px-2 removeProp">–</button>
+      `;
+      propsList.appendChild(row);
+    };
+
+    block.appendChild(propsList);
+    block.appendChild(addPropBtn);
+
+    const removeSelector = header.querySelector(".deleteSelector");
+    removeSelector.onclick = () => block.remove();
+
+    editorContainer.appendChild(block);
+  }
+
+  // Add button to create a new selector
+  const addSelectorBtn = document.createElement("button");
+  addSelectorBtn.textContent = "+ Add New Selector";
+  addSelectorBtn.className = "btn-primary w-full mt-4";
+  addSelectorBtn.onclick = () => {
+    const newBlock = document.createElement("div");
+    newBlock.className = "glass p-3 rounded-md space-y-2";
+    newBlock.innerHTML = `
+      <div class="flex justify-between items-center">
+        <input class="form-input flex-1 selectorInput" placeholder="New selector (e.g., .myClass)" />
+        <button class="bg-red-600 text-white px-2 py-1 rounded ml-2 deleteSelector">✕</button>
+      </div>
+      <div class="space-y-1 propsList"></div>
+      <button class="btn-secondary w-full mt-2 addProp">+ Add Property</button>
+    `;
+    newBlock.querySelector(".deleteSelector").onclick = () => newBlock.remove();
+    newBlock.querySelector(".addProp").onclick = () => {
+      const propsList = newBlock.querySelector(".propsList");
+      const row = document.createElement("div");
+      row.className = "flex gap-2";
+      row.innerHTML = `
+        <input class="form-input flex-1 propKey" placeholder="property" />
+        <input class="form-input flex-1 propVal" placeholder="value" />
+        <button class="bg-red-500 text-white rounded px-2 removeProp">–</button>
+      `;
+      propsList.appendChild(row);
+    };
+    editorContainer.insertBefore(newBlock, addSelectorBtn);
+  };
+  editorContainer.appendChild(addSelectorBtn);
+}
+
+// --- Collect updated CSS from UI ---
+function collectCSSFromUI() {
+  const blocks = editorContainer.querySelectorAll(".glass");
+  const rules = {};
+  blocks.forEach(block => {
+    const selector = block.querySelector(".selectorInput")?.value?.trim();
+    if (!selector) return;
+    const props = {};
+    const propRows = block.querySelectorAll(".propKey");
+    propRows.forEach((keyEl, i) => {
+      const key = keyEl.value.trim();
+      const val = block.querySelectorAll(".propVal")[i]?.value.trim();
+      if (key && val) props[key] = val;
+    });
+    rules[selector] = props;
+  });
+  return rules;
+}
+
+// --- Load or create theme CSS document ---
+async function loadCSS() {
+  const snap = await getDoc(themeRef);
+  if (!snap.exists()) {
+    await setDoc(themeRef, { css: defaultCSS });
+    renderEditor(parseCSS(defaultCSS));
+  } else {
+    const data = snap.data();
+    const rules = parseCSS(data.css);
+    renderEditor(rules);
   }
 }
 
-/* ───────────── Real-Time Listener ───────────── */
-onSnapshot(ref, snap => {
-  if (!snap.exists()) {
-    cssEditor.innerHTML = `<p class="text-gray-400 italic">No CSS found in Firestore.</p>`;
-    return;
-  }
-  const newCSS = (snap.data().css || "").toString();
-  // If CSS changed remotely, reparse and rerender the editor
-  if (newCSS !== liveCSS) {
-    console.log("🔥 Live CSS Loaded:", newCSS.length, "characters");
-    liveCSS = newCSS;
-    cssRules = safeParseCSS(liveCSS);
-    renderEditor();
-  }
+// --- Save CSS to Firestore ---
+async function saveCSS() {
+  const newRules = collectCSSFromUI();
+  const cssText = stringifyCSS(newRules);
+  await updateDoc(themeRef, { css: cssText });
+  alert("✅ CSS updated successfully!");
+}
+
+// --- Live reload listener ---
+onSnapshot(themeRef, docSnap => {
+  const data = docSnap.data();
+  if (!data) return;
+  const rules = parseCSS(data.css);
+  renderEditor(rules);
 });
 
-/* ───────────── Wire Up Buttons ───────────── */
-if (saveBtn)  saveBtn.addEventListener("click", saveEdits);
-if (reloadBtn) reloadBtn.addEventListener("click", reloadFromFirestore);
+// --- Button handlers ---
+saveBtn.onclick = saveCSS;
+reloadBtn.onclick = loadCSS;
 
-/* ───────────── Initial Load ───────────── */
-reloadFromFirestore();
+// --- Initialize ---
+loadCSS();
