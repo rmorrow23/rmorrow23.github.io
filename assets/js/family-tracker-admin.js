@@ -1,6 +1,6 @@
 // ============================
 // Morrow Industries — Family Tracker (Admin)
-// Touch-Optimized Version
+// Touch-Optimized Version (with Payment & Future Payment Support)
 // ============================
 
 import {
@@ -37,27 +37,57 @@ let selectedUser = null;
 let currentLoan  = null;
 let verifiedPass = false;
 
-/* ───────────── TOUCH OPTIMIZED CLICK HANDLER ───────────── */
+/* ───────────── TOUCH-OPTIMIZED CLICK HANDLER ───────────── */
 function addTapListener(el, fn) {
   if (!el) return;
   let locked = false;
-
   const run = e => {
     if (locked) return;
     locked = true;
     fn(e);
     setTimeout(() => (locked = false), 250);
   };
-
   el.addEventListener("click", run);
   el.addEventListener(
     "touchend",
     e => {
-      e.preventDefault();   // stop ghost click
+      e.preventDefault();
       run(e);
     },
     { passive: false }
   );
+}
+
+/* ───────────── SIMPLE LOADER & TOAST ───────────── */
+function showLoader(msg = "Saving...") {
+  let loader = document.getElementById("loader");
+  if (!loader) {
+    loader = document.createElement("div");
+    loader.id = "loader";
+    loader.className =
+      "fixed inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-[9999]";
+    loader.innerHTML = `
+      <div class="animate-spin border-4 border-[#d4af37] border-t-transparent rounded-full w-10 h-10 mb-3"></div>
+      <p class="text-[#d4af37] text-sm">${msg}</p>`;
+    document.body.appendChild(loader);
+  } else {
+    loader.querySelector("p").textContent = msg;
+    loader.classList.remove("hidden");
+  }
+}
+
+function hideLoader() {
+  const loader = document.getElementById("loader");
+  if (loader) loader.classList.add("hidden");
+}
+
+function showToast(msg) {
+  const toast = document.createElement("div");
+  toast.className =
+    "fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#d4af37]/90 text-black font-semibold px-4 py-2 rounded-md shadow-md z-[9999] animate-slideUp";
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2200);
 }
 
 /* ───────────── AUTHENTICATION ───────────── */
@@ -132,10 +162,8 @@ function watchLoans(uid) {
 function renderLoanCard(uid, loan) {
   const bal = calcBalance(loan);
   const percent = loan.totalAmount ? (bal.paid / loan.totalAmount) * 100 : 0;
-
   const card = document.createElement("div");
-  card.className = "loan-card"; // <-- controlled by CSS now
-
+  card.className = "loan-card";
   card.innerHTML = `
     <div class="loan-header">
       <div class="loan-left">
@@ -153,7 +181,6 @@ function renderLoanCard(uid, loan) {
     <div class="loan-progress">
       <div class="loan-progress-bar" style="--progress:${percent}%"></div>
     </div>`;
-
   addTapListener(card, () => openLoanModal(uid, loan));
   loanListEl.appendChild(card);
 }
@@ -164,11 +191,9 @@ function openLoanModal(uid, loan) {
   fillLoanDetails(loan);
   loanDetailsModal.classList.remove("hidden");
   setTimeout(() => loanDetailsCard.classList.remove("translate-y-full"), 10);
-  setTimeout(initTabs, 300); // initialize tab system after modal is visible
+  setTimeout(initTabs, 300);
 }
-
 addTapListener(closeLoanDetails, () => closeModal());
-
 function closeModal() {
   loanDetailsCard.classList.add("translate-y-full");
   setTimeout(() => loanDetailsModal.classList.add("hidden"), 250);
@@ -192,174 +217,164 @@ function renderTables(loan) {
   const pay = Array.isArray(loan.transactions) ? loan.transactions : [];
   const futs = Array.isArray(loan.futurePayments) ? loan.futurePayments : [];
   let run = loan.totalAmount || 0;
-
   hist.innerHTML =
     "<tr class='text-[#d4af37]'><th>Date</th><th>Amt</th><th>Note</th><th>Remain</th></tr>" +
-    (pay
-      .map(p => {
-        run -= p.amount;
-        const d = p.date?.toDate?.() || new Date(p.date);
-        return `<tr><td>${d.toLocaleDateString()}</td><td>$${p.amount.toFixed(2)}</td><td>${p.note || ""}</td><td>$${run.toFixed(2)}</td></tr>`;
-      })
-      .join("") || "<tr><td colspan='4' class='text-center py-1 text-xs'>No payments</td></tr>");
-
+    (pay.map(p => {
+      run -= p.amount;
+      const d = p.date?.toDate?.() || new Date(p.date);
+      return `<tr><td>${d.toLocaleDateString()}</td><td>$${p.amount.toFixed(2)}</td><td>${p.note || ""}</td><td>$${run.toFixed(2)}</td></tr>`;
+    }).join("") || "<tr><td colspan='4' class='text-center py-1 text-xs'>No payments</td></tr>");
   fut.innerHTML =
     "<tr class='text-[#d4af37]'><th>Due</th><th>Amt</th></tr>" +
-    (futs
-      .map(f => `<tr><td>${new Date(f.dueDate).toLocaleDateString()}</td><td>$${f.amount.toFixed(2)}</td></tr>`)
-      .join("") || "<tr><td colspan='2' class='text-center py-1 text-xs'>No future</td></tr>");
+    (futs.map(f => `<tr><td>${new Date(f.dueDate).toLocaleDateString()}</td><td>$${f.amount.toFixed(2)}</td></tr>`).join("") ||
+     "<tr><td colspan='2' class='text-center py-1 text-xs'>No future</td></tr>");
+}
+
+/* ───────────── PAYMENT LOGIC ───────────── */
+const addPaymentForm = document.getElementById("addPaymentForm");
+const paymentDateInput = document.getElementById("paymentDate");
+const chipButtons = document.querySelectorAll(".chip-btn");
+
+function setDateOffset(daysOffset) {
+  const d = new Date();
+  d.setDate(d.getDate() + daysOffset);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  paymentDateInput.value = `${yyyy}-${mm}-${dd}`;
+}
+chipButtons.forEach(btn => {
+  addTapListener(btn, () => {
+    chipButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const offset = btn.dataset.offset;
+    if (offset === "custom") { paymentDateInput.focus(); return; }
+    setDateOffset(parseInt(offset, 10));
+  });
+});
+setDateOffset(0);
+
+if (addPaymentForm) {
+  addPaymentForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!currentLoan || !currentLoan.uid) return alert("No loan selected.");
+    const amount = parseFloat(document.getElementById("paymentAmount").value);
+    const note = document.getElementById("paymentNote").value.trim();
+    if (isNaN(amount) || amount <= 0) return alert("Enter valid amount.");
+    let dateValue = paymentDateInput.value;
+    const when = dateValue ? new Date(`${dateValue}T00:00:00`) : new Date();
+    showLoader("Adding payment...");
+    try {
+      const newPayment = { amount, note, date: when.toISOString() };
+      const ref = doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id);
+      const existing = Array.isArray(currentLoan.data.transactions) ? currentLoan.data.transactions : [];
+      await updateDoc(ref, { transactions: [...existing, newPayment] });
+      hideLoader(); showToast("Payment added!"); closeModal();
+    } catch (err) {
+      hideLoader(); console.error(err); alert("Error adding payment.");
+    }
+  });
+}
+
+/* ───────────── FUTURE PAYMENT LOGIC ───────────── */
+const addFutureForm = document.getElementById("addFutureForm");
+const futureDueDateInput = document.getElementById("futureDueDate");
+const futureChipButtons = document.querySelectorAll(".future-chip-btn");
+
+function setFutureOffset(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  futureDueDateInput.value = `${yyyy}-${mm}-${dd}`;
+}
+futureChipButtons.forEach(btn => {
+  addTapListener(btn, () => {
+    futureChipButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const offset = btn.dataset.days;
+    if (offset === "custom") { futureDueDateInput.focus(); return; }
+    setFutureOffset(parseInt(offset, 10));
+  });
+});
+setFutureOffset(30);
+
+if (addFutureForm) {
+  addFutureForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!currentLoan || !currentLoan.uid) return alert("No loan selected.");
+    const amount = parseFloat(document.getElementById("futureAmount").value);
+    const date = futureDueDateInput.value;
+    if (isNaN(amount) || amount <= 0) return alert("Enter valid amount.");
+    if (!date) return alert("Select a valid due date.");
+    showLoader("Scheduling payment...");
+    try {
+      const newFuture = { dueDate: date, amount };
+      const ref = doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id);
+      const existing = Array.isArray(currentLoan.data.futurePayments) ? currentLoan.data.futurePayments : [];
+      await updateDoc(ref, { futurePayments: [...existing, newFuture] });
+      hideLoader(); showToast("Future payment added!"); closeModal();
+    } catch (err) {
+      hideLoader(); console.error(err); alert("Error adding future payment.");
+    }
+  });
 }
 
 /* ───────────── SECURE DELETE FLOW ───────────── */
 const deleteLoanBtn = document.getElementById("deleteLoanBtn");
 addTapListener(deleteLoanBtn, () => showModal(passcodeModal));
-
 addTapListener(verifyPasscode, async () => {
   const adminPass = adminPassInput.value.trim();
   const passRef = await getDoc(doc(db, "adminSettings", "familyTracker"));
-  if (!passRef.exists()) {
-    alert("Passcode not set");
-    return;
-  }
-  if (adminPass !== passRef.data().passcode) {
-    alert("Incorrect passcode");
-    return;
-  }
-  verifiedPass = true;
-  hideModal(passcodeModal);
-  showModal(overrideModal);
+  if (!passRef.exists()) return alert("Passcode not set");
+  if (adminPass !== passRef.data().passcode) return alert("Incorrect passcode");
+  verifiedPass = true; hideModal(passcodeModal); showModal(overrideModal);
 });
-
 addTapListener(confirmOverride, () => {
   hideModal(overrideModal);
-  if (!verifiedPass) {
-    alert("Unauthorized");
-    return;
-  }
+  if (!verifiedPass) return alert("Unauthorized");
   showModal(nameMatchModal);
 });
-
 addTapListener(finalDeleteBtn, async () => {
   const match = confirmLoanNameInput.value.trim();
-  if (match !== currentLoan.data.loanName) {
-    alert("Name mismatch");
-    return;
-  }
+  if (match !== currentLoan.data.loanName) return alert("Name mismatch");
   await deleteDoc(doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id));
-  hideModal(nameMatchModal);
-  closeModal();
-  alert("Loan deleted successfully");
+  hideModal(nameMatchModal); closeModal(); alert("Loan deleted successfully");
 });
 
-/* ───────────── TABS & ANIMATIONS ───────────── */
+/* ───────────── TABS ───────────── */
 function initTabs() {
   const tabView = document.getElementById("tabView");
   const tabEdit = document.getElementById("tabEdit");
   const tabPayment = document.getElementById("tabPayment");
+  const tabFuture = document.getElementById("tabFuture");
   const detailsPanel = document.getElementById("detailsPanel");
   const editPanel = document.getElementById("editPanel");
   const paymentPanel = document.getElementById("paymentPanel");
+  const futurePanel = document.getElementById("futurePanel");
   const deleteBtn = document.getElementById("deleteLoanBtn");
-
   if (!tabView || !tabEdit || !tabPayment) return;
-
   let currentTab = "view";
-  const panels = { view: detailsPanel, edit: editPanel, pay: paymentPanel };
-  const tabs = { view: tabView, edit: tabEdit, pay: tabPayment };
-
+  const panels = { view: detailsPanel, edit: editPanel, pay: paymentPanel, future: futurePanel };
+  const tabs = { view: tabView, edit: tabEdit, pay: tabPayment, future: tabFuture };
   function switchTab(target) {
     if (target === currentTab) return;
-    Object.values(tabs).forEach(t => t.classList.remove("active"));
-    tabs[target].classList.add("active");
-
-    Object.values(panels).forEach(p => p.classList.add("hidden"));
-    panels[target].classList.remove("hidden");
-
-    // animations
-    if (currentTab === "view" && target === "edit") {
-      panels[target].classList.add("animate-slideLeftIn");
-    } else if (currentTab === "view" && target === "pay") {
-      panels[target].classList.add("animate-slideRightIn");
-    } else if (target === "view") {
-      panels[target].classList.add("animate-slideDown");
-    }
-
-    // delete button animation
-    if (target === "edit") {
-      deleteBtn.classList.remove("opacity-0", "translate-y-6");
-    } else {
-      deleteBtn.classList.add("opacity-0", "translate-y-6");
-    }
-
+    Object.values(tabs).forEach(t => t?.classList.remove("active"));
+    tabs[target]?.classList.add("active");
+    Object.values(panels).forEach(p => p?.classList.add("hidden"));
+    panels[target]?.classList.remove("hidden");
+    if (target === "edit") deleteBtn.classList.remove("opacity-0", "translate-y-6");
+    else deleteBtn.classList.add("opacity-0", "translate-y-6");
     currentTab = target;
   }
-
   addTapListener(tabView, () => switchTab("view"));
   addTapListener(tabEdit, () => switchTab("edit"));
   addTapListener(tabPayment, () => switchTab("pay"));
+  if (tabFuture) addTapListener(tabFuture, () => switchTab("future"));
 }
-/* ───────────── ADD PAYMENT LOGIC ───────────── */
-const addPaymentForm = document.getElementById("addPaymentForm");
 
-if (addPaymentForm) {
-  addPaymentForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    if (!currentLoan || !currentLoan.uid) {
-      alert("No loan selected.");
-      return;
-    }
-
-    const amount = parseFloat(document.getElementById("paymentAmount").value);
-    const note = document.getElementById("paymentNote").value.trim();
-
-    if (isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid amount.");
-      return;
-    }
-
-    // Prepare new payment object
-    const newPayment = {
-      amount,
-      note,
-      date: new Date().toISOString(),
-    };
-
-    try {
-      const loanRef = doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id);
-
-      // Merge new transaction with existing ones
-      const existing = currentLoan.data.transactions || [];
-      const updatedTransactions = [...existing, newPayment];
-
-      await updateDoc(loanRef, { transactions: updatedTransactions });
-
-      showToast("Payment added successfully!");
-      closeModal();
-    } catch (err) {
-      console.error("Error adding payment:", err);
-      alert("Failed to add payment. Please try again.");
-    }
-  });
-}
 /* ───────────── HELPERS ───────────── */
-function showToast(msg) {
-  const t = document.createElement("div");
-  t.textContent = msg;
-  t.className = "fixed bottom-5 left-1/2 -translate-x-1/2 bg-[#d4af37] text-black px-4 py-2 rounded-md shadow-lg";
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2500);
-}
 function calcBalance(loan) {
   const pay = Array.isArray(loan.transactions) ? loan.transactions : [];
-  const fut = Array.isArray(loan.futurePayments) ? loan.futurePayments : [];
-  const paid = pay.reduce((a, b) => a + b.amount, 0);
-  const remaining = (loan.totalAmount || 0) - paid;
-  const nextDue = fut.length
-    ? fut.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))[0].dueDate
-    : null;
-  return { paid, remaining, nextDue: nextDue ? new Date(nextDue).toLocaleDateString() : "—" };
-}
-
-function showModal(m) { m.classList.remove("hidden"); }
-function hideModal(m) { m.classList.add("hidden"); }
+  const fut = Array.isArray(loan.future
