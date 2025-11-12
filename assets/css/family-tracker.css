@@ -269,3 +269,53 @@ nav.glass {
 .form-input {
   @apply bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg px-3 py-2 text-sm text-[#e9eef8] placeholder-gray-500;
 }
+.chip-btn {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 0.5rem;
+  color: #d4af37;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+.chip-btn:hover, .chip-btn.active {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: #d4af37;
+  color: #fff;
+}
+.future-chip-btn {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 0.5rem;
+  color: #d4af37;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+.future-chip-btn:hover,
+.future-chip-btn.active {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: #d4af37;
+  color: #fff;
+}
+/* ===========================
+   Morrow Industries Loader
+=========================== */
+.loader-ring {
+  height: 50px;
+  width: 50px;
+  border: 4px solid rgba(212, 175, 55, 0.3);
+  border-top: 4px solid #d4af37;
+  border-radius: 50%;
+  animation: spin 1s linear infinite, glowPulse 2s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.6), inset 0 0 10px rgba(212, 175, 55, 0.3);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(212,175,55,0.5); }
+  50% { box-shadow: 0 0 20px rgba(212,175,55,0.9); }
+}
