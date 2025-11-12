@@ -298,7 +298,50 @@ function initTabs() {
   addTapListener(tabEdit, () => switchTab("edit"));
   addTapListener(tabPayment, () => switchTab("pay"));
 }
+/* ───────────── ADD PAYMENT LOGIC ───────────── */
+const addPaymentForm = document.getElementById("addPaymentForm");
 
+if (addPaymentForm) {
+  addPaymentForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    if (!currentLoan || !currentLoan.uid) {
+      alert("No loan selected.");
+      return;
+    }
+
+    const amount = parseFloat(document.getElementById("paymentAmount").value);
+    const note = document.getElementById("paymentNote").value.trim();
+
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid amount.");
+      return;
+    }
+
+    // Prepare new payment object
+    const newPayment = {
+      amount,
+      note,
+      date: new Date().toISOString(),
+    };
+
+    try {
+      const loanRef = doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id);
+
+      // Merge new transaction with existing ones
+      const existing = currentLoan.data.transactions || [];
+      const updatedTransactions = [...existing, newPayment];
+
+      await updateDoc(loanRef, { transactions: updatedTransactions });
+
+      alert("Payment added successfully!");
+      closeModal();
+    } catch (err) {
+      console.error("Error adding payment:", err);
+      alert("Failed to add payment. Please try again.");
+    }
+  });
+}
 /* ───────────── HELPERS ───────────── */
 function calcBalance(loan) {
   const pay = Array.isArray(loan.transactions) ? loan.transactions : [];
