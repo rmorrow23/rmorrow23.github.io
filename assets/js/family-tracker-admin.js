@@ -334,7 +334,7 @@ if (addPaymentForm) {
 
       await updateDoc(loanRef, { transactions: updatedTransactions });
 
-      alert("Payment added successfully!");
+      showToast("Payment added successfully!");
       closeModal();
     } catch (err) {
       console.error("Error adding payment:", err);
@@ -343,6 +343,13 @@ if (addPaymentForm) {
   });
 }
 /* ───────────── HELPERS ───────────── */
+function showToast(msg) {
+  const t = document.createElement("div");
+  t.textContent = msg;
+  t.className = "fixed bottom-5 left-1/2 -translate-x-1/2 bg-[#d4af37] text-black px-4 py-2 rounded-md shadow-lg";
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
 function calcBalance(loan) {
   const pay = Array.isArray(loan.transactions) ? loan.transactions : [];
   const fut = Array.isArray(loan.futurePayments) ? loan.futurePayments : [];
