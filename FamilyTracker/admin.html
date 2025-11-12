@@ -5,32 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Morrow Industries — Family Payment Tracker (Admin)</title>
   <link rel="icon" href="/morIcon.png" />
-  <!-- <link rel="stylesheet" href="/assets/css/family-tracker.css" /> -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script type="module" src="/assets/js/firebase-init.js"></script>
-  <style>
-    /* Modal animation helpers */
-    #loanDetailsCard { transition: transform 0.3s ease-in-out; }
-    #loanDetailsModal { transition: opacity 0.3s ease; }
-    #loanDetailsModal:not(.hidden) { opacity: 1; }
 
-    @keyframes slideUp { from {opacity: 0; transform: translateY(20px);} to {opacity: 1; transform: translateY(0);} }
-    .animate-slideUp { animation: slideUp 0.3s ease-out; }
-  </style>
+  <!-- Tailwind + App CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/assets/css/family-tracker.css" />
+
+  <!-- Firebase -->
+  <script type="module" src="/assets/js/firebase-init.js"></script>
 </head>
 
 <body class="min-h-screen flex flex-col bg-gradient-to-b from-black to-[#0a0b0f] text-[#e9eef8] font-[Inter] p-6">
 
-  <!-- Header -->
+  <!-- ===== HEADER ===== -->
   <header class="flex justify-between items-center mb-6">
     <div class="flex items-center gap-3">
       <img src="/morIcon.png" alt="logo" class="h-8 w-8" />
-      <h1 class="text-2xl font-semibold text-[#d4af37]">Family Payment Tracker — Admin</h1>
+      <h1 class="text-2xl font-semibold text-[#d4af37]">
+        Family Payment Tracker — Admin
+      </h1>
     </div>
-    <button id="logoutBtn" class="bg-[#d4af37] text-black font-semibold rounded-md px-3 py-1 hover:opacity-80 transition">Sign Out</button>
+    <button id="logoutBtn" class="btn-primary">Sign Out</button>
   </header>
 
-  <!-- Admin Panel -->
+  <!-- ===== ADMIN PANEL ===== -->
   <div id="adminPanel" class="grid md:grid-cols-3 gap-6">
     <!-- Users -->
     <div class="glass p-4">
@@ -44,163 +41,128 @@
       <div id="selectedUserInfo" class="mb-4 text-sm italic"></div>
       <div id="loanList" class="space-y-4"></div>
       <div class="flex justify-end">
-        <button id="addLoanBtn" class="bg-[#d4af37] text-black font-semibold rounded-md px-4 py-1 hover:opacity-80 transition mt-4">+ Add Loan</button>
+        <button id="addLoanBtn" class="btn-primary mt-4">+ Add Loan</button>
       </div>
     </div>
   </div>
 
-  <!-- Full-Screen Loan Details Modal (Admin) -->
-  <div id="loanDetailsModal" class="fixed inset-0 hidden flex flex-col justify-end bg-black/80 backdrop-blur-xl z-50 transition-transform duration-300 ease-out" pointer-events-none>
-    <div class="glass pointer-events-auto w-full max-h-[90vh] rounded-t-2xl overflow-y-auto p-6 transform translate-y-full transition-all duration-300" id="loanDetailsCard">
-  <!-- Top Bar -->
-  <div class="flex justify-between items-center mb-4">
-    <button id="closeLoanDetails" class="text-gray-400 hover:text-[#d4af37] text-xl font-bold">✕</button>
-    <h2 id="detailsName" class="text-xl font-semibold text-[#d4af37] text-center flex-1">Loan Title</h2>
-  </div>
-
-  <!-- Tabs -->
-  <div class="flex justify-center gap-4 mb-6">
-    <button id="tabView" class="tab-btn active">View</button>
-    <button id="tabEdit" class="tab-btn">Edit</button>
-    <button id="tabPayment" class="tab-btn">Payment</button>
-  </div>
-
-  <!-- Panels Container -->
-  <div id="panelContainer" class="relative overflow-hidden min-h-[400px]">
-    <!-- VIEW PANEL -->
-    <div id="detailsPanel" class="panel detailsPanel active animate-slideDown">
-      <div class="flex flex-col items-center mb-4">
-        <img id="detailsIcon" src="/assets/icons/default-loan.png" class="w-280 h-32 object-cover mb-3" />
+  <!-- ===== LOAN DETAILS MODAL ===== -->
+  <div id="loanDetailsModal" class="modal hidden">
+    <div id="loanDetailsCard" class="modal-card glass">
+      <div class="flex justify-between items-center mb-4">
+        <button id="closeLoanDetails" class="text-gray-400 hover:text-[#d4af37] text-xl font-bold">✕</button>
+        <h2 id="detailsName" class="text-xl font-semibold text-[#d4af37] flex-1 text-center">Loan Title</h2>
       </div>
-      <div id="detailsStats" class="grid grid-cols-2 gap-3 text-sm mb-6">
-        <div class=" p-3 text-center"><p>Total</p><p id="detailsTotal" class="text-[#d4af37] font-semibold">$0.00</p></div>
-        <div class=" p-3 text-center"><p>Paid</p><p id="detailsPaid" class="text-[#d4af37] font-semibold">$0.00</p></div>
-        <div class=" p-3 text-center"><p>Remaining</p><p id="detailsRemaining" class="text-[#d4af37] font-semibold">$0.00</p></div>
-        <div class=" p-3 text-center"><p>Next Due</p><p id="detailsNextDue" class="text-[#d4af37] font-semibold">—</p></div>
+
+      <!-- Tabs -->
+      <div class="flex justify-center gap-4 mb-6">
+        <button id="tabView" class="tab-btn active">View</button>
+        <button id="tabEdit" class="tab-btn">Edit</button>
+        <button id="tabPayment" class="tab-btn">Payment</button>
       </div>
-      <div class="space-y-6">
-        <div>
-          <h3 class="text-[#d4af37] font-semibold mb-2">Payment History</h3>
-          <table id="detailsHistory" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
+
+      <!-- Panels -->
+      <div id="panelContainer" class="relative overflow-hidden min-h-[400px]">
+        <!-- VIEW PANEL -->
+        <div id="detailsPanel" class="panel active">
+          <div class="flex flex-col items-center mb-4">
+            <img id="detailsIcon" src="/assets/icons/default-loan.png" class="w-28 h-28 object-cover mb-3" />
+          </div>
+          <div id="detailsStats" class="grid grid-cols-2 gap-3 text-sm mb-6">
+            <div><p>Total</p><p id="detailsTotal" class="text-[#d4af37] font-semibold">$0.00</p></div>
+            <div><p>Paid</p><p id="detailsPaid" class="text-[#d4af37] font-semibold">$0.00</p></div>
+            <div><p>Remaining</p><p id="detailsRemaining" class="text-[#d4af37] font-semibold">$0.00</p></div>
+            <div><p>Next Due</p><p id="detailsNextDue" class="text-[#d4af37] font-semibold">—</p></div>
+          </div>
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-[#d4af37] font-semibold mb-2">Payment History</h3>
+              <table id="detailsHistory" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
+            </div>
+            <div>
+              <h3 class="text-[#d4af37] font-semibold mb-2">Upcoming Payments</h3>
+              <table id="detailsUpcoming" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
+            </div>
+          </div>
         </div>
-        <div>
-          <h3 class="text-[#d4af37] font-semibold mb-2">Upcoming Payments</h3>
-          <table id="detailsUpcoming" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
+
+        <!-- EDIT PANEL -->
+        <div id="editPanel" class="panel hidden">
+          <h3 class="text-[#d4af37] font-semibold mb-3">Edit Loan</h3>
+          <form id="editLoanForm" class="flex flex-col gap-3">
+            <input id="editLoanName" placeholder="Loan Name" class="form-input" />
+            <input id="editTotalAmount" type="number" placeholder="Total Amount" class="form-input" />
+            <select id="editFrequency" class="form-input">
+              <option value="monthly">Monthly</option>
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Biweekly</option>
+            </select>
+            <button id="saveEditBtn" type="button" class="btn-primary">Save Changes</button>
+          </form>
+          <button id="deleteLoanBtn" class="btn-danger mt-6 opacity-0 translate-y-6 transition-all duration-300">Delete Loan</button>
+        </div>
+
+        <!-- PAYMENT PANEL -->
+        <div id="paymentPanel" class="panel hidden">
+          <h3 class="text-[#d4af37] font-semibold mb-3">Add Payment</h3>
+          <form id="addPaymentForm" class="flex flex-col gap-3">
+            <input id="paymentAmount" type="number" step="0.01" placeholder="Amount" class="form-input" required />
+            <input id="paymentNote" placeholder="Note" class="form-input" />
+            <div class="flex flex-col gap-2">
+              <label class="text-sm text-gray-400">Select Payment Date</label>
+              <input id="paymentDate" type="date" class="form-input" />
+              <div class="flex gap-2">
+                <button type="button" class="chip-btn" data-offset="0">Today</button>
+                <button type="button" class="chip-btn" data-offset="-1">Yesterday</button>
+                <button type="button" class="chip-btn" data-offset="custom">Custom</button>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary mt-3">Add Payment</button>
+          </form>
+        </div>
+
+        <!-- FUTURE PAYMENT PANEL -->
+        <div id="futurePanel" class="panel hidden">
+          <h3 class="text-[#d4af37] font-semibold mb-3">Add Future Payment</h3>
+          <form id="addFutureForm" class="flex flex-col gap-3">
+            <input id="futureAmount" type="number" step="0.01" placeholder="Amount" class="form-input" required />
+            <div class="flex flex-col gap-2">
+              <label class="text-sm text-gray-400">Select Due Date</label>
+              <input id="futureDueDate" type="date" class="form-input" />
+              <div class="flex gap-2">
+                <button type="button" class="future-chip-btn" data-days="7">+7 days</button>
+                <button type="button" class="future-chip-btn" data-days="14">+14 days</button>
+                <button type="button" class="future-chip-btn" data-days="30">+30 days</button>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary mt-3">Add Future Payment</button>
+          </form>
         </div>
       </div>
     </div>
-
-    <!-- EDIT PANEL -->
-    <div id="editPanel" class="panel editPanel hidden">
-      <h3 class="text-[#d4af37] font-semibold mb-3">Edit Loan</h3>
-      <form id="editLoanForm" class="flex flex-col gap-3">
-        <input id="editLoanName" placeholder="Loan Name" class="form-input" />
-        <input id="editTotalAmount" type="number" placeholder="Total Amount" class="form-input" />
-        <select id="editFrequency" class="form-input">
-          <option value="monthly">Monthly</option>
-          <option value="weekly">Weekly</option>
-          <option value="biweekly">Biweekly</option>
-        </select>
-        <button id="saveEditBtn" type="button" class="btn-primary">Save Changes</button>
-      </form>
-      <button id="deleteLoanBtn" class="btn-danger mt-6 opacity-0 translate-y-6 transition-all duration-300">Delete Loan</button>
-    </div>
-
-    <!-- PAYMENT PANEL -->
-<!-- PAYMENT PANEL -->
-<div id="paymentPanel" class="panel paymentPanel hidden">
-  <h3 class="text-[#d4af37] font-semibold mb-3">Add Payment</h3>
-  <form id="addPaymentForm" class="flex flex-col gap-3">
-    <input id="paymentAmount" type="number" step="0.01" placeholder="Amount" class="form-input" required />
-    <input id="paymentNote" placeholder="Note" class="form-input" />
-
-    <!-- Payment Date Picker -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm text-gray-400">Select Payment Date</label>
-      <input id="paymentDate" type="date" class="form-input" />
-      <div class="flex gap-2">
-        <button type="button" class="chip-btn" data-offset="0">Today</button>
-        <button type="button" class="chip-btn" data-offset="-1">Yesterday</button>
-        <button type="button" class="chip-btn" data-offset="custom">Custom</button>
-      </div>
-    </div>
-
-    <button type="submit" class="btn-primary mt-3">Add Payment</button>
-  </form>
-</div>
-  <!-- ADD FUTURE PAYMENT PANEL -->
-<div id="futurePanel" class="panel futurePanel hidden">
-  <h3 class="text-[#d4af37] font-semibold mb-3">Add Future Payment</h3>
-
-  <form id="addFutureForm" class="flex flex-col gap-3">
-    <input id="futureAmount" type="number" step="0.01" placeholder="Amount" class="form-input" required />
-
-    <!-- Future Due Date -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm text-gray-400">Select Due Date</label>
-      <input id="futureDueDate" type="date" class="form-input" />
-      <div class="flex gap-2">
-        <button type="button" class="future-chip-btn" data-days="7">+7 days</button>
-        <button type="button" class="future-chip-btn" data-days="14">+14 days</button>
-        <button type="button" class="future-chip-btn" data-days="30">+30 days</button>
-        <button type="button" class="future-chip-btn" data-days="custom">Custom</button>
-      </div>
-    </div>
-
-    <button type="submit" class="btn-primary mt-3">Add Future Payment</button>
-  </form>
-</div>
-
-  <!-- Delete Confirmation Modals -->
-  <div id="passcodeModal" class="modal hidden">
-    <div class="modal-content glass p-6 w-[90%] max-w-sm text-center">
-      <h2 class="text-lg font-semibold text-[#d4af37] mb-2">Enter Admin Passcode</h2>
-      <input id="adminPassInput" type="password" placeholder="••••••" class="form-input text-center mb-4" />
-      <div class="flex justify-center gap-3">
-        <button id="cancelPasscode" class="btn-secondary">Cancel</button>
-        <button id="verifyPasscode" class="btn-primary">Verify</button>
-      </div>
-    </div>
   </div>
 
-  <div id="overrideModal" class="modal hidden">
-    <div class="modal-content glass p-6 w-[90%] max-w-sm text-center">
-      <h2 class="text-lg font-semibold text-[#d4af37] mb-3">Admin Override Required</h2>
-      <p class="text-sm text-gray-300 mb-4">Confirm you are an authorized admin to proceed.</p>
-      <div class="flex justify-center gap-3">
-        <button id="cancelOverride" class="btn-secondary">Cancel</button>
-        <button id="confirmOverride" class="btn-primary">Confirm</button>
-      </div>
-    </div>
-  </div>
+  <!-- ===== MODALS ===== -->
+  <div id="passcodeModal" class="modal hidden"> ... </div>
+  <div id="overrideModal" class="modal hidden"> ... </div>
+  <div id="nameMatchModal" class="modal hidden"> ... </div>
 
-  <div id="nameMatchModal" class="modal hidden">
-    <div class="modal-content glass p-6 w-[90%] max-w-sm text-center">
-      <h2 class="text-lg font-semibold text-[#d4af37] mb-3">Final Confirmation</h2>
-      <p class="text-sm text-gray-300 mb-2">Type the loan name exactly to confirm deletion.</p>
-      <input id="confirmLoanNameInput" type="text" class="form-input text-center mb-4" placeholder="Exact Loan Name" />
-      <div class="flex justify-center gap-3">
-        <button id="cancelNameMatch" class="btn-secondary">Cancel</button>
-        <button id="finalDeleteBtn" class="bg-red-600 text-white rounded-md px-3 py-1 hover:opacity-80">Delete</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Overlay -->
+  <!-- ===== OVERLAY ===== -->
   <div id="overlay" class="overlay hidden"></div>
 
-  <!-- Script -->
-  <script type="module" src="/assets/js/family-tracker-admin.js"></script>
-<script type="module" src="/assets/js/family-theme-editor.js"></script>
-
-<!-- THEME EDITOR -->
-<div class="glass p-4 md:col-span-3 mt-8">
-  <h2 class="text-lg font-semibold mb-3 text-[#d4af37]">Theme CSS Editor (Development)</h2>
-  <div class="flex justify-end mb-3">
-    <button id="reloadCSSBtn" class="btn-secondary">Reload CSS</button>
-    <button id="saveCSSBtn" class="btn-primary ml-2">Save Changes</button>
+  <!-- ===== THEME EDITOR ===== -->
+  <div id="themeEditorContainer" class="glass p-4 md:col-span-3 mt-8 relative z-0">
+    <h2 class="text-lg font-semibold mb-3 text-[#d4af37]">Theme CSS Editor (Development)</h2>
+    <div class="flex justify-end mb-3">
+      <button id="reloadCSSBtn" class="btn-secondary">Reload CSS</button>
+      <button id="saveCSSBtn" class="btn-primary ml-2">Save Changes</button>
+    </div>
+    <input type="text" id="searchCSS" placeholder="Search..." class="form-input mb-3 text-sm" />
+    <div id="cssEditor" class="space-y-3 text-sm overflow-y-auto max-h-[60vh]"></div>
   </div>
-  <div id="cssEditor" class="space-y-3 text-sm overflow-y-auto max-h-[60vh]"></div>
-</div>
+
+  <!-- ===== SCRIPTS ===== -->
+  <script type="module" src="/assets/js/family-tracker-admin.js"></script>
+  <script type="module" src="/assets/js/family-theme-editor.js"></script>
 </body>
 </html>
