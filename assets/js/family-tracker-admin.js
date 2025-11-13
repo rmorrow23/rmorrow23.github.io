@@ -63,25 +63,39 @@ onAuthStateChanged(auth, async user => {
 
 /* ───────────── USERS ───────────── */
 async function loadUsers() {
-  userListEl.innerHTML = "";
-  const users = await getDocs(collection(db, "users"));
-  users.forEach(u => {
-    const data = u.data();
-    const row = document.createElement("div");
-    row.className = "p-2 rounded hover:bg-[var(--border)] cursor-pointer";
-    row.innerHTML = `
-      <div class="flex justify-between items-center">
-        <span>${data.name || data.email}</span>
-        <select data-uid="${u.id}" class="bg-transparent border border-[var(--border)] rounded px-1 text-xs">
-          <option value="">none</option>
-          <option value="admin" ${data.role_familyTracker === "admin" ? "selected" : ""}>admin</option>
-          <option value="viewer" ${data.role_familyTracker === "viewer" ? "selected" : ""}>viewer</option>
-        </select>
-      </div>`;
-    row.querySelector("select").onchange = e => updateUserRole(u.id, e.target.value);
-    addTapListener(row, () => selectUser(u.id, data));
-    userListEl.appendChild(row);
-  });
+  userListEl.innerHTML = `<p class="text-center text-gray-400 italic p-4">Loading users...</p>`;
+  try {
+    const usersSnap = await getDocs(collection(db, "users"));
+    console.log("✅ Users snapshot size:", usersSnap.size);
+
+    if (usersSnap.empty) {
+      userListEl.innerHTML = `<p class="text-center text-gray-400 italic p-4">No users found in Firestore.</p>`;
+      return;
+    }
+
+    userListEl.innerHTML = "";
+    usersSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      console.log("👤 User loaded:", docSnap.id, data);
+      const row = document.createElement("div");
+      row.className = "p-2 rounded hover:bg-[var(--border)] cursor-pointer";
+      row.innerHTML = `
+        <div class="flex justify-between items-center">
+          <span>${data.name || data.email || docSnap.id}</span>
+          <select data-uid="${docSnap.id}" class="bg-transparent border border-[var(--border)] rounded px-1 text-xs">
+            <option value="">none</option>
+            <option value="admin" ${(data.role_familyTracker || data.role_familytracker) === "admin" ? "selected" : ""}>admin</option>
+            <option value="viewer" ${(data.role_familyTracker || data.role_familytracker) === "viewer" ? "selected" : ""}>viewer</option>
+          </select>
+        </div>`;
+      row.querySelector("select").onchange = e => updateUserRole(docSnap.id, e.target.value);
+      addTapListener(row, () => selectUser(docSnap.id, data));
+      userListEl.appendChild(row);
+    });
+  } catch (err) {
+    console.error("❌ Error loading users:", err);
+    userListEl.innerHTML = `<p class="text-center text-red-400 italic p-4">Error loading users: ${err.message}</p>`;
+  }
 }
 
 async function updateUserRole(uid, role) {
