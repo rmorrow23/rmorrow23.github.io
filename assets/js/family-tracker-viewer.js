@@ -46,7 +46,8 @@ onAuthStateChanged(auth, async user => {
   }
 
   watchLoans(user.uid);
-  loadNotifications(user.uid);
+  loadNotifications(user.uid);  
+  initBadgeCounter(user.uid);
 
 });
 
@@ -102,6 +103,8 @@ function showNotification(uid, id, data) {
   `;
 
   container.appendChild(div);
+  document.getElementById("notifSound").play().catch(() => {});
+
 
   // Close handler
   div.querySelector(".close").onclick = async () => {
@@ -115,6 +118,28 @@ function showNotification(uid, id, data) {
     setTimeout(() => div.remove(), 450);
   };
 }
+function initBadgeCounter(uid) {
+  const ref = collection(db, "users", uid, "notifications");
+
+  onSnapshot(ref, snap => {
+    let unread = 0;
+
+    snap.forEach(docSnap => {
+      if (!docSnap.data().read) unread++;
+    });
+
+    const badge = document.getElementById("notifBadge");
+
+    if (unread > 0) {
+      badge.textContent = unread;
+      badge.classList.remove("hidden");
+    } else {
+      badge.classList.add("hidden");
+    }
+  });
+}
+
+
 /* ───────── Summary Update ───────── */
 function updateSummary(total, futures, count) {
   totalBalanceEl.textContent = `$${total.toFixed(2)}`;
