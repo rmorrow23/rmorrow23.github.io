@@ -407,8 +407,8 @@ body {
 }
 
 .startup-logo {
-  width: 110px;
-  height: 110px;
+  width: 600px;
+  height: 600px;
   filter: drop-shadow(0 0 14px rgba(212,175,55,0.6));
   animation: logoPulse 2.4s ease-in-out infinite;
 }
@@ -447,4 +447,110 @@ body {
 @keyframes fadeOut {
   to { opacity: 0; pointer-events: none; }
 }
+/* =============================
+   Success Pop Animation
+============================= */
+.success-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(.8);
+  opacity: 0;
+  z-index: 99999;
+  background: rgba(0,0,0,0.8);
+  padding: 20px 30px;
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--gold);
+  text-align: center;
+  transition: all .35s ease;
+}
 
+.success-popup.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.success-checkmark {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 4px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  animation: successPop .5s ease;
+  box-shadow: 0 0 15px rgba(212,175,55,0.7);
+}
+
+.check-icon {
+  width: 22px;
+  height: 45px;
+  border-right: 4px solid var(--gold);
+  border-bottom: 4px solid var(--gold);
+  transform: rotate(45deg);
+  animation: successDraw .4s ease .15s forwards;
+  opacity: 0;
+}
+
+@keyframes successDraw {
+  from { height: 0; opacity: 0; }
+  to   { height: 45px; opacity: 1; }
+}
+
+@keyframes successPop {
+  0% { transform: scale(0.7); }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* Loan update pulse */
+.loan-update-pulse {
+  animation: loanPulse 0.55s ease-out;
+}
+
+@keyframes loanPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(212,175,55,0); }
+  40% { transform: scale(1.03); box-shadow: 0 0 18px rgba(212,175,55,0.5); }
+  100% { transform: scale(1); box-shadow: 0 0 0 rgba(212,175,55,0); }
+}
+
+/* Notifications */
+.notif-container {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 99999;
+}
+
+.notification {
+  background: rgba(0,0,0,0.85);
+  padding: 14px 18px;
+  border-left: 4px solid var(--gold);
+  border-radius: 0.75rem;
+  width: 260px;
+  color: var(--text);
+  margin-bottom: 10px;
+  box-shadow: 0 0 10px rgba(212,175,55,0.35);
+  backdrop-filter: blur(12px);
+  transform: translateX(100%);
+  opacity: 0;
+  animation: slideInNotif .5s ease forwards;
+  display: flex;
+  justify-content: space-between;
+}
+
+.notification .close {
+  cursor: pointer;
+  padding-left: 10px;
+  color: var(--gold);
+}
+
+@keyframes slideInNotif {
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutNotif {
+  to { transform: translateX(100%); opacity: 0; }
+}
