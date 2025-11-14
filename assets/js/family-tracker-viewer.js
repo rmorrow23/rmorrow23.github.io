@@ -1,7 +1,7 @@
 import {
   auth, db,
   GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut,
-  collection, doc, getDoc, onSnapshot
+  collection, doc, getDoc, onSnapshot, updateDoc
 } from "/assets/js/firebase-init.js";
 
 import { enableLiveStyle } from "/assets/js/family-tracker-livestyle.js";
@@ -22,7 +22,6 @@ const activeLoansEl    = document.getElementById("activeLoans");
 const loanDetailsModal = document.getElementById("loanDetailsModal");
 const loanDetailsCard  = document.getElementById("loanDetailsCard");
 const closeLoanDetails = document.getElementById("closeLoanDetails");
-const detailsIcon      = document.getElementById("detailsIcon");
 /* ───────── Auth Flow ───────── */
 logoutBtn.onclick = () => signOut(auth);
 
@@ -47,6 +46,8 @@ onAuthStateChanged(auth, async user => {
   }
 
   watchLoans(user.uid);
+  loadNotifications(user.uid);
+
 });
 
 /* ───────── Watch User Loans ───────── */
@@ -75,7 +76,45 @@ function watchLoans(uid) {
     updateSummary(total, future, snap.size);
   });
 }
+function loadNotifications(uid) {
+  const ref = collection(db, "users", uid, "notifications");
 
+  onSnapshot(ref, snap => {
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (!data.read) showNotification(uid, docSnap.id, data);
+    });
+  });
+}
+
+function showNotification(uid, id, data) {
+  const container = document.getElementById("notifContainer");
+  container.classList.remove("hidden");
+
+  const div = document.createElement("div");
+  div.className = "notification";
+  div.innerHTML = `
+    <div>
+      <p class="font-semibold text-[#d4af37]">${data.title}</p>
+      <p class="text-sm">${data.message}</p>
+    </div>
+    <div class="close">✕</div>
+  `;
+
+  container.appendChild(div);
+
+  // Close handler
+  div.querySelector(".close").onclick = async () => {
+    div.style.animation = "slideOutNotif .4s ease forwards";
+
+    await updateDoc(
+      doc(db, "users", uid, "notifications", id),
+      { read: true }
+    );
+
+    setTimeout(() => div.remove(), 450);
+  };
+}
 /* ───────── Summary Update ───────── */
 function updateSummary(total, futures, count) {
   totalBalanceEl.textContent = `$${total.toFixed(2)}`;
@@ -175,6 +214,19 @@ function closeModal() {
 
 closeLoanDetails.onclick = () => closeModal();
 
+function showSuccess(msg="Success!") {
+  const pop = document.getElementById("successPopup");
+  const txt = document.getElementById("successMessage");
+
+  txt.textContent = msg;
+  pop.classList.remove("hidden");
+  pop.classList.add("active");
+
+  setTimeout(() => {
+    pop.classList.remove("active");
+    setTimeout(() => pop.classList.add("hidden"), 300);
+  }, 1800);
+}
 
 /* ───────── Fill Modal ───────── */
 function fillLoanDetails(loan) {
@@ -273,6 +325,12 @@ function showLoader(msg = "Loading...") {
     loader.querySelector("p").textContent = msg;
     loader.classList.remove("hidden");
   }
+}
+function animateLoanCard(loanId) {
+  const card = document.querySelector(`[data-loan="${loanId}"]`);
+  if (!card) return;
+  card.classList.add("loan-update-pulse");
+  setTimeout(() => card.classList.remove("loan-update-pulse"), 600);
 }
 
 /* Hide loader overlay */

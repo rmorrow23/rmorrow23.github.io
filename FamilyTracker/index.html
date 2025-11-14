@@ -21,6 +21,13 @@
         <div class="loader-ring mt-6"></div>
     </div>
 </div>
+<div id="successPopup" class="success-popup hidden">
+  <div class="success-checkmark">
+      <div class="check-icon"></div>
+  </div>
+  <p id="successMessage">Success!</p>
+</div>
+
 
   <!-- Header -->
   <header class="flex justify-between items-center mb-6">
@@ -72,7 +79,7 @@
 
     <div id="loanDetailsCard"
       class="glass pointer-events-auto w-full max-h-[90vh] rounded-t-2xl overflow-y-auto p-6 transform translate-y-full transition-all duration-300">
-<div class="mini-loader"></div>
+
 
       <div class="flex-1 justify-between items-center mb-4">
         <button id="closeLoanDetails" class="text-gray-400 hover:text-[#d4af37] text-xl font-bold">✕</button>
@@ -110,10 +117,12 @@
         <div>
           <h3 class="text-[#d4af37] font-semibold mb-2">Upcoming Payments</h3>
           <table id="detailsUpcoming" class="text-sm w-full border-t border-[rgba(255,255,255,0.1)]"></table>
-        </div>
+        </div> <!--<div class="mini-loader"></div>-->
       </div>
     </div>
   </div>
+  <div id="notifContainer" class="notif-container hidden"></div>
+
 </body>
 
 </html>
