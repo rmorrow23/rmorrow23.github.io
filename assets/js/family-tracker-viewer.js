@@ -5,9 +5,9 @@ import {
 } from "/assets/js/firebase-init.js";
 
 import { enableLiveStyle } from "/assets/js/family-tracker-livestyle.js";
-enableLiveStyle();
+/*enableLiveStyle();
 
-/* ───────── GLOBALS ───────── */
+ ───────── GLOBALS ───────── */
 let userRole = null;
 let currentLoan = null;
 
@@ -22,7 +22,7 @@ const activeLoansEl    = document.getElementById("activeLoans");
 const loanDetailsModal = document.getElementById("loanDetailsModal");
 const loanDetailsCard  = document.getElementById("loanDetailsCard");
 const closeLoanDetails = document.getElementById("closeLoanDetails");
-
+const detailsIcon      = document.getElementById("detailsIcon");
 /* ───────── Auth Flow ───────── */
 logoutBtn.onclick = () => signOut(auth);
 
@@ -98,44 +98,83 @@ function renderLoanCard(uid, loan) {
   const percent = loan.totalAmount ? (bal.paid / loan.totalAmount) * 100 : 0;
 
   const card = document.createElement("div");
-  card.className = "loan-card"; // styled via CSS / theme editor
+  card.className = "loan-card";
 
   card.innerHTML = `
-    <div class="loan-header">
-      <div class="loan-left">
-        <img src="${loan.loanIcon || "/assets/icons/default-loan.png"}" class="loan-icon"/>
-        <div class="loan-info">
-          <h3 class="loan-name">${loan.loanName}</h3>
-          <p class="loan-remaining">Remaining $${bal.remaining.toFixed(2)}</p>
+  <div class="flex-col justify-between items-center ">
+  <h3 class="loan-name">${loan.loanName}</h3>
+    <div class="flex justify-between items-center">
+    
+      <div class="flex items-center gap-3">
+        <img src="${loan.loanIcon || "/assets/icons/default-loan.png"}" class="loan-icon" />
+        <div>
+          
+          <p class="loan-remaining text-sm text-gray-400">Remaining: $${bal.remaining.toFixed(2)}</p>
         </div>
       </div>
-      <div class="loan-right">
-        <p class="loan-next-label">Next</p>
-        <p class="loan-next-date">${bal.nextDue || "—"}</p>
+      <div class="text-right text-sm">
+        <p class="text-gray-400">Next:</p>
+        <p>${bal.nextDue || "—"}</p>
       </div>
     </div>
-    <div class="loan-progress">
-      <div class="loan-progress-bar" style="--progress:${percent}%"></div>
-    </div>`;
+    <div class="h-2 bg-[rgba(255,255,255,0.1)] rounded mt-3">
+      <div class="h-2 bg-[#d4af37] rounded" style="width:${percent}%"></div>
+    </div>
+    </div>
+  `;
 
   addTapListener(card, () => openLoanModal(loan));
-  loanContainer.appendChild(card); // ✅ Correct container
+  loanContainer.appendChild(card);
 }
 
 /* ───────── Loan Details Modal ───────── */
 function openLoanModal(loan) {
   currentLoan = loan;
+
   fillLoanDetails(loan);
+
   loanDetailsModal.classList.remove("hidden");
-  setTimeout(() => loanDetailsCard.classList.remove("translate-y-full"), 10);
+  loanDetailsModal.classList.add("active");
+
+  const card = loanDetailsCard;
+
+  // Reset animation classes
+  card.classList.remove("loan-modal-close");
+  card.style.transform = "scaleY(0.2) translateY(40px)";
+  card.style.opacity = "0";
+
+  // Give browser a tick
+  requestAnimationFrame(() => {
+    card.classList.add("loan-modal-animate");
+    const icon = document.getElementById("detailsIcon");
+    if (icon) {
+      icon.classList.remove("icon-fly-in"); // reset if previously used
+      void icon.offsetWidth;                // force repaint
+      icon.classList.add("icon-fly-in");    // FIRE ANIMATION
+    }
+  });
+}
+
+function closeModal() {
+  
+  // Remove any previous animation classes
+  loanDetailsCard.classList.remove("loan-modal-animate", "loan-modal-close");
+
+  // Force reflow so animation restarts cleanly
+  void loanDetailsCard.offsetWidth;
+
+  // Add the close animation class
+  loanDetailsCard.classList.add("loan-modal-close");
+
+  // After animation finishes, hide the modal wrapper
+  setTimeout(() => {
+    loanDetailsModal.classList.remove("active");   // fades overlay
+    loanDetailsModal.classList.add("hidden");      // hides entire modal
+  }, 450); // match CSS: loanModalReroll duration (0.45s)
 }
 
 closeLoanDetails.onclick = () => closeModal();
 
-function closeModal() {
-  loanDetailsCard.classList.add("translate-y-full");
-  setTimeout(() => loanDetailsModal.classList.add("hidden"), 250);
-}
 
 /* ───────── Fill Modal ───────── */
 function fillLoanDetails(loan) {
@@ -194,4 +233,61 @@ function addTapListener(el, fn) {
     e.preventDefault();
     run(e);
   }, { passive: false });
+}
+/* ───────────── ANIMATION CLASSES (inject if missing) ───────────── */
+const animStyle = document.createElement("style");
+animStyle.textContent = `
+@keyframes slideInRight { from {opacity:0;transform:translateX(20px)} to {opacity:1;transform:translateX(0)} }
+@keyframes slideOutLeft { from {opacity:1;transform:translateX(0)} to {opacity:0;transform:translateX(-20px)} }
+@keyframes slideUp { from {opacity:0;transform:translateY(20px)} to {opacity:1;transform:translateY(0)} }
+@keyframes slideDown { from {opacity:1;transform:translateY(0)} to {opacity:0;transform:translateY(20px)} }
+.animate-slideInRight{animation:slideInRight .3s ease-out}
+.animate-slideOutLeft{animation:slideOutLeft .3s ease-in}
+.animate-slideUp{animation:slideUp .3s ease-out}
+.animate-slideDown{animation:slideDown .3s ease-in}
+`;
+document.head.appendChild(animStyle);
+
+/* ================================
+   Morrow Industries Loader + Toast
+================================ */
+
+/* Show loader overlay */
+function showLoader(msg = "Loading...") {
+  let loader = document.getElementById("globalLoader");
+
+  if (!loader) {
+    loader = document.createElement("div");
+    loader.id = "globalLoader";
+
+    loader.className =
+      "fixed inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-[9999]";
+
+    loader.innerHTML = `
+      <div class="loader-ring mb-4"></div>
+      <p class="text-[#d4af37] text-sm tracking-wide">${msg}</p>
+    `;
+
+    document.body.appendChild(loader);
+  } else {
+    loader.querySelector("p").textContent = msg;
+    loader.classList.remove("hidden");
+  }
+}
+
+/* Hide loader overlay */
+function hideLoader() {
+  const loader = document.getElementById("globalLoader");
+  if (loader) loader.classList.add("hidden");
+}
+
+/* Toast Notification */
+function showToast(msg) {
+  const t = document.createElement("div");
+  t.className =
+    "fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#d4af37]/90 text-black font-semibold px-4 py-2 rounded-md shadow-md z-[9999] animate-slideUpIn";
+  t.textContent = msg;
+
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
 }

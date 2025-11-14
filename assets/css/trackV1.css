@@ -1,0 +1,450 @@
+/* ==============================
+   Morrow Industries — Family Tracker Theme
+============================== */
+:root {
+  --gold: #d4af37;
+  --bg: #000;
+  --text: #e9eef8;
+  --surface: rgba(0, 20, 27, 0.55);
+  --border: rgba(255, 255, 255, 0.08);
+  --muted: #a9b0be;
+}
+
+/* ---- Base ---- */
+body {
+  background: #000;
+  color: var(--text);
+}
+
+/* ---- Glass Panels ---- */
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0);
+}
+
+/* ---- Summary Cards ---- */
+.summary-card {
+  text-align: left;
+  padding: 1rem;
+}
+.summary-card h3 {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.summary-card .card-value {
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+/* ---- Overlay ---- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 90;  
+  overflow-y: hidden;
+}
+.hidden { display: none; }
+
+/* ---- Gradient Override ---- */
+.bg-gradient-to-b {
+  background: #000;
+}
+
+/* ---- Buttons ---- */
+.btn-primary {
+  background: var(--gold);
+  color: #000;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.4rem 1rem;
+  transition: all 0.2s ease;
+}
+.btn-primary:hover { opacity: 0.85; }
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.4rem 1rem;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.btn-danger {
+  background: #b91c1c;
+  color: white;
+  border-radius: 0.5rem;
+  padding: 0.4rem 1rem;
+  transition: all 0.2s ease;
+}
+.btn-danger:hover { opacity: 0.8; }
+
+/* ---- Tabs ---- */
+.tab-btn {
+  border-top: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  color: var(--muted);
+  transition: all 0.2s ease;
+  pointer-events: auto;
+}
+.tab-btn.active {
+  border-top: 1px solid var(--gold);
+  color: var(--gold)
+}
+
+/* ---- Inputs ---- */
+.form-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+.form-input:focus { border-color: var(--gold); }
+
+/* ---- Loan Cards ---- */
+.loan-card {
+  border-top: 0.5rem solid var(--border);
+  border-top-left-radius: 2.75rem;
+  border-top-right-radius: 1.75rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: -0.75rem -1.5rem 0 -1.65rem;
+  background: var(--surface);
+}
+.loan-card:hover {
+  box-shadow: 0 0 10px rgba(212,175,55,0.4);
+}
+.loan-card img {
+  width: 11.5rem;
+  height: 11.25rem;
+  object-fit: contain;
+}
+.loan-card h3 {
+  color: var(--gold);
+  font-weight: 600;
+  border-top: 1px solid var(--gold);
+  margin-top: 0.5rem;
+  font-size: 1.75rem;
+  text-align: center;
+}
+.loan-card p {
+  font-size: 1.2rem;
+  color: var(--muted);
+}
+
+/* ---- Loan Details ---- */
+#loanDetailsCard {
+  background: var(--surface);
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  height: 95vh;
+  max-height: 95vh;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.3s ease-in-out;
+  width: 95%;
+  padding: 1.5rem;
+  margin: 1rem;
+  max-width: 900px;
+}
+#loanDetailsCard.active {
+  transform: translateY(0);
+}
+
+#loanDetailsModal {
+  transition: opacity 0.3s ease;
+}
+#loanDetailsModal:not(.hidden) { opacity: 1; }
+
+#detailsIcon {
+  width: 22rem;
+  height: 14rem;
+  object-fit: contain;
+}
+#detailsIcon.active {
+  transition: 0.55s cubic-bezier(0.15, 0.8, 0.15, 1), opacity 0.25s ease;
+  transform: scaleX(1);
+}
+
+#detailsStats div {
+  background: transparent;
+  padding: 0.75rem;
+}
+#detailsStats p:first-child {
+  color: var(--muted);
+  font-size: 1.7rem;
+}
+#detailsStats p:last-child {
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+/* ---- Panels ---- */
+.panel { transition: all 0.4s ease; }
+.panel.hidden { display: none; }
+
+/* ---- Generic Modal ---- */
+.modal {
+  display: flex;     /* or block — flex is nicer for centering */
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.modal.hidden {
+  display: none !important;
+}
+
+.modal.active {
+  display: flex !important;
+  pointer-events: auto;
+  opacity: 1;
+}
+
+
+.modal-content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+
+/* ---- Animations ---- */
+@keyframes slideLeftIn {
+  from { opacity: 0; transform: translateX(-100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideRightIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideLeftOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-100%); }
+}
+@keyframes slideRightOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(100%); }
+}
+@keyframes slideUpIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes slideUpOut {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-20px); opacity: 0; }
+}
+
+.animate-slideLeftIn { animation: slideLeftIn 0.4s forwards; }
+.animate-slideRightIn { animation: slideRightIn 0.4s forwards; }
+.animate-slideLeftOut { animation: slideLeftOut 0.4s forwards; }
+.animate-slideRightOut { animation: slideRightOut 0.4s forwards; }
+.animate-slideUpIn { animation: slideUpIn 0.4s forwards; }
+.animate-slideUpOut { animation: slideUpOut 0.4s forwards; }
+
+
+/* Smooth fade/unroll */
+/* Smooth fade/unroll */
+@keyframes loanModalUnroll {
+  0% {
+    transform: scaleY(0.01) translateY(20px);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  60% {
+    transform: scaleY(1.03) translateY(0);  /* slight overshoot */
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    transform: scaleY(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Reverse roll (close animation) */
+@keyframes loanModalReroll {
+  0% {
+    transform: scaleY(1) translateY(0);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  40% {
+    transform: scaleY(1.03);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scaleY(0.01) translateY(20px);
+    opacity: 0;
+    filter: blur(6px);
+  }
+}
+
+/* animate target (loanDetailsCard) */
+.loan-modal-animate {
+  transform-origin: top;
+  animation: loanModalUnroll 0.55s cubic-bezier(.18,.89,.32,1.28) forwards;
+}
+
+.loan-modal-close {
+  transform-origin: top;
+  animation: loanModalReroll 0.95s cubic-bezier(.18,.89,.32,1.28) forwards;
+}
+
+/* ============================
+   Loan Details Icon Fly-In
+============================ */
+@keyframes iconFlyIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.1) translateY(20px) rotate(-8deg);
+    filter: blur(6px);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2) translateY(-4px) rotate(8deg);
+    filter: blur(0);
+  }
+  100% {
+    transform: scale(1) translateY(0) rotate(0);
+  }
+}
+
+.icon-fly-in {
+  animation: iconFlyIn 1.55s cubic-bezier(.18,.89,.32,1.28) forwards;
+}
+
+/* ==============================
+   Morrow Industries — Loaders & Animations
+================================*/
+
+/* --- Mini Loader (inside cards & modals) --- */
+.mini-loader {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  border-top: 2px solid var(--gold);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite, glowPulse 1.8s ease-in-out infinite;
+  margin-left: 6px;
+  box-shadow: 0 0 4px rgba(212,175,55,0.6);
+}
+
+/* --- Loader Ring (full-size circular loader) --- */
+.loader-ring {
+  height: 50px;
+  width: 50px;
+  border: 4px solid rgba(212, 175, 55, 0.3);
+  border-top: 4px solid #d4af37;
+  border-radius: 50%;
+  animation: spin 1s linear infinite, glowPulse 2s infinite;
+  box-shadow: 0 0 10px rgba(212,175,55,0.6), inset 0 0 10px rgba(212,175,55,0.3);
+}
+
+/* --- Progress Loader (for long tasks) --- */
+.progress-loader {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 6px;
+  width: 0%;
+  background: var(--gold);
+  border-radius: 8px;
+  transition: width 0.25s ease;
+  box-shadow: 0 0 8px rgba(212,175,55,0.8);
+}
+
+/* --- Icon + Loader combo (VaultView style) --- */
+.icon-loader img.loader-logo {
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(0 0 8px rgba(212,175,55,0.4));
+  animation: floatPulse 2.6s ease-in-out infinite;
+}
+
+/* --- Startup Screen --- */
+.startup-screen {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #0a0b0f 0%, #000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+.startup-screen.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.startup-inner {
+  text-align: center;
+  animation: appPop 0.9s cubic-bezier(.18,.89,.32,1.28);
+}
+
+.startup-logo {
+  width: 110px;
+  height: 110px;
+  filter: drop-shadow(0 0 14px rgba(212,175,55,0.6));
+  animation: logoPulse 2.4s ease-in-out infinite;
+}
+
+
+/* ==============================
+   Animations
+================================*/
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(212,175,55,0.5); }
+  50% { box-shadow: 0 0 20px rgba(212,175,55,0.9); }
+}
+
+@keyframes floatPulse {
+  0%   { transform: translateY(0);   opacity: 0.95; }
+  50%  { transform: translateY(-4px); opacity: 1; }
+  100% { transform: translateY(0);   opacity: 0.95; }
+}
+
+@keyframes appPop {
+  0%   { transform: scale(0.8) translateY(20px); opacity: 0; }
+  70%  { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes logoPulse {
+  0%,100% { transform: scale(1); opacity: 0.92; }
+  50%     { transform: scale(1.08); opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; pointer-events: none; }
+}
+
