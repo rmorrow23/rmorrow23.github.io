@@ -1,6 +1,6 @@
 // ============================
 // Morrow Industries — Family Tracker (Admin)
-// Fully Wired + Animated Version
+// Full Bottom-Sheet Modal Version
 // ============================
 
 import {
@@ -10,13 +10,16 @@ import {
 } from "/assets/js/firebase-init.js";
 
 import { enableLiveStyle } from "/assets/js/family-tracker-livestyle.js";
-enableLiveStyle();
+/*enableLiveStyle();
 
-/* ───────────── ELEMENTS ───────────── */
+/* --------------------------------------------
+   ELEMENTS
+-------------------------------------------- */
 const userListEl = document.getElementById("userList");
 const loanListEl = document.getElementById("loanList");
 const logoutBtn = document.getElementById("logoutBtn");
 const selectedUserInfo = document.getElementById("selectedUserInfo");
+
 const loanDetailsModal = document.getElementById("loanDetailsModal");
 const loanDetailsCard = document.getElementById("loanDetailsCard");
 const closeLoanDetails = document.getElementById("closeLoanDetails");
@@ -24,85 +27,88 @@ const closeLoanDetails = document.getElementById("closeLoanDetails");
 let selectedUser = null;
 let currentLoan = null;
 
-/* ───────────── TOUCH SAFE HANDLER ───────────── */
+/* --------------------------------------------
+   TOUCH-SAFE TAP HANDLER
+-------------------------------------------- */
 function addTapListener(el, fn) {
   if (!el) return;
   let locked = false;
-  const handler = e => {
+
+  const handler = (e) => {
     if (locked) return;
     locked = true;
     fn(e);
-    setTimeout(() => (locked = false), 250);
+    setTimeout(() => (locked = false), 200);
   };
+
   el.addEventListener("click", handler);
-  el.addEventListener(
-    "touchend",
-    e => {
-      e.preventDefault();
-      handler(e);
-    },
-    { passive: false }
-  );
+  el.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    handler(e);
+  }, { passive: false });
 }
 
-/* ───────────── AUTH ───────────── */
+/* --------------------------------------------
+   AUTHENTICATION
+-------------------------------------------- */
 addTapListener(logoutBtn, () => signOut(auth));
 
-onAuthStateChanged(auth, async user => {
+onAuthStateChanged(auth, async (user) => {
   if (!user) {
     await signInWithPopup(auth, new GoogleAuthProvider());
     return;
   }
+
   const u = await getDoc(doc(db, "users", user.uid));
+
   if (!u.exists() || u.data().role_familyTracker !== "admin") {
     window.location = "unauthorized.html";
     return;
   }
+
   loadUsers();
 });
 
-/* ───────────── USERS ───────────── */
+/* --------------------------------------------
+   LOAD USERS
+-------------------------------------------- */
 async function loadUsers() {
-  userListEl.innerHTML = `<p class="text-center text-gray-400 italic p-4">Loading users...</p>`;
-  try {
-    const usersSnap = await getDocs(collection(db, "users"));
-    console.log("✅ Users snapshot size:", usersSnap.size);
+  userListEl.innerHTML = "Loading...";
 
-    if (usersSnap.empty) {
-      userListEl.innerHTML = `<p class="text-center text-gray-400 italic p-4">No users found in Firestore.</p>`;
-      return;
-    }
+  const snap = await getDocs(collection(db, "users"));
+  userListEl.innerHTML = "";
 
-    userListEl.innerHTML = "";
-    usersSnap.forEach(docSnap => {
-      const data = docSnap.data();
-      console.log("👤 User loaded:", docSnap.id, data);
-      const row = document.createElement("div");
-      row.className = "p-2 rounded hover:bg-[var(--border)] cursor-pointer";
-      row.innerHTML = `
-        <div class="flex justify-between items-center">
-          <span>${data.name || data.email || docSnap.id}</span>
-          <select data-uid="${docSnap.id}" class="bg-transparent border border-[var(--border)] rounded px-1 text-xs">
-            <option value="">none</option>
-            <option value="admin" ${(data.role_familyTracker || data.role_familytracker) === "admin" ? "selected" : ""}>admin</option>
-            <option value="viewer" ${(data.role_familyTracker || data.role_familytracker) === "viewer" ? "selected" : ""}>viewer</option>
-          </select>
-        </div>`;
-      row.querySelector("select").onchange = e => updateUserRole(docSnap.id, e.target.value);
-      addTapListener(row, () => selectUser(docSnap.id, data));
-      userListEl.appendChild(row);
-    });
-  } catch (err) {
-    console.error("❌ Error loading users:", err);
-    userListEl.innerHTML = `<p class="text-center text-red-400 italic p-4">Error loading users: ${err.message}</p>`;
-  }
+  snap.forEach((docSnap) => {
+    const data = docSnap.data();
+    const row = document.createElement("div");
+
+    row.className = "p-2 rounded hover:bg-[var(--border)] cursor-pointer";
+
+    row.innerHTML = `
+      <div class="flex justify-between items-center">
+        <span>${data.name || data.email || docSnap.id}</span>
+        <select data-uid="${docSnap.id}" class="bg-transparent border border-[var(--border)] rounded px-1 text-xs">
+          <option value="">none</option>
+          <option value="admin" ${data.role_familyTracker === "admin" ? "selected" : ""}>admin</option>
+          <option value="viewer" ${data.role_familyTracker === "viewer" ? "selected" : ""}>viewer</option>
+        </select>
+      </div>
+    `;
+
+    row.querySelector("select").onchange = (e) => updateUserRole(docSnap.id, e.target.value);
+    addTapListener(row, () => selectUser(docSnap.id, data));
+
+    userListEl.appendChild(row);
+  });
 }
 
 async function updateUserRole(uid, role) {
   await updateDoc(doc(db, "users", uid), { role_familyTracker: role || null });
 }
 
-/* ───────────── LOANS ───────────── */
+/* --------------------------------------------
+   SELECT USER & WATCH LOANS
+-------------------------------------------- */
 function selectUser(uid, data) {
   selectedUser = uid;
   selectedUserInfo.textContent = `Managing loans for: ${data.name || data.email}`;
@@ -110,15 +116,18 @@ function selectUser(uid, data) {
 }
 
 function watchLoans(uid) {
-  loanListEl.innerHTML = "";
   const ref = collection(db, "loans", uid, "userLoans");
-  onSnapshot(ref, snap => {
+
+  onSnapshot(ref, (snap) => {
     loanListEl.innerHTML = "";
+
     if (snap.empty) {
-      loanListEl.innerHTML = `<p class="text-center text-gray-400 italic p-4">No loans yet</p>`;
+      loanListEl.innerHTML =
+        `<p class="text-center text-gray-400 italic p-4">No loans yet</p>`;
       return;
     }
-    snap.forEach(d => {
+
+    snap.forEach((d) => {
       const loan = d.data();
       loan.id = d.id;
       renderLoanCard(uid, loan);
@@ -126,182 +135,319 @@ function watchLoans(uid) {
   });
 }
 
+/* --------------------------------------------
+   RENDER LOAN CARD
+-------------------------------------------- */
 function renderLoanCard(uid, loan) {
   const bal = calcBalance(loan);
   const percent = loan.totalAmount ? (bal.paid / loan.totalAmount) * 100 : 0;
+
   const card = document.createElement("div");
   card.className = "loan-card";
+
   card.innerHTML = `
-    <div class="loan-header">
-      <div class="loan-left">
-        <img src="${loan.loanIcon || "/assets/icons/default-loan.png"}" class="loan-icon"/>
-        <div class="loan-info">
-          <h3 class="loan-name">${loan.loanName}</h3>
-          <p class="loan-remaining">Remaining $${bal.remaining.toFixed(2)}</p>
+  <div class="flex-col justify-between items-center mb-2">
+  <h3 class="loan-name">${loan.loanName}</h3>
+    <div class="flex justify-between items-center">
+    
+      <div class="flex items-center gap-3">
+        <img src="${loan.loanIcon || "/assets/icons/default-loan.png"}" class="loan-icon" />
+        <div>
+          
+          <p class="loan-remaining text-sm text-gray-400">Remaining: $${bal.remaining.toFixed(2)}</p>
         </div>
       </div>
-      <div class="loan-right">
-        <p class="loan-next-label">Next</p>
-        <p class="loan-next-date">${bal.nextDue || "—"}</p>
+      <div class="text-right text-sm">
+        <p class="text-gray-400">Next:</p>
+        <p>${bal.nextDue || "—"}</p>
       </div>
     </div>
-    <div class="loan-progress">
-      <div class="loan-progress-bar" style="--progress:${percent}%"></div>
-    </div>`;
+    <div class="h-2 bg-[rgba(255,255,255,0.1)] rounded mt-3">
+      <div class="h-2 bg-[#d4af37] rounded" style="width:${percent}%"></div>
+    </div>
+    </div>
+  `;
+
   addTapListener(card, () => openLoanModal(uid, loan));
   loanListEl.appendChild(card);
 }
 
-/* ───────────── MODAL OPEN/CLOSE (Animated) ───────────── */
+/* --------------------------------------------
+   OPEN BOTTOM-SHEET MODAL
+-------------------------------------------- */
 function openLoanModal(uid, loan) {
+
   currentLoan = { uid, id: loan.id, data: loan };
   fillLoanDetails(loan);
+
   loanDetailsModal.classList.remove("hidden");
-  loanDetailsModal.style.opacity = "0";
-  setTimeout(() => {
-    loanDetailsModal.style.transition = "opacity 0.3s";
-    loanDetailsModal.style.opacity = "1";
-    loanDetailsCard.classList.add("animate-slideUp");
-  }, 10);
-  setTimeout(initTabs, 200);
-}
+  loanDetailsModal.classList.add("active");
 
-addTapListener(closeLoanDetails, closeModal);
-function closeModal() {
+  // ensure proper animation
+  requestAnimationFrame(() => {
+    loanDetailsCard.classList.add("active");
+    loanDetailsCard.classList.remove("animate-slideDown");
+    loanDetailsCard.classList.add("animate-slideUpIn");
+  });
+  setTimeout(() => {
+    initTabs();
+  }, 150);
+}
+function closeLoanModal() {
+  loanDetailsCard.classList.remove("animate-slideUpIn");
   loanDetailsCard.classList.add("animate-slideDown");
-  loanDetailsModal.style.opacity = "1";
   setTimeout(() => {
-    loanDetailsModal.style.opacity = "0";
-    setTimeout(() => {
-      loanDetailsModal.classList.add("hidden");
-      loanDetailsCard.classList.remove("animate-slideDown");
-    }, 250);
-  }, 50);
+    loanDetailsModal.classList.remove("active");
+    loanDetailsModal.classList.add("hidden");
+  }, 300);
 }
 
-/* ───────────── FILL DETAILS ───────────── */
+
+/* --------------------------------------------
+   FILL DETAILS
+-------------------------------------------- */
 function fillLoanDetails(loan) {
+  const bal = calcBalance(loan);
+
   document.getElementById("detailsName").textContent = loan.loanName;
   document.getElementById("detailsIcon").src = loan.loanIcon || "/assets/icons/default-loan.png";
-  const bal = calcBalance(loan);
-  document.getElementById("detailsTotal").textContent = `$${loan.totalAmount?.toFixed(2) || 0}`;
-  document.getElementById("detailsPaid").textContent = `$${bal.paid.toFixed(2)}`;
-  document.getElementById("detailsRemaining").textContent = `$${bal.remaining.toFixed(2)}`;
-  document.getElementById("detailsNextDue").textContent = bal.nextDue || "—";
-  renderTables(loan);
 
-  document.getElementById("editLoanName").value = loan.loanName || "";
-  document.getElementById("editTotalAmount").value = loan.totalAmount || "";
-  document.getElementById("editFrequency").value = loan.frequency || "monthly";
+  document.getElementById("detailsTotal").textContent =
+    `$${loan.totalAmount?.toFixed(2)}`;
+
+  document.getElementById("detailsPaid").textContent =
+    `$${bal.paid.toFixed(2)}`;
+
+  document.getElementById("detailsRemaining").textContent =
+    `$${bal.remaining.toFixed(2)}`;
+
+  document.getElementById("detailsNextDue").textContent =
+    bal.nextDue || "—";
+
+  renderTables(loan);
 }
 
-/* ───────────── SAVE EDIT ───────────── */
-addTapListener(document.getElementById("saveEditBtn"), async e => {
-  e.preventDefault();
-  if (!currentLoan) return;
-  const name = document.getElementById("editLoanName").value.trim();
-  const total = parseFloat(document.getElementById("editTotalAmount").value);
-  const freq = document.getElementById("editFrequency").value;
-  if (!name || isNaN(total)) return alert("Enter valid info");
-  showLoader("Saving changes...");
-  try {
-    await updateDoc(doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id), {
-      loanName: name, totalAmount: total, frequency: freq
-    });
-    hideLoader(); showToast("Changes saved!");
-  } catch {
-    hideLoader(); alert("Error saving changes");
-  }
-});
+/* --------------------------------------------
+   RENDER TABLES
+-------------------------------------------- */
 
-/* ───────────── ADD PAYMENT ───────────── */
-document.getElementById("addPaymentForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  if (!currentLoan) return;
-  const amount = parseFloat(document.getElementById("paymentAmount").value);
-  const note = document.getElementById("paymentNote").value.trim();
-  const dateVal = document.getElementById("paymentDate").value;
-  const date = dateVal ? new Date(`${dateVal}T00:00:00`) : new Date();
-  if (isNaN(amount) || amount <= 0) return alert("Enter valid amount");
-  showLoader("Adding payment...");
-  try {
-    const newPayment = { amount, note, date: date.toISOString() };
-    const ref = doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id);
-    const existing = Array.isArray(currentLoan.data.transactions) ? currentLoan.data.transactions : [];
-    await updateDoc(ref, { transactions: [...existing, newPayment] });
-    hideLoader(); showToast("Payment added!"); closeModal();
-  } catch {
-    hideLoader(); alert("Error adding payment");
-  }
-});
 
-/* ───────────── ADD FUTURE PAYMENT ───────────── */
-document.getElementById("addFutureForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  if (!currentLoan) return;
-  const amount = parseFloat(document.getElementById("futureAmount").value);
-  const dateVal = document.getElementById("futureDueDate").value;
-  if (isNaN(amount) || !dateVal) return alert("Enter valid amount & date");
-  showLoader("Scheduling future payment...");
-  try {
-    const newFuture = { dueDate: dateVal, amount };
-    const ref = doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id);
-    const existing = Array.isArray(currentLoan.data.futurePayments) ? currentLoan.data.futurePayments : [];
-    await updateDoc(ref, { futurePayments: [...existing, newFuture] });
-    hideLoader(); showToast("Future payment added!"); closeModal();
-  } catch {
-    hideLoader(); alert("Error adding future payment");
-  }
-});
-
-/* ───────────── ANIMATED TAB SWITCH ───────────── */
+/* --------------------------------------------
+   TAB SYSTEM
+-------------------------------------------- */
+/* ───────────── ANIMATED TAB SWITCH WITH DEBUGGING ───────────── */
 function initTabs() {
+
   const tabView = document.getElementById("tabView");
   const tabEdit = document.getElementById("tabEdit");
   const tabPayment = document.getElementById("tabPayment");
+
   const detailsPanel = document.getElementById("detailsPanel");
   const editPanel = document.getElementById("editPanel");
   const paymentPanel = document.getElementById("paymentPanel");
-  const futurePanel = document.getElementById("futurePanel");
+
   const deleteBtn = document.getElementById("deleteLoanBtn");
+  const closeLoanDetails = document.getElementById("closeLoanDetails");
+
+  
+
+  if (!tabView || !tabEdit || !tabPayment) {
+    console.warn("❌ One or more Tab Buttons NOT FOUND!");
+    return;
+  }
 
   let activePanel = detailsPanel;
+
   function switchTab(nextPanel, btn) {
+
+    
+
+    // Switch active state on buttons
     [tabView, tabEdit, tabPayment].forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
 
-    // slide animation
+    // Animate old panel out
     activePanel.classList.add("animate-slideOutLeft");
+
     setTimeout(() => {
       activePanel.classList.add("hidden");
       activePanel.classList.remove("animate-slideOutLeft");
+
       nextPanel.classList.remove("hidden");
       nextPanel.classList.add("animate-slideInRight");
-      setTimeout(() => nextPanel.classList.remove("animate-slideInRight"), 300);
+
+      setTimeout(() => nextPanel.classList.remove("animate-slideInRight"), 400);
+
       activePanel = nextPanel;
+
+
     }, 250);
 
-    // Delete visibility animation
-    if (btn === tabEdit)
+    // Delete button visibility animation
+    if (btn === tabEdit) {
       deleteBtn.classList.remove("opacity-0", "translate-y-6");
-    else deleteBtn.classList.add("opacity-0", "translate-y-6");
+    } else {
+      deleteBtn.classList.add("opacity-0", "translate-y-6");
+    }
   }
 
-  addTapListener(tabView, () => switchTab(detailsPanel, tabView));
-  addTapListener(tabEdit, () => switchTab(editPanel, tabEdit));
-  addTapListener(tabPayment, () => switchTab(paymentPanel, tabPayment));
+  /* DEBUGGING CLICK HANDLERS */
+  addTapListener(tabView, e => {
+    switchTab(detailsPanel, tabView);
+  });
+ closeLoanDetails.addEventListener("click", async () => {
+  closeLoanModal();
+ });
+  addTapListener(tabEdit, e => {
+    switchTab(editPanel, tabEdit);
+  });
+
+  addTapListener(tabPayment, e => {
+    switchTab(paymentPanel, tabPayment);
+  });
+/* ============================================================
+   SAVE EDIT — Update Loan Name / Total Amount / Frequency
+============================================================ */
+document.getElementById("saveEditBtn").addEventListener("click", async () => {
+  if (!currentLoan) return alert("No loan selected");
+
+  const name = document.getElementById("editLoanName").value.trim();
+  const totalAmount = parseFloat(document.getElementById("editTotalAmount").value);
+  const frequency = document.getElementById("editFrequency").value;
+
+  if (!name) return alert("Loan name required");
+  if (isNaN(totalAmount) || totalAmount <= 0) return alert("Invalid total amount");
+
+  showLoader("Saving loan changes...");
+
+  try {
+    await updateDoc(
+      doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id),
+      {
+        loanName: name,
+        totalAmount,
+        frequency
+      }
+    );
+
+    hideLoader();
+    showToast("Loan updated!");
+  } catch (err) {
+    hideLoader();
+    alert("Error saving loan: " + err.message);
+  }
+});
+
+
+/* ============================================================
+   ADD PAYMENT — Append to loan.transactions
+============================================================ */
+document.getElementById("addPaymentForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!currentLoan) return alert("No loan selected");
+
+  const amount = parseFloat(document.getElementById("paymentAmount").value);
+  const note = document.getElementById("paymentNote").value.trim();
+  const dateRaw = document.getElementById("paymentDate").value;
+
+  const date = dateRaw 
+    ? new Date(dateRaw + "T00:00:00") 
+    : new Date(); // fallback to today
+
+  if (isNaN(amount) || amount <= 0) return alert("Payment amount required");
+
+  const newPayment = {
+    amount,
+    note,
+    date: date.toISOString()
+  };
+
+  const loanRef = doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id);
+  const existing = Array.isArray(currentLoan.data.transactions)
+    ? currentLoan.data.transactions
+    : [];
+
+  showLoader("Adding payment...");
+
+  try {
+    await updateDoc(loanRef, {
+      transactions: [...existing, newPayment]
+    });
+
+    hideLoader();
+    showToast("Payment added!");
+    closeModal();
+
+  } catch (err) {
+    hideLoader();
+    alert("Error adding payment: " + err.message);
+  }
+});
+
+
+/* ============================================================
+   ADD FUTURE PAYMENT — Append to loan.futurePayments
+============================================================ */
+document.getElementById("addFutureForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!currentLoan) return alert("No loan selected");
+
+  const amount = parseFloat(document.getElementById("futureAmount").value);
+  const dueDate = document.getElementById("futureDueDate").value;
+
+  if (!dueDate) return alert("Due date required");
+  if (isNaN(amount) || amount <= 0) return alert("Amount required");
+
+  const newFuture = {
+    amount,
+    dueDate
+  };
+
+  const loanRef = doc(db, "loans", currentLoan.uid, "userLoans", currentLoan.id);
+  const existing = Array.isArray(currentLoan.data.futurePayments)
+    ? currentLoan.data.futurePayments
+    : [];
+
+  showLoader("Scheduling payment...");
+
+  try {
+    await updateDoc(loanRef, {
+      futurePayments: [...existing, newFuture]
+    });
+
+    hideLoader();
+    showToast("Future payment added!");
+    closeModal();
+
+  } catch (err) {
+    hideLoader();
+    alert("Error adding future payment: " + err.message);
+  }
+});
+
 }
 
-/* ───────────── HELPERS ───────────── */
+
+/* --------------------------------------------
+   CALCULATE BALANCE
+-------------------------------------------- */
 function calcBalance(loan) {
-  const pay = Array.isArray(loan.transactions) ? loan.transactions : [];
-  const fut = Array.isArray(loan.futurePayments) ? loan.futurePayments : [];
-  const paid = pay.reduce((a, b) => a + (b.amount || 0), 0);
-  const remaining = (loan.totalAmount || 0) - paid;
-  const nextDue = fut.length > 0 ? fut[0].dueDate : null;
-  return { paid, remaining, nextDue };
-}
+  const pay = loan.transactions || [];
+  const fut = loan.futurePayments || [];
 
+  const paid = pay.reduce((a, b) => a + b.amount, 0);
+  const remaining = (loan.totalAmount || 0) - paid;
+
+  const nextDue = fut.length
+    ? fut.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))[0].dueDate
+    : null;
+
+  return {
+    paid,
+    remaining,
+    nextDue: nextDue ? new Date(nextDue).toLocaleDateString() : null
+  };
+}
 function renderTables(loan) {
   const hist = document.getElementById("detailsHistory");
   const fut = document.getElementById("detailsUpcoming");

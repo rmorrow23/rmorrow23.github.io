@@ -6,13 +6,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Morrow Industries — Family Payment Tracker</title>
   <link rel="icon" href="/morIcon.png" />
+  <link rel="stylesheet" href="/assets/css/trackV1.css" />
   <!-- <link rel="stylesheet" href="/assets/css/family-tracker.css" /> -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="module" src="/assets/js/firebase-init.js"></script>
   <script type="module" src="/assets/js/family-tracker-viewer.js"></script>
 </head>
 
-<body class="min-h-screen flex flex-col bg-gradient-to-b from-black to-[#0a0b0f] text-[#e9eef8] font-[Inter] p-6">
+<body class="min-h-screen flex flex-col bg-gradient-to-b  text-[#e9eef8] font-[Inter] p-6">
+<!-- Morrow Industries — Startup Loader -->
+<div id="startupScreen" class="startup-screen hidden">
+    <div class="startup-inner">
+        <img src="/morIcon.png" class="startup-logo" />
+        <div class="loader-ring mt-6"></div>
+    </div>
+</div>
 
   <!-- Header -->
   <header class="flex justify-between items-center mb-6">
@@ -28,26 +36,43 @@
 
   <!-- Dashboard Summary -->
   <section id="summary" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-1 mb-1">
-    <div class="summary-card"><h3>Total Balance</h3><p id="totalBalance" class="card-value">$0.00</p></div>
-    <div class="summary-card"><h3>Next Due Date</h3><p id="nextDueDate" class="card-value">—</p></div>
-    <div class="summary-card"><h3>Next Amount Due</h3><p id="nextAmountDue" class="card-value">$0.00</p></div>
-    <div class="summary-card"><h3>Active Loans</h3><p id="activeLoans" class="card-value">0</p></div>
+    <div class="summary-card">
+      <h3>Total Balance</h3>
+      <p id="totalBalance" class="card-value">$0.00</p>
+    </div>
+    <div class="summary-card">
+      <h3>Next Due Date</h3>
+      <p id="nextDueDate" class="card-value">—</p>
+    </div>
+    <div class="summary-card">
+      <h3>Next Amount Due</h3>
+      <p id="nextAmountDue" class="card-value">$0.00</p>
+    </div>
+    <div class="summary-card">
+      <h3>Active Loans</h3>
+      <p id="activeLoans" class="card-value">0</p>
+    </div>
   </section>
 
   <!-- Loan List -->
   <main>
     <h2 class="text-xl font-semibold text-[#d4af37] mb-3">Your Loans</h2>
     <div id="loanContainer" class="space-y-4">
-      <div id="loading" class="text-center italic text-[#d4af37]">Loading your loans...</div>
+      <div id="loading" class="flex flex-col items-center justify-center py-8 text-center text-[#d4af37]">
+    <div class="loader-ring mb-3"></div>
+    <p class="text-sm opacity-80">Loading your loans...</p>
+</div>
+
     </div>
   </main>
 
   <!-- Full-Screen Loan Details Modal -->
   <div id="loanDetailsModal"
-    class="fixed inset-0 hidden flex flex-col justify-end bg-black/80 backdrop-blur-xl z-50 transition-transform duration-300 ease-out pointer-events-none">
+    class="fixed inset-0 hidden flex flex-col justify-end bg-black/80 backdrop-blur-xl z-50 transition-transform duration-300 ease-out pointer-events-auto">
 
     <div id="loanDetailsCard"
       class="glass pointer-events-auto w-full max-h-[90vh] rounded-t-2xl overflow-y-auto p-6 transform translate-y-full transition-all duration-300">
+<div class="mini-loader"></div>
 
       <div class="flex-1 justify-between items-center mb-4">
         <button id="closeLoanDetails" class="text-gray-400 hover:text-[#d4af37] text-xl font-bold">✕</button>
@@ -90,4 +115,5 @@
     </div>
   </div>
 </body>
+
 </html>
