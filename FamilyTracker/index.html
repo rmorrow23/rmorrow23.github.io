@@ -14,19 +14,19 @@
 </head>
 
 <body class="min-h-screen flex flex-col bg-gradient-to-b  text-[#e9eef8] font-[Inter] p-6">
-<!-- Morrow Industries — Startup Loader -->
-<div id="startupScreen" class="startup-screen hidden">
+  <!-- Morrow Industries — Startup Loader -->
+  <div id="startupScreen" class="startup-screen hidden">
     <div class="startup-inner">
-        <img src="/morIcon.png" class="startup-logo" />
-        <div class="loader-ring mt-6"></div>
+      <img src="/morIcon.png" class="startup-logo" />
+      <div class="loader-ring mt-6"></div>
     </div>
-</div>
-<div id="successPopup" class="success-popup hidden">
-  <div class="success-checkmark">
-      <div class="check-icon"></div>
   </div>
-  <p id="successMessage">Success!</p>
-</div>
+  <div id="successPopup" class="success-popup hidden">
+    <div class="success-checkmark">
+      <div class="check-icon"></div>
+    </div>
+    <p id="successMessage">Success!</p>
+  </div>
 
 
   <!-- Header -->
@@ -40,13 +40,13 @@
       Sign Out
     </button>
     <div class="relative">
-  <button class="text-[#d4af37] text-xl">🔔</button>
+      <button class="text-[#d4af37] text-xl">🔔</button>
 
-  <span id="notifBadge"
-    class="notif-badge hidden absolute -top-1 -right-1 bg-[#d4af37] text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-    0
-  </span>
-</div>
+      <span id="notifBadge"
+        class="notif-badge hidden absolute -top-1 -right-1 bg-[#d4af37] text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+        0
+      </span>
+    </div>
 
   </header>
 
@@ -72,12 +72,12 @@
 
   <!-- Loan List -->
   <main>
-    <h2 class="text-xl font-semibold text-[#d4af37] mb-3">Your Loans</h2>
+    <h2 class="text-xl font-semibold text-[#d4af37] mb-3" id="loansHeader">Your Loans</h2>
     <div id="loanContainer" class="space-y-4">
       <div id="loading" class="flex flex-col items-center justify-center py-8 text-center text-[#d4af37]">
-    <div class="loader-ring mb-3"></div>
-    <p class="text-sm opacity-80">Loading your loans...</p>
-</div>
+        <div class="loader-ring mb-3"></div>
+        <p class="text-sm opacity-80">Loading your loans...</p>
+      </div>
 
     </div>
   </main>
