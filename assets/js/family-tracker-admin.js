@@ -6,7 +6,7 @@
 import {
   auth, db,
   GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut,
-  collection, doc, getDoc, getDocs, onSnapshot, updateDoc, deleteDoc
+  collection, doc, getDoc,setDoc,serverTimestamp, getDocs, onSnapshot, updateDoc, deleteDoc
 } from "/assets/js/firebase-init.js";
 
 import { enableLiveStyle } from "/assets/js/family-tracker-livestyle.js";
@@ -202,7 +202,60 @@ function closeLoanModal() {
   }, 300);
 }
 
+async function loadNotificationUsers() {
+  const usersRef = collection(db, "users");
+  const snap = await getDocs(usersRef);
 
+  const sel = document.getElementById("notifTarget");
+  snap.forEach(docSnap => {
+    const data = docSnap.data();
+    const opt = document.createElement("option");
+    opt.value = docSnap.id;
+    opt.textContent = data.displayName || data.name || docSnap.id;
+    sel.appendChild(opt);
+  });
+}
+loadNotificationUsers();
+
+/* ===========================
+   Send Notification
+=========================== */
+document.getElementById("sendNotifBtn").onclick = async () => {
+  const title = notifTitle.value.trim();
+  const msg = notifMsg.value.trim();
+  const target = notifTarget.value;
+
+  if (!title || !msg) return showToast("Missing title or message.");
+
+  showLoader("Sending...");
+
+  if (target === "ALL") {
+    // broadcast to all
+    const usersRef = collection(db, "users");
+    const snap = await getDocs(usersRef);
+
+    for (const user of snap.docs) {
+      await pushNotification(user.id, title, msg);
+    }
+  } else {
+    await pushNotification(target, title, msg);
+  }
+
+  hideLoader();
+  showSuccess("Notification Sent!");
+  notifTitle.value = "";
+  notifMsg.value = "";
+};
+
+async function pushNotification(uid, title, message) {
+  const notifRef = doc(collection(db, "users", uid, "notifications"));
+  await setDoc(notifRef, {
+    title,
+    message,
+    createdAt: serverTimestamp(),
+    read: false
+  });
+}
 /* --------------------------------------------
    FILL DETAILS
 -------------------------------------------- */

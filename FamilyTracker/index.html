@@ -39,6 +39,15 @@
       class="border border-[#d4af37] text-[#d4af37] font-semibold rounded-xl px-3 py-1 hover:opacity-80 transition">
       Sign Out
     </button>
+    <div class="relative">
+  <button class="text-[#d4af37] text-xl">🔔</button>
+
+  <span id="notifBadge"
+    class="notif-badge hidden absolute -top-1 -right-1 bg-[#d4af37] text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+    0
+  </span>
+</div>
+
   </header>
 
   <!-- Dashboard Summary -->
@@ -124,5 +133,7 @@
   <div id="notifContainer" class="notif-container hidden"></div>
 
 </body>
+<audio id="notifSound" src="/assets/sounds/notif-pop.mp3" preload="auto"></audio>
+
 
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,8 +14,8 @@
   <link rel="stylesheet" href="/assets/css/family-tracker.css" /> -->
 
   <!-- Firebase -->
-  <script type="module" src="/assets/js/firebase-init.js"></script> 
-  
+  <script type="module" src="/assets/js/firebase-init.js"></script>
+
 </head>
 
 <body class="min-h-screen flex flex-col bg-gradient-to-b from-black to-[#0a0b0f] text-[#e9eef8] font-[Inter] p-6">
@@ -46,7 +47,28 @@
       <div class="flex justify-end">
         <button id="addLoanBtn" class="btn-primary mt-4">+ Add Loan</button>
       </div>
-    </div>
+      </div>
+      <!-- ==========================
+     Admin Notification Composer
+      =========================== -->
+    <section id="adminNotifications" class="glass p-4 rounded-xl mt-6">
+      <h2 class="text-xl font-semibold text-[#d4af37] mb-4">Send Notification</h2>
+
+      <div class="space-y-3">
+        <input id="notifTitle" type="text" placeholder="Notification Title" class="form-input text-sm" />
+
+        <textarea id="notifMsg" placeholder="Message..." rows="3" class="form-input text-sm"></textarea>
+
+        <select id="notifTarget" class="form-input text-sm">
+          <option value="ALL">All Users</option>
+        </select>
+
+        <button id="sendNotifBtn" class="btn-primary w-full">
+          Send Notification
+        </button>
+      </div>
+    </section>
+
   </div>
 
   <!-- ===== LOAN DETAILS MODAL ===== -->
@@ -72,10 +94,22 @@
             <img id="detailsIcon" src="/assets/icons/default-loan.png" class="w-28 h-28 object-cover mb-3" />
           </div>
           <div id="detailsStats" class="grid grid-cols-2 gap-3 text-sm mb-6">
-            <div><p>Total</p><p id="detailsTotal" class="text-[#d4af37] font-semibold">$0.00</p></div>
-            <div><p>Paid</p><p id="detailsPaid" class="text-[#d4af37] font-semibold">$0.00</p></div>
-            <div><p>Remaining</p><p id="detailsRemaining" class="text-[#d4af37] font-semibold">$0.00</p></div>
-            <div><p>Next Due</p><p id="detailsNextDue" class="text-[#d4af37] font-semibold">—</p></div>
+            <div>
+              <p>Total</p>
+              <p id="detailsTotal" class="text-[#d4af37] font-semibold">$0.00</p>
+            </div>
+            <div>
+              <p>Paid</p>
+              <p id="detailsPaid" class="text-[#d4af37] font-semibold">$0.00</p>
+            </div>
+            <div>
+              <p>Remaining</p>
+              <p id="detailsRemaining" class="text-[#d4af37] font-semibold">$0.00</p>
+            </div>
+            <div>
+              <p>Next Due</p>
+              <p id="detailsNextDue" class="text-[#d4af37] font-semibold">—</p>
+            </div>
           </div>
           <div class="space-y-6">
             <div>
@@ -102,7 +136,8 @@
             </select>
             <button id="saveEditBtn" type="button" class="btn-primary">Save Changes</button>
           </form>
-          <button id="deleteLoanBtn" class="btn-danger mt-6 opacity-0 translate-y-6 transition-all duration-300">Delete Loan</button>
+          <button id="deleteLoanBtn" class="btn-danger mt-6 opacity-0 translate-y-6 transition-all duration-300">Delete
+            Loan</button>
         </div>
 
         <!-- PAYMENT PANEL -->
@@ -168,4 +203,5 @@
   <script type="module" src="/assets/js/family-tracker-admin.js"></script>
   <script type="module" src="/assets/js/family-theme-editor.js"></script>
 </body>
+
 </html>
