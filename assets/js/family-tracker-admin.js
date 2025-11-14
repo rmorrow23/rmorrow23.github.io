@@ -256,6 +256,20 @@ async function pushNotification(uid, title, message) {
     read: false
   });
 }
+function showSuccess(msg="Success!") {
+  const pop = document.getElementById("successPopup");
+  const txt = document.getElementById("successMessage");
+
+  txt.textContent = msg;
+  pop.classList.remove("hidden");
+  pop.classList.add("active");
+
+  setTimeout(() => {
+    pop.classList.remove("active");
+    setTimeout(() => pop.classList.add("hidden"), 300);
+  }, 1800);
+}
+
 /* --------------------------------------------
    FILL DETAILS
 -------------------------------------------- */
