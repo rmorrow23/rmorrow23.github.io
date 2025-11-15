@@ -31,7 +31,7 @@ const closeLoanDetails = document.getElementById("closeLoanDetails");
 
 let selectedUser = null;
 let currentLoan = null;
-addTapListener(addLoanBtn, () => {
+addLoanBtn.onClick = () => {
   if (!selectedUser) {
     alert("Select a user first.");
     return;
