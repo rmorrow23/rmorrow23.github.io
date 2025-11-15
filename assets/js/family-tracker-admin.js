@@ -20,10 +20,7 @@ const loanListEl = document.getElementById("loanList");
 const logoutBtn = document.getElementById("logoutBtn");
 const selectedUserInfo = document.getElementById("selectedUserInfo");
 
-const addLoanBtn     = document.getElementById("addLoanBtn");
-const addLoanModal   = document.getElementById("addLoanModal");
-const addLoanCard    = document.getElementById("addLoanCard");
-const cancelAddLoan  = document.getElementById("cancelAddLoan");
+
 
 const loanDetailsModal = document.getElementById("loanDetailsModal");
 const loanDetailsCard = document.getElementById("loanDetailsCard");
@@ -31,7 +28,16 @@ const closeLoanDetails = document.getElementById("closeLoanDetails");
 
 let selectedUser = null;
 let currentLoan = null;
-addLoanBtn.onClick = () => {
+
+const addLoanBtn     = document.getElementById("addLoanBtn");
+const addLoanModal   = document.getElementById("addLoanModal");
+const addLoanCard    = document.getElementById("addLoanCard");
+const cancelAddLoan  = document.getElementById("cancelAddLoan");
+
+/* ------------------------------
+   OPEN ADD LOAN MODAL
+------------------------------ */
+addLoanBtn.onclick = () => {
   if (!selectedUser) {
     alert("Select a user first.");
     return;
@@ -39,15 +45,20 @@ addLoanBtn.onClick = () => {
 
   addLoanModal.classList.remove("hidden");
 
+  // trigger animation on next frame
   requestAnimationFrame(() => {
     addLoanCard.classList.add("loan-modal-open");
   });
-});
+};
 
-cancelAddLoan.onclick = () => closeAddLoan();
+/* ------------------------------
+   CLOSE ADD LOAN MODAL
+------------------------------ */
+cancelAddLoan.onclick = closeAddLoan;
 
 function closeAddLoan() {
   addLoanCard.classList.add("loan-modal-close");
+
   setTimeout(() => {
     addLoanModal.classList.add("hidden");
     addLoanCard.classList.remove("loan-modal-open", "loan-modal-close");
