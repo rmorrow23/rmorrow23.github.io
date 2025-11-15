@@ -598,3 +598,22 @@ margin: -1.75rem -2.45rem 0 -1.95rem;
   70% { transform: scale(1.2); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+/* Add Loan Modal Animation */
+.loan-modal-enter {
+  transform-origin: top center;
+  transform: scale(0.8);
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(.18,.89,.32,1.28),
+              opacity 0.25s ease;
+}
+
+.loan-modal-open {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.loan-modal-close {
+  transform: scale(0.85);
+  opacity: 0;
+}
