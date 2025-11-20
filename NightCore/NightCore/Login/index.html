@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NightCore — Login</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Custom NightCore Styles -->
+  <link rel="stylesheet" href="nightcore.css" />
+</head>
+
+<body class="bg-core relative overflow-hidden">
+
+<!-- ============================
+
+     MOBILE MODE (Bottom Sheet)
+
+============================= -->
+
+<div class="relative h-screen w-full md:hidden overflow-hidden">
+
+  <!-- TOP SECTION (fixed height) -->
+
+  <div class="w-full h-[55%] flex flex-col items-center justify-center px-6 animate-fadeIn">
+
+    <img src="nightcore-logo.png" alt="NightCore" class="h-120 drop-shadow-glow">
+
+    <p class="text-md text-gray-300" style="margin-top: -2rem;">Where All Systems Converge</p>
+
+  </div>
+
+  <!-- BOTTOM SHEET (glass card) -->
+
+  <div class="glass-card w-[100%] px-6 pt-10 pb-[-10] animate-slideUp absolute bottom-0 left-0 h-[45%]">
+
+    <form class="max-w-sm mx-auto w-full">
+
+      <label class="input-label">Email</label>
+
+      <input type="email" class="input-field mb-4" placeholder="Enter your email" />
+
+      <label class="input-label">Password</label>
+
+      <input type="password" class="input-field mb-6" placeholder="Enter your password" />
+
+      <button class="btn-core w-full">Access NightCore</button>
+
+    </form>
+
+  </div>
+
+</div>
+
+  <!-- ============================
+       DESKTOP/TABLET MODE (Option C)
+       Split screen layout
+       (Displayed at md and above)
+  ============================= -->
+  <div class="hidden md:flex h-screen w-full">
+
+    <!-- Left Branding Panel -->
+    <div class="w-1/2 bg-left-panel flex flex-col items-center justify-center p-12">
+      <img src="nightcore-logo.png" alt="NightCore" class="h-120 mb-1 drop-shadow-glow">
+      <h1 class="text-5xl font-cinzel text-gold mb-4">NightCore</h1>
+      <p class="text-gray-300 tracking-wide text-lg">Where All Systems Converge</p>
+    </div>
+
+    <!-- Right Login Panel -->
+    <div class="w-1/2 flex items-center justify-center p-12 bg-core">
+      <div class="glass-card w-full max-w-md p-10 animate-slideUp">
+
+        <h2 class="text-2xl font-cinzel text-gold text-center mb-6">Secure Login</h2>
+
+        <form>
+          <label class="input-label">Email</label>
+          <input type="email" class="input-field mb-4" placeholder="Enter your email" />
+
+          <label class="input-label">Password</label>
+          <input type="password" class="input-field mb-6" placeholder="Enter your password" />
+
+          <button class="btn-core w-full mb-4">Access NightCore</button>
+
+          <p class="text-center text-gray-400 text-sm">
+            Authorized personnel only.
+          </p>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+
+</html>

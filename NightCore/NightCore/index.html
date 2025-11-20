@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>NightCore OS — Home</title>
+
+  <link rel="icon" href="/morIcon.png" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts -->
+
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght:300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    :root {
+
+      --bg: #0a0b0f;
+
+      --card: rgba(18, 20, 27, 0.7);
+
+      --border: rgba(255, 255, 255, 0.08);
+
+      --gold: #d4af37;
+
+      --text: #e9eef8;
+
+    }
+
+    body {
+
+      margin: 0;
+
+      padding-bottom: 25px;
+
+      background: radial-gradient(circle at top, var(--bg) 0%, #000 100%);
+
+      color: var(--text);
+
+      font-family: 'Inter', sans-serif;
+
+      height: 100vh;
+
+      display: flex;
+
+      flex-direction: column;
+
+      overflow: hidden;
+
+    }
+
+    /* NightCore Glass Card */
+
+    .glass {
+
+      background: var(--card);
+
+      border: 1px solid var(--border);
+
+      backdrop-filter: blur(16px) saturate(140%);
+
+      border-radius: 1.2rem;
+
+      box-shadow: 0 0 25px rgba(0,0,0,0.65);
+
+    }
+
+    /* Widget Grid */
+
+    .widget-grid {
+
+      display: grid;
+
+      grid-template-columns: 1fr;
+
+      gap: 1.2rem;
+
+      padding: 1.3rem;
+
+      padding-bottom: 7rem; /* space for navigation */
+
+      overflow-y: auto;
+
+    }
+
+    @media (min-width: 600px) {
+
+      .widget-grid {
+
+        grid-template-columns: repeat(2, 1fr);
+
+      }
+
+    }
+
+    /* Bottom Navigation */
+
+    .nav {
+
+      position: fixed;
+
+      bottom: 0;
+
+      left: 0;
+
+      width: 100%;
+
+      height: 72px;
+
+      background: rgba(12, 13, 18, 0.85);
+
+      backdrop-filter: blur(18px);
+
+      border-top: 1px solid var(--border);
+
+      display: flex;
+
+      justify-content: space-around;
+
+      align-items: center;
+
+      z-index: 50;
+
+    }
+
+    .nav button {
+
+      background: none;
+
+      border: none;
+
+      color: var(--text);
+
+      font-size: 0.8rem;
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+
+      gap: 0.2rem;
+
+      padding: 0.4rem;
+
+    }
+
+    .nav button.active {
+
+      color: var(--gold);
+
+    }
+
+    .nav img {
+
+      width: 22px;
+
+      height: 22px;
+
+      opacity: 0.9;
+
+    }
+
+    /* Top Bar */
+
+    .topbar {
+
+      position: sticky;
+
+      top: 0;
+
+      z-index: 30;
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      padding: 1rem 1.2rem;
+
+      background: rgba(10,11,15,0.4);
+
+      backdrop-filter: blur(20px);
+
+    }
+
+    .top-title {
+
+      font-family: 'Cinzel', serif;
+
+      font-size: 1.3rem;
+
+      color: var(--gold);
+
+      letter-spacing: 1px;
+
+    }
+
+    .top-actions img {
+
+      width: 24px;
+
+      height: 24px;
+
+      margin-left: 1rem;
+
+      opacity: 0.9;
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <!-- Top Bar -->
+
+  <header class="topbar">
+
+    <div class="top-title">NightCore OS</div>
+
+    <div class="top-actions flex items-center">
+
+      <img src="/assets/icons/search.png" alt="Search">
+
+      <img src="/assets/icons/settings.png" alt="Settings">
+
+      <img src="/assets/icons/bell.png" alt="Notifications">
+
+    </div>
+
+  </header>
+
+  <!-- Widget Grid (C–F region) -->
+
+  <main class="widget-grid">
+
+    <div class="glass p-4">
+
+      <h2 class="text-lg font-semibold mb-2">Welcome Back</h2>
+
+      <p class="text-sm opacity-80">Here’s a quick overview of your system.</p>
+
+    </div>
+
+    <div class="glass p-4">
+
+      <h2 class="text-lg font-semibold mb-2">Clock In/Out</h2>
+
+      <button class="mt-2 px-4 py-2 rounded-lg bg-[var(--gold)] text-black font-semibold">
+
+        Clock In
+
+      </button>
+
+    </div>
+
+    <div class="glass p-4">
+
+      <h2 class="text-lg font-semibold mb-2">Notifications</h2>
+
+      <p class="text-sm opacity-80">No new alerts.</p>
+
+    </div>
+
+    <div class="glass p-4">
+
+      <h2 class="text-lg font-semibold mb-2">3D PrintBot Status</h2>
+
+      <p class="text-sm opacity-80">Printer Idle • No queued jobs</p>
+
+    </div>
+
+    <div class="glass p-4">
+
+      <h2 class="text-lg font-semibold mb-2">Your Account</h2>
+
+      <p class="text-sm opacity-80">Manage profile & security</p>
+
+    </div>
+
+    <div class="glass p-4">
+
+      <h2 class="text-lg font-semibold mb-2">Admin Panel</h2>
+
+      <p class="text-sm opacity-80">Manage website modules</p>
+
+    </div>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+
+  <nav class="nav">
+
+    <button class="active">
+
+      <img src="/assets/icons/home.png" alt="">
+
+      Home
+
+    </button>
+
+    <button>
+
+      <img src="/assets/icons/bell.png" alt="">
+
+      Notify
+
+    </button>
+
+    <button>
+
+      <img src="/assets/icons/robot.png" alt="">
+
+      PrintBot
+
+    </button>
+
+    <button>
+
+      <img src="/assets/icons/user.png" alt="">
+
+      Account
+
+    </button>
+
+    <button>
+
+      <img src="/assets/icons/admin.png" alt="">
+
+      Admin
+
+    </button>
+
+  </nav>
+
+</body>
+
+</html>
