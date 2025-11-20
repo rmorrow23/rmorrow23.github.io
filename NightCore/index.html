@@ -1,351 +1,248 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-  <title>NightCore OS — Home</title>
 
-  <link rel="icon" href="/morIcon.png" />
+  <title>NightCore OS</title>
 
+  <!-- PWA fullscreen controls -->
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Fonts -->
-
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght:300;400;600&display=swap" rel="stylesheet">
 
-  <style>
-
-    :root {
-
-      --bg: #0a0b0f;
-
-      --card: rgba(18, 20, 27, 0.7);
-
-      --border: rgba(255, 255, 255, 0.08);
-
-      --gold: #d4af37;
-
-      --text: #e9eef8;
-
-    }
-
-    body {
-
-      margin: 0;
-
-      padding-bottom: 25px;
-
-      background: radial-gradient(circle at top, var(--bg) 0%, #000 100%);
-
-      color: var(--text);
-
-      font-family: 'Inter', sans-serif;
-
-      height: 100vh;
-
-      display: flex;
-
-      flex-direction: column;
-
-      overflow: hidden;
-
-    }
-
-    /* NightCore Glass Card */
-
-    .glass {
-
-      background: var(--card);
-
-      border: 1px solid var(--border);
-
-      backdrop-filter: blur(16px) saturate(140%);
-
-      border-radius: 1.2rem;
-
-      box-shadow: 0 0 25px rgba(0,0,0,0.65);
-
-    }
-
-    /* Widget Grid */
-
-    .widget-grid {
-
-      display: grid;
-
-      grid-template-columns: 1fr;
-
-      gap: 1.2rem;
-
-      padding: 1.3rem;
-
-      padding-bottom: 7rem; /* space for navigation */
-
-      overflow-y: auto;
-
-    }
-
-    @media (min-width: 600px) {
-
-      .widget-grid {
-
-        grid-template-columns: repeat(2, 1fr);
-
-      }
-
-    }
-
-    /* Bottom Navigation */
-
-    .nav {
-
-      position: fixed;
-
-      bottom: 0;
-
-      left: 0;
-
-      width: 100%;
-
-      height: 72px;
-
-      background: rgba(12, 13, 18, 0.85);
-
-      backdrop-filter: blur(18px);
-
-      border-top: 1px solid var(--border);
-
-      display: flex;
-
-      justify-content: space-around;
-
-      align-items: center;
-
-      z-index: 50;
-
-    }
-
-    .nav button {
-
-      background: none;
-
-      border: none;
-
-      color: var(--text);
-
-      font-size: 0.8rem;
-
-      display: flex;
-
-      flex-direction: column;
-
-      align-items: center;
-
-      gap: 0.2rem;
-
-      padding: 0.4rem;
-
-    }
-
-    .nav button.active {
-
-      color: var(--gold);
-
-    }
-
-    .nav img {
-
-      width: 22px;
-
-      height: 22px;
-
-      opacity: 0.9;
-
-    }
-
-    /* Top Bar */
-
-    .topbar {
-
-      position: sticky;
-
-      top: 0;
-
-      z-index: 30;
-
-      display: flex;
-
-      justify-content: space-between;
-
-      align-items: center;
-
-      padding: 1rem 1.2rem;
-
-      background: rgba(10,11,15,0.4);
-
-      backdrop-filter: blur(20px);
-
-    }
-
-    .top-title {
-
-      font-family: 'Cinzel', serif;
-
-      font-size: 1.3rem;
-
-      color: var(--gold);
-
-      letter-spacing: 1px;
-
-    }
-
-    .top-actions img {
-
-      width: 50px;
-
-      height: 50px;
-
-      margin-left: 1rem;
-
-      opacity: 0.9;
-
-    }
-
-  </style>
-
+  <!-- NightCore OS Styles -->
+  <link rel="stylesheet" href="nightcore.css">
+
+  <!-- Boot & OS Logic -->
+  <script src="nightcore.js" defer></script>
 </head>
 
-<body>
+<body class="bg-core text-white overflow-hidden font-inter">
 
-  <!-- Top Bar -->
+  <!-- =====================================================
+       LAYER 0 — CLASSIFIED ACCESS LOGIN OVERLAY
+       ===================================================== -->
+  <div id="classifiedScreen" class="fixed inset-0 flex flex-col items-center justify-center bg-black z-[1000] opacity-0 transition-opacity duration-700 pointer-events-none">
+    
+    <div class="text-center">
+      <h1 class="text-3xl font-cinzel text-gold mb-4 tracking-widest flicker-text">
+        WELCOME, RANDAL MORROW
+      </h1>
 
-  <header class="topbar">
-
-    <div class="top-title">NightCore OS</div>
-
-    <div class="top-actions flex items-center">
-
-      <img src="/NightCore/assets/icons/search.png" alt="Search">
-
-      <img src="/NightCore/assets/icons/settings.png" alt="Settings">
-
-      <img src="/NightCore/assets/icons/bell.png" alt="Notifications">
-
+      <p id="authLine1" class="text-md text-gray-300 opacity-0 mt-2 typewriter"></p>
+      <p id="authLine2" class="text-md text-gray-300 opacity-0 mt-2 typewriter"></p>
+      <p id="authLine3" class="text-md text-gray-300 opacity-0 mt-2 typewriter"></p>
     </div>
 
-  </header>
+  </div>
 
-  <!-- Widget Grid (C–F region) -->
 
-  <main class="widget-grid">
+  <!-- =====================================================
+       LAYER 1 — HUD BOOT ANIMATION
+       ===================================================== -->
+  <div id="bootHUD" class="fixed inset-0 bg-black flex items-center justify-center z-[900] opacity-0 pointer-events-none transition-opacity duration-700">
 
-    <div class="glass p-4">
+    <!-- Rotating Gold HUD Rings -->
+    <div class="hud-ring ring1"></div>
+    <div class="hud-ring ring2"></div>
+    <div class="hud-ring ring3"></div>
 
-      <h2 class="text-lg font-semibold mb-2">Welcome Back</h2>
+    <!-- Circuit Lines -->
+    <div class="circuit-layer"></div>
 
-      <p class="text-sm opacity-80">Here’s a quick overview of your system.</p>
+    <!-- Scanline Layer -->
+    <div class="scanline"></div>
 
+    <!-- Center Logo Hologram -->
+    <div class="boot-logo-container">
+      <img src="/NightCore/assets/icons/robot.png" class="boot-logo hologram-flicker" alt="NightCore Logo">
+      <p class="boot-label">NIGHTCORE OS</p>
     </div>
 
-    <div class="glass p-4">
+    <!-- Terminal Boot Text -->
+    <div class="boot-terminal">
+      <p class="boot-line" id="boot1"></p>
+      <p class="boot-line" id="boot2"></p>
+      <p class="boot-line" id="boot3"></p>
+      <p class="boot-line" id="boot4"></p>
+      <p class="boot-line" id="boot5"></p>
+    </div>
 
-      <h2 class="text-lg font-semibold mb-2">Clock In/Out</h2>
+  </div>
 
-      <button class="mt-2 px-4 py-2 rounded-lg bg-[var(--gold)] text-black font-semibold">
 
-        Clock In
+  <!-- =====================================================
+       LAYER 2 — MAIN OS INTERFACE
+       ===================================================== -->
+  <div id="osInterface" class="opacity-0 transition-opacity duration-700 overflow-hidden">
 
+    <!-- ===========================
+         HERO SECTION (VERSION 1)
+       =========================== -->
+    <header id="heroSection" class="pt-12 pb-6 px-6 text-center">
+      
+      <img src="/NightCore/assets/icons/robot.png" class="mx-auto h-40 drop-shadow-glow mb-4" alt="NightCore Logo">
+
+      <p class="text-gray-300 text-sm tracking-wide">
+        Central Command System
+      </p>
+
+      <!-- Quick Access -->
+      <div class="flex items-center justify-center gap-6 mt-6">
+        <button class="quick-btn"><img src="/NightCore/assets/icons/search.png"></button>
+        <button class="quick-btn"><img src="/NightCore/assets/icons/bell.png"></button>
+        <button class="quick-btn"><img src="/NightCore/assets/icons/settings.png"></button>
+      </div>
+
+    </header>
+
+
+    <!-- ===========================
+         STICKY TOPBAR (VERSION 2)
+       =========================== -->
+    <div id="topbar" class="topbar hidden">
+      <div class="top-title">NightCore OS</div>
+      <div class="top-actions">
+        <img src="/NightCore/assets/icons/search.png">
+        <img src="/NightCore/assets/icons/settings.png">
+        <img src="/NightCore/assets/icons/bell.png">
+      </div>
+    </div>
+
+
+    <!-- ===========================
+         WIDGET GRID (MERGED)
+       =========================== -->
+    <main id="widgetGrid" class="widget-grid">
+
+      <!-- Welcome -->
+      <div class="glass p-4 widget-animate">
+        <h2 class="text-lg font-semibold mb-2">Welcome Back</h2>
+        <p class="text-sm opacity-80">Here’s a quick overview of your system.</p>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="glass p-4 widget-animate">
+        <h2 class="text-lg font-semibold mb-2">Quick Actions</h2>
+        <div class="mt-3 flex flex-col gap-2">
+          <button class="widget-btn">+ New Task</button>
+          <button class="widget-btn">+ Upload File</button>
+          <button class="widget-btn">+ Shortcut</button>
+        </div>
+      </div>
+
+      <!-- Active Devices -->
+      <div class="glass p-4 widget-animate">
+        <h2 class="text-lg font-semibold mb-2">Active Devices</h2>
+        <ul class="text-sm opacity-80 mt-2 space-y-1">
+          <li>📱 Phone — Online</li>
+          <li>💻 PC — Idle</li>
+          <li>🤖 PrintBot — Standby</li>
+        </ul>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="glass p-4 widget-animate">
+        <h2 class="text-lg font-semibold mb-2">Recent Activity</h2>
+        <ul class="text-sm opacity-80 mt-2 space-y-1">
+          <li>• System check complete</li>
+          <li>• Modules synced</li>
+          <li>• Cloud backup ready</li>
+        </ul>
+      </div>
+
+      <!-- PrintBot Status -->
+      <div class="glass p-4 widget-animate">
+        <h2 class="text-lg font-semibold mb-2">3D PrintBot Status</h2>
+        <p class="text-sm opacity-80">Printer Idle • No queued jobs</p>
+      </div>
+
+      <!-- Account -->
+      <div class="glass p-4 widget-animate">
+        <h2 class="text-lg font-semibold mb-2">Your Account</h2>
+        <p class="text-sm opacity-80">Manage profile & security</p>
+      </div>
+
+      <!-- Admin Panel -->
+      <div class="glass p-4 widget-animate">
+        <h2 class="text-lg font-semibold mb-2">Admin Panel</h2>
+        <p class="text-sm opacity-80">Manage website modules</p>
+      </div>
+
+    </main>
+
+
+    <!-- ===========================
+         MODULES GRID
+       =========================== -->
+    <section class="px-6 pb-24">
+      <h2 class="text-lg font-cinzel text-gold mb-4">Modules</h2>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="module-card widget-animate">VaultView</div>
+        <div class="module-card widget-animate">PixelFrost</div>
+        <div class="module-card widget-animate">PrintBot</div>
+        <div class="module-card widget-animate">Unraveled</div>
+        <div class="module-card widget-animate">Inventory</div>
+        <div class="module-card widget-animate">3D Portal</div>
+        <div class="module-card widget-animate">File Portal</div>
+        <div class="module-card widget-animate">Jellyfin</div>
+      </div>
+    </section>
+
+
+    <!-- ===========================
+         BOTTOM NAVIGATION
+       =========================== -->
+    <nav class="nav">
+      <button class="active">
+        <img src="/NightCore/assets/icons/home.png">
+        Home
       </button>
+      <button>
+        <img src="/NightCore/assets/icons/bell.png">
+        Notify
+      </button>
+      <button>
+        <img src="/NightCore/assets/icons/robot.png">
+        PrintBot
+      </button>
+      <button>
+        <img src="/NightCore/assets/icons/user.png">
+        Account
+      </button>
+      <button>
+        <img src="/NightCore/assets/icons/admin.png">
+        Admin
+      </button>
+    </nav>
 
+
+    <!-- ===========================
+         FLOATING ACTION BUTTON + DRAWER
+       =========================== -->
+    <button id="coreButton" class="core-btn">⋮</button>
+
+    <div id="coreDrawer" class="drawer">
+      <div class="p-6">
+        <h3 class="text-xl font-cinzel text-gold mb-4">Navigation</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <button class="drawer-btn">Home</button>
+          <button class="drawer-btn">Modules</button>
+          <button class="drawer-btn">Account</button>
+          <button class="drawer-btn">Settings</button>
+        </div>
+      </div>
     </div>
 
-    <div class="glass p-4">
-
-      <h2 class="text-lg font-semibold mb-2">Notifications</h2>
-
-      <p class="text-sm opacity-80">No new alerts.</p>
-
-    </div>
-
-    <div class="glass p-4">
-
-      <h2 class="text-lg font-semibold mb-2">3D PrintBot Status</h2>
-
-      <p class="text-sm opacity-80">Printer Idle • No queued jobs</p>
-
-    </div>
-
-    <div class="glass p-4">
-
-      <h2 class="text-lg font-semibold mb-2">Your Account</h2>
-
-      <p class="text-sm opacity-80">Manage profile & security</p>
-
-    </div>
-
-    <div class="glass p-4">
-
-      <h2 class="text-lg font-semibold mb-2">Admin Panel</h2>
-
-      <p class="text-sm opacity-80">Manage website modules</p>
-
-    </div>
-
-  </main>
-
-  <!-- Bottom Navigation -->
-
-  <nav class="nav">
-
-    <button class="active">
-
-      <img src="/NightCore/assets/icons/home.png" alt="">
-
-      Home
-
-    </button>
-
-    <button>
-
-      <img src="/NightCore/assets/icons/bell.png" alt="">
-
-      Notify
-
-    </button>
-
-    <button>
-
-      <img src="/NightCore/assets/icons/robot.png" alt="">
-
-      PrintBot
-
-    </button>
-
-    <button>
-
-      <img src="/NightCore/assets/icons/user.png" alt="">
-
-      Account
-
-    </button>
-
-    <button>
-
-      <img src="/NightCore/assets/icons/admin.png" alt="">
-
-      Admin
-
-    </button>
-
-  </nav>
+  </div> <!-- End OS Interface -->
 
 </body>
-
 </html>
