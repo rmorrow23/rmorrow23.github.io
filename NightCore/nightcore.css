@@ -1,0 +1,398 @@
+/* ==========================================================
+   NIGHTCORE OS — CORE VARIABLES & GLOBALS
+   ========================================================== */
+:root {
+  --bg: #0a0b0f;
+  --gold: #d4af37;
+  --text: #e9eef8;
+  --glass: rgba(18, 20, 27, 0.7);
+  --border: rgba(255,255,255,0.08);
+}
+
+body {
+  background: radial-gradient(circle at top, var(--bg) 0%, #000 100%);
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* Utility */
+.hidden { display: none !important; }
+.font-cinzel { font-family: 'Cinzel', serif; }
+
+/* Glow shadow */
+.drop-shadow-glow {
+  filter: drop-shadow(0 0 15px rgba(212,175,55,0.45));
+}
+
+/* ==========================================================
+   CLASSIFIED LOGIN SCREEN
+   ========================================================== */
+#classifiedScreen {
+  background: black;
+  text-align: center;
+}
+
+.flicker-text {
+  animation: textFlicker 2s infinite alternate;
+}
+
+@keyframes textFlicker {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Typewriter lines */
+.typewriter {
+  font-family: "Inter", monospace;
+  white-space: nowrap;
+  border-right: 2px solid var(--gold);
+  overflow: hidden;
+}
+
+/* ==========================================================
+   FULL HUD BOOT SEQUENCE
+   ========================================================== */
+#bootHUD {
+  position: fixed;
+  inset: 0;
+  background: black;
+  overflow: hidden;
+}
+
+/* Rotating Rings */
+.hud-ring {
+  position: absolute;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  opacity: 0.25;
+  animation: rotateRing linear infinite;
+}
+
+.ring1 {
+  width: 320px;
+  height: 320px;
+  animation-duration: 14s;
+}
+
+.ring2 {
+  width: 450px;
+  height: 450px;
+  animation-duration: 22s;
+}
+
+.ring3 {
+  width: 600px;
+  height: 600px;
+  animation-duration: 35s;
+}
+
+@keyframes rotateRing {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Circuit Lines */
+.circuit-layer {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(90deg, rgba(212,175,55,0.1) 1px, transparent 1px),
+    linear-gradient(rgba(212,175,55,0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  opacity: 0.12;
+  animation: circuitGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes circuitGlow {
+  0% { opacity: 0.08; }
+  100% { opacity: 0.2; }
+}
+
+/* Scanline */
+.scanline {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255,255,255,0.04),
+    transparent
+  );
+  animation: scanMove 4s linear infinite;
+  opacity: 0.12;
+}
+
+@keyframes scanMove {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* Center Logo */
+.boot-logo-container {
+  position: absolute;
+  text-align: center;
+}
+
+.boot-logo {
+  width: 120px;
+  opacity: 0.85;
+}
+
+.boot-label {
+  margin-top: 8px;
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  letter-spacing: 4px;
+  font-size: 1rem;
+  opacity: 0.6;
+}
+
+/* Hologram Flicker */
+.hologram-flicker {
+  animation: holoFlicker 2.2s infinite;
+}
+
+@keyframes holoFlicker {
+  0% { opacity: 0.9; }
+  20% { opacity: 0.7; }
+  30% { opacity: 1; }
+  45% { opacity: 0.5; }
+  60% { opacity: 0.9; }
+  75% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+/* Boot Terminal Text */
+.boot-terminal {
+  position: absolute;
+  bottom: 40px;
+  left: 20px;
+  font-family: "Inter", monospace;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.boot-line {
+  margin-top: 4px;
+  color: rgba(255,255,255,0.8);
+}
+
+/* ==========================================================
+   MAIN OS INTERFACE (VISIBLE AFTER BOOT)
+   ========================================================== */
+#osInterface {
+  overflow-y: auto;
+  height: 100vh;
+}
+
+/* HERO SECTION */
+#heroSection {
+  transition: all 0.6s ease;
+}
+
+/* Auto-hide behavior */
+.hero-hidden {
+  opacity: 0;
+  transform: translateY(-40px);
+  height: 0;
+  padding: 0;
+}
+
+/* Sticky Topbar */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(10,11,15,0.75);
+  backdrop-filter: blur(16px);
+  padding: 1rem 1.3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.top-title {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 1.3rem;
+}
+
+/* Topbar icons */
+.top-actions img {
+  width: 26px;
+  height: 26px;
+  margin-left: 1rem;
+  opacity: 0.85;
+}
+
+/* Quick Buttons */
+.quick-btn img {
+  width: 32px;
+  height: 32px;
+  opacity: 0.9;
+}
+
+/* ==========================================================
+   GLASS CARDS & WIDGETS
+   ========================================================== */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  border-radius: 1.2rem;
+  box-shadow: 0 0 25px rgba(0,0,0,0.55);
+}
+
+/* Widget grid */
+.widget-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.2rem;
+  padding: 1.3rem;
+  padding-bottom: 140px;
+}
+
+@media (min-width: 600px) {
+  .widget-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Widget Entrance Animation */
+.widget-animate {
+  opacity: 0;
+  transform: translateY(25px);
+  animation: widgetIn 0.8s forwards ease;
+}
+
+@keyframes widgetIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Widget buttons */
+.widget-btn {
+  background: rgba(212,175,55,0.2);
+  color: var(--gold);
+  padding: 0.5rem;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+  border: 1px solid rgba(212,175,55,0.3);
+  transition: 0.15s;
+}
+
+.widget-btn:hover {
+  background: rgba(212,175,55,0.3);
+}
+
+/* ==========================================================
+   MODULE GRID
+   ========================================================== */
+.module-card {
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  border-radius: 1rem;
+  padding: 1.2rem;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  box-shadow: 0 0 25px rgba(0,0,0,0.6);
+  transition: transform 0.15s;
+  font-size: 0.95rem;
+}
+
+.module-card:hover {
+  transform: scale(1.04);
+}
+
+/* ==========================================================
+   BOTTOM NAV BAR
+   ========================================================== */
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 72px;
+  width: 100%;
+  background: rgba(12,13,18,0.9);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  backdrop-filter: blur(16px);
+  z-index: 60;
+}
+
+.nav button {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nav button img {
+  width: 22px;
+  height: 22px;
+}
+
+.nav button.active {
+  color: var(--gold);
+}
+
+/* ==========================================================
+   FLOATING ACTION BUTTON & DRAWER
+   ========================================================== */
+.core-btn {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gold);
+  color: black;
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 25px rgba(212,175,55,0.5);
+  z-index: 70;
+}
+
+.drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  background: rgba(18,20,27,0.95);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+  transition: height 0.3s ease;
+  z-index: 80;
+}
+
+.drawer-btn {
+  background: rgba(212,175,55,0.2);
+  padding: 0.7rem;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+  border: 1px solid rgba(212,175,55,0.3);
+  color: var(--gold);
+  text-align: center;
+  transition: 0.15s;
+}
+
+.drawer-btn:hover {
+  background: rgba(212,175,55,0.35);
+}
