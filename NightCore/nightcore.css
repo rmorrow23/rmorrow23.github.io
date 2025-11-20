@@ -64,9 +64,12 @@ body {
 /* Rotating Rings */
 .hud-ring {
   position: absolute;
+  top: 50%;
+  left: 50%;
   border: 2px solid var(--gold);
   border-radius: 50%;
   opacity: 0.25;
+  transform: translate(-50%, -50%); /* FIX HERE */
   animation: rotateRing linear infinite;
 }
 
