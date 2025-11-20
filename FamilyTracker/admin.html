@@ -184,6 +184,38 @@
   <div id="passcodeModal" class="modal hidden"> ... </div>
   <div id="overrideModal" class="modal hidden"> ... </div>
   <div id="nameMatchModal" class="modal hidden"> ... </div>
+<!-- ADD LOAN MODAL -->
+<div id="addLoanModal" class="modal hidden">
+  <div id="addLoanCard" class="modal-content glass p-6 w-[90%] max-w-md loan-modal-enter">
+    <h2 class="text-lg font-semibold text-[#d4af37] mb-4">Add New Loan</h2>
+
+    <form id="addLoanForm" class="space-y-4">
+      <div>
+        <label class="text-sm text-gray-300">Loan Name</label>
+        <input id="newLoanName" class="form-input" placeholder="Ex: Car Loan" required />
+      </div>
+
+      <div>
+        <label class="text-sm text-gray-300">Total Amount</label>
+        <input id="newLoanAmount" type="number" class="form-input" placeholder="10000" required />
+      </div>
+
+      <div>
+        <label class="text-sm text-gray-300">Payment Frequency</label>
+        <select id="newLoanFrequency" class="form-input">
+          <option value="monthly">Monthly</option>
+          <option value="biweekly">Biweekly</option>
+          <option value="weekly">Weekly</option>
+        </select>
+      </div>
+
+      <div class="flex justify-between pt-2">
+        <button type="button" id="cancelAddLoan" class="btn-secondary px-4 py-1">Cancel</button>
+        <button type="submit" class="btn-primary px-4 py-1">Add Loan</button>
+      </div>
+    </form>
+  </div>
+</div>
 
   <!-- ===== OVERLAY ===== -->
   <div id="overlay" class="overlay hidden"></div>
