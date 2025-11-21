@@ -2,7 +2,7 @@
    NIGHTCORE OS — CORE VARIABLES & GLOBALS
    ========================================================== */
 :root {
-  --bg: #0a0b0f;
+  --bg: #000;
   --gold: #d4af37;
   --text: #e9eef8;
   --glass: rgba(18, 20, 27, 0.7);
@@ -430,7 +430,7 @@ body {
   width: auto;
   height: auto;
   transform-origin: center center !important;
-  transform: translate(-50%, -50%) rotate(0deg) !important;
+  transform: translate(0, 0) rotate(0deg) !important;
   animation: rotateRing 12s linear infinite !important;
   z-index: 2 !important;
 }
@@ -438,9 +438,9 @@ body {
 /* FORCE TRANSFORM STACK */
 @keyframes rotateRing {
   from {
-    transform: translate(-50%, -50%) rotate(0deg) !important;
+    transform: translate(0,0) rotate(0deg) !important;
   }
   to {
-    transform: translate(-50%, -50%) rotate(360deg) !important;
+    transform: translate(0, 0) rotate(360deg) !important;
   }
 }
