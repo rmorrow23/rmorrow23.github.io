@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NightCore Icon Library</title>
+
+<style>
+  body {
+    background:#0a0b0f;
+    color:#e9eef8;
+    font-family: Inter, sans-serif;
+    padding: 30px;
+  }
+
+  h1 {
+    color:#d4af37;
+    font-size: 2rem;
+    text-align:center;
+    margin-bottom: 22px;
+  }
+
+  #searchBar {
+    width: 100%;
+    max-width: 400px;
+    display: block;
+    margin: 0 auto 25px auto;
+    padding: 10px 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background:rgba(255,255,255,0.07);
+    color:#e9eef8;
+    backdrop-filter: blur(8px);
+    font-size: 1rem;
+  }
+
+  #searchBar:focus {
+    outline: 2px solid #d4af37;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 25px;
+    padding-top: 10px;
+  }
+
+  .icon-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 12px;
+    border-radius: 14px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s;
+  }
+
+  .icon-card:hover {
+    transform: scale(1.05);
+  }
+
+  .icon-card img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    margin-bottom: 8px;
+  }
+
+  .url-btn {
+    margin-top: 6px;
+    background: #d4af37;
+    color: #000;
+    font-weight: bold;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .url-btn:hover {
+    filter: brightness(1.18);
+  }
+</style>
+</head>
+
+<body>
+
+<h1>NightCore Icon Library</h1>
+
+<input id="searchBar" type="text" placeholder="Search icons…">
+
+<div class="grid" id="iconGrid"></div>
+
+<script>
+const grid = document.getElementById("iconGrid");
+const searchBar = document.getElementById("searchBar");
+
+let icons = [];
+let filteredIcons = [];
+
+const apiUrl = "https://us-central1-morrow-industries.cloudfunctions.net/getIcons";
+
+async function loadIcons() {
+  const res = await fetch(apiUrl);
+  icons = await res.json();
+  filteredIcons = icons;
+  renderIcons();
+}
+
+function renderIcons() {
+  grid.innerHTML = "";
+
+  filteredIcons.forEach(icon => {
+    const card = document.createElement("div");
+    card.className = "icon-card";
+
+    card.innerHTML = `
+      <img src="${icon.download_url}" alt="${icon.name}">
+      <div>${icon.name}</div>
+      <button class="url-btn" onclick="copyURL('${icon.url}')">Copy URL</button>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+function copyURL(url) {
+  navigator.clipboard.writeText(url);
+  alert("Copied: " + url);
+}
+
+searchBar.addEventListener("input", () => {
+  const query = searchBar.value.toLowerCase();
+  filteredIcons = icons.filter(icon => icon.name.toLowerCase().includes(query));
+  renderIcons();
+});
+
+loadIcons();
+</script>
+
+</body>
+</html>
