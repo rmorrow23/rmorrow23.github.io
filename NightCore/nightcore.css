@@ -16,11 +16,9 @@ body {
   overflow-x: hidden;
 }
 
-/* Utility */
 .hidden { display: none !important; }
 .font-cinzel { font-family: 'Cinzel', serif; }
 
-/* Glow shadow */
 .drop-shadow-glow {
   filter: drop-shadow(0 0 15px rgba(212,175,55,0.45));
 }
@@ -38,12 +36,10 @@ body {
 }
 
 @keyframes textFlicker {
-  0% { opacity: 0.7; }
+  0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
-  100% { opacity: 0.6; }
 }
 
-/* Typewriter lines */
 .typewriter {
   font-family: "Inter", monospace;
   white-space: nowrap;
@@ -59,9 +55,12 @@ body {
   inset: 0;
   background: black;
   overflow: hidden;
+  z-index: 900;
 }
 
-/* Rotating Rings */
+/* ======================
+     ROTATING GOLD RINGS
+   ====================== */
 .hud-ring {
   position: absolute;
   top: 50%;
@@ -69,8 +68,10 @@ body {
   border: 2px solid var(--gold);
   border-radius: 50%;
   opacity: 0.25;
-  transform: translate(-50%, -50%); /* FIX HERE */
+  transform-origin: center center;
+  transform: translate(-50%, -50%) rotate(0deg);
   animation: rotateRing linear infinite;
+  z-index: 2;
 }
 
 .ring1 {
@@ -92,11 +93,13 @@ body {
 }
 
 @keyframes rotateRing {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-/* Circuit Lines */
+/* ======================
+     CIRCUIT GRID
+   ====================== */
 .circuit-layer {
   position: absolute;
   inset: 0;
@@ -106,25 +109,29 @@ body {
   background-size: 50px 50px;
   opacity: 0.12;
   animation: circuitGlow 3s ease-in-out infinite alternate;
+  z-index: 1;
 }
 
 @keyframes circuitGlow {
   0% { opacity: 0.08; }
-  100% { opacity: 0.2; }
+  100% { opacity: 0.22; }
 }
 
-/* Scanline */
+/* ======================
+     SCANLINE
+   ====================== */
 .scanline {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to bottom,
     transparent,
-    rgba(255,255,255,0.04),
+    rgba(255,255,255,0.05),
     transparent
   );
   animation: scanMove 4s linear infinite;
   opacity: 0.12;
+  z-index: 3;
 }
 
 @keyframes scanMove {
@@ -132,14 +139,21 @@ body {
   100% { transform: translateY(100%); }
 }
 
-/* Center Logo */
+/* ======================
+     CENTER LOGO HOLOGRAM
+   ====================== */
 .boot-logo-container {
   position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   text-align: center;
+  z-index: 10;
 }
 
 .boot-logo {
-  width: 120px;
+  width: 130px;
+  height: auto;
   opacity: 0.85;
 }
 
@@ -152,7 +166,6 @@ body {
   opacity: 0.6;
 }
 
-/* Hologram Flicker */
 .hologram-flicker {
   animation: holoFlicker 2.2s infinite;
 }
@@ -167,7 +180,9 @@ body {
   100% { opacity: 1; }
 }
 
-/* Boot Terminal Text */
+/* ======================
+     TERMINAL LINES
+   ====================== */
 .boot-terminal {
   position: absolute;
   bottom: 40px;
@@ -175,19 +190,21 @@ body {
   font-family: "Inter", monospace;
   font-size: 0.85rem;
   opacity: 0.85;
+  z-index: 15;
 }
 
 .boot-line {
-  margin-top: 4px;
-  color: rgba(255,255,255,0.8);
+  margin-top: 6px;
+  color: rgba(255,255,255,0.85);
 }
 
 /* ==========================================================
-   MAIN OS INTERFACE (VISIBLE AFTER BOOT)
+   MAIN OS INTERFACE (AFTER BOOT)
    ========================================================== */
 #osInterface {
   overflow-y: auto;
   height: 100vh;
+  opacity: 0;
 }
 
 /* HERO SECTION */
@@ -195,7 +212,6 @@ body {
   transition: all 0.6s ease;
 }
 
-/* Auto-hide behavior */
 .hero-hidden {
   opacity: 0;
   transform: translateY(-40px);
@@ -203,7 +219,7 @@ body {
   padding: 0;
 }
 
-/* Sticky Topbar */
+/* TOPBAR */
 .topbar {
   position: sticky;
   top: 0;
@@ -220,18 +236,18 @@ body {
 .top-title {
   font-family: 'Cinzel', serif;
   color: var(--gold);
+  letter-spacing: 1px;
   font-size: 1.3rem;
 }
 
-/* Topbar icons */
 .top-actions img {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   margin-left: 1rem;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-/* Quick Buttons */
+/* QUICK ICONS BELOW LOGO */
 .quick-btn img {
   width: 32px;
   height: 32px;
@@ -239,17 +255,17 @@ body {
 }
 
 /* ==========================================================
-   GLASS CARDS & WIDGETS
+   GLASS WIDGET CARDS
    ========================================================== */
 .glass {
   background: var(--glass);
   border: 1px solid var(--border);
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px);
   border-radius: 1.2rem;
   box-shadow: 0 0 25px rgba(0,0,0,0.55);
 }
 
-/* Widget grid */
+/* WIDGET GRID */
 .widget-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -264,7 +280,7 @@ body {
   }
 }
 
-/* Widget Entrance Animation */
+/* widget stagger */
 .widget-animate {
   opacity: 0;
   transform: translateY(25px);
@@ -278,7 +294,6 @@ body {
   }
 }
 
-/* Widget buttons */
 .widget-btn {
   background: rgba(212,175,55,0.2);
   color: var(--gold);
@@ -290,7 +305,7 @@ body {
 }
 
 .widget-btn:hover {
-  background: rgba(212,175,55,0.3);
+  background: rgba(212,175,55,0.35);
 }
 
 /* ==========================================================
@@ -305,8 +320,8 @@ body {
   font-weight: 600;
   border: 1px solid var(--border);
   box-shadow: 0 0 25px rgba(0,0,0,0.6);
-  transition: transform 0.15s;
   font-size: 0.95rem;
+  transition: transform 0.15s;
 }
 
 .module-card:hover {
@@ -314,7 +329,7 @@ body {
 }
 
 /* ==========================================================
-   BOTTOM NAV BAR
+   BOTTOM NAVIGATION BAR
    ========================================================== */
 .nav {
   position: fixed;
@@ -344,6 +359,7 @@ body {
 .nav button img {
   width: 22px;
   height: 22px;
+  opacity: 0.9;
 }
 
 .nav button.active {
@@ -398,4 +414,33 @@ body {
 
 .drawer-btn:hover {
   background: rgba(212,175,55,0.35);
+}
+/* ==========================================================
+   FINAL OVERRIDE — ROTATING RINGS FIX
+   ========================================================== */
+
+#bootHUD * {
+  will-change: transform;
+}
+
+.hud-ring {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: auto;
+  height: auto;
+  transform-origin: center center !important;
+  transform: translate(-50%, -50%) rotate(0deg) !important;
+  animation: rotateRing 12s linear infinite !important;
+  z-index: 2 !important;
+}
+
+/* FORCE TRANSFORM STACK */
+@keyframes rotateRing {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg) !important;
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg) !important;
+  }
 }
