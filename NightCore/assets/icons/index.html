@@ -3,137 +3,269 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>NightCore Icon Library</title>
+<title>NightCore Icon Manager</title>
 
 <style>
-  body {
-    background:#0a0b0f;
-    color:#e9eef8;
-    font-family: Inter, sans-serif;
-    padding: 30px;
-  }
+/* ---------------------------------------------
+   NIGHTCORE GLOBAL STYLING
+--------------------------------------------- */
+body {
+  margin: 0;
+  background: #000;
+  overflow-x: hidden;
+  font-family: "Inter", sans-serif;
+  color: #e9eef8;
+}
 
-  h1 {
-    color:#d4af37;
-    font-size: 2rem;
-    text-align:center;
-    margin-bottom: 22px;
-  }
+/* Animated gold particle + streak background */
+#backgroundCanvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
 
-  #searchBar {
-    width: 100%;
-    max-width: 400px;
-    display: block;
-    margin: 0 auto 25px auto;
-    padding: 10px 15px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background:rgba(255,255,255,0.07);
-    color:#e9eef8;
-    backdrop-filter: blur(8px);
-    font-size: 1rem;
-  }
+/* ---------------------------------------------
+   TOP FLOATING GLASS SEARCH BAR
+--------------------------------------------- */
+.search-container {
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(18px);
+  background: rgba(0,0,0,0.35);
+  border-bottom: 1px solid rgba(212,175,55,0.25);
+  padding: 18px 30px;
+  box-shadow: 0 3px 25px rgba(0,0,0,0.6);
+  z-index: 10;
+}
 
-  #searchBar:focus {
-    outline: 2px solid #d4af37;
-  }
+#searchBar {
+  width: 100%;
+  max-width: 500px;
+  display: block;
+  margin: 0 auto;
+  padding: 14px 18px;
+  font-size: 1rem;
+  color: #e9eef8;
+  background: rgba(255,255,255,0.05);
+  border: none;
+  border-bottom: 2px solid #d4af37;
+  border-radius: 8px;
+  outline: none;
+  backdrop-filter: blur(10px);
+  transition: 0.2s;
+}
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 25px;
-    padding-top: 10px;
-  }
+#searchBar:focus {
+  box-shadow: 0 0 12px #d4af37;
+}
 
-  .icon-card {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 12px;
-    border-radius: 14px;
-    text-align: center;
-    backdrop-filter: blur(10px);
-    transition: transform 0.2s;
-  }
+/* ---------------------------------------------
+   ICON GRID & NIGHTCORE CARD STYLE
+--------------------------------------------- */
+.icon-grid {
+  padding: 40px;
+  display: grid;
+  gap: 35px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
 
-  .icon-card:hover {
-    transform: scale(1.05);
-  }
+.icon-card {
+  position: relative;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(212,175,55,0.25);
+  border-radius: 16px;
+  padding: 20px 12px;
+  text-align: center;
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+  transition: transform 0.25s ease,
+              backdrop-filter 0.25s ease,
+              box-shadow 0.25s ease;
+}
 
-  .icon-card img {
-    width: 72px;
-    height: 72px;
-    object-fit: contain;
-    margin-bottom: 8px;
-  }
+.icon-card:hover {
+  transform: scale(1.12);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 0 25px rgba(212,175,55,0.55);
+}
 
-  .url-btn {
-    margin-top: 6px;
-    background: #d4af37;
-    color: #000;
-    font-weight: bold;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 10px;
-    cursor: pointer;
-  }
+/* Gold light sweep on hover */
+.icon-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(212,175,55,0.4),
+    transparent
+  );
+  transform: translateX(-200%);
+  transition: transform 0.8s;
+}
 
-  .url-btn:hover {
-    filter: brightness(1.18);
-  }
+.icon-card:hover::after {
+  transform: translateX(200%);
+}
+
+.icon-card img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.4));
+}
+
+/* Info revealed on hover */
+.icon-info {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: 0.25s;
+}
+
+.icon-card:hover .icon-info {
+  opacity: 1;
+  transform: translateY(0px);
+}
+
+.copy-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #d4af37;
+  color: #000;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.copy-btn:hover {
+  filter: brightness(1.2);
+}
 </style>
 </head>
-
 <body>
 
-<h1>NightCore Icon Library</h1>
+<canvas id="backgroundCanvas"></canvas>
 
-<input id="searchBar" type="text" placeholder="Search icons…">
+<div class="search-container">
+  <input id="searchBar" type="text" placeholder="Search icons…">
+</div>
 
-<div class="grid" id="iconGrid"></div>
+<div class="icon-grid" id="iconGrid"></div>
 
 <script>
+/* ---------------------------------------------
+   BACKGROUND PARTICLE + STREAK ANIMATION
+--------------------------------------------- */
+const canvas = document.getElementById("backgroundCanvas");
+const ctx = canvas.getContext("2d");
+function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+resize(); window.onresize = resize;
+
+const particles = [];
+const streaks = [];
+
+function spawnParticle(){
+  return {
+    x: Math.random()*canvas.width,
+    y: Math.random()*canvas.height,
+    size: Math.random()*2+1,
+    speed: Math.random()*0.4+0.2
+  };
+}
+
+function spawnStreak(){
+  return {
+    x: Math.random()*canvas.width,
+    y: -20,
+    len: Math.random()*50+40,
+    speed: Math.random()*3+2,
+    alpha: Math.random()*0.5+0.3
+  };
+}
+
+for(let i=0;i<180;i++) particles.push(spawnParticle());
+
+setInterval(()=>streaks.push(spawnStreak()), 900);
+
+function animate(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // particles
+  ctx.fillStyle="rgba(212,175,55,0.6)";
+  particles.forEach(p=>{
+    p.y+=p.speed;
+    if(p.y>canvas.height) p.y=0;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  // streaks
+  streaks.forEach(s=>{
+    ctx.strokeStyle=`rgba(212,175,55,${s.alpha})`;
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(s.x, s.y + s.len);
+    ctx.stroke();
+    s.y+=s.speed;
+  });
+
+  // remove finished streaks
+  for(let i=streaks.length-1;i>=0;i--){
+    if(streaks[i].y > canvas.height) streaks.splice(i,1);
+  }
+
+  requestAnimationFrame(animate);
+}
+animate();
+
+
+/* ---------------------------------------------
+   LOAD ICONS FROM CLOUD FUNCTION
+--------------------------------------------- */
+const apiUrl = "https://geticons-75190213345.us-central1.run.app";
 const grid = document.getElementById("iconGrid");
 const searchBar = document.getElementById("searchBar");
 
 let icons = [];
-let filteredIcons = [];
 
-const apiUrl = "https://us-central1-morrow-industries.cloudfunctions.net/getIcons";
-
-async function loadIcons() {
+async function loadIcons(){
   const res = await fetch(apiUrl);
   icons = await res.json();
-  filteredIcons = icons;
-  renderIcons();
+  renderIcons(icons);
 }
 
-function renderIcons() {
+function renderIcons(list){
   grid.innerHTML = "";
-
-  filteredIcons.forEach(icon => {
+  list.forEach(icon=>{
     const card = document.createElement("div");
     card.className = "icon-card";
-
+    
     card.innerHTML = `
       <img src="${icon.download_url}" alt="${icon.name}">
-      <div>${icon.name}</div>
-      <button class="url-btn" onclick="copyURL('${icon.url}')">Copy URL</button>
+      <div class="icon-info">
+        <div>${icon.name}</div>
+        <button class="copy-btn" onclick="copyURL('${icon.url}')">Copy URL</button>
+      </div>
     `;
-
     grid.appendChild(card);
   });
 }
 
-function copyURL(url) {
+function copyURL(url){
   navigator.clipboard.writeText(url);
   alert("Copied: " + url);
 }
 
-searchBar.addEventListener("input", () => {
-  const query = searchBar.value.toLowerCase();
-  filteredIcons = icons.filter(icon => icon.name.toLowerCase().includes(query));
-  renderIcons();
+searchBar.addEventListener("input", e=>{
+  const q = e.target.value.toLowerCase();
+  renderIcons(
+    icons.filter(i => i.name.toLowerCase().includes(q))
+  );
 });
 
 loadIcons();
