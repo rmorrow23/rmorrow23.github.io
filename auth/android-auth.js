@@ -1,75 +1,54 @@
-// ================================
-// Morrow Industries — Android Token Bridge
-// Drop-in module for any webpage
-// ================================
+// =======================================================
+// Morrow Industries — Android WebView → Firebase Bridge
+// Robust auto-sign-in module for ALL webpages
+// =======================================================
 
-// Make sure Firebase is loaded before this script
-// <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-// <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+console.log("%c[AndroidAuth] Module loaded", "color:#D4AF37");
 
-const AndroidAuth = (() => {
-    let pendingToken = null;
-    let isSigningIn = false;
-
-    const debug = (...msg) => console.log("%c[AndroidAuth]", "color: #D4AF37", ...msg);
-
-    // ---------------------------
-    // 🔥 Process token from Android app
-    // ---------------------------
-    async function handleTokenFromAndroid(token) {
-        debug("Token received:", token);
-
-        pendingToken = token;
-
-        // Avoid double-sign-ins
-        if (isSigningIn) {
-            debug("Already signing in, ignoring token...");
+// =======================================================
+// 1. Wait for firebase to exist before using it
+// =======================================================
+function waitForFirebase() {
+    return new Promise((resolve) => {
+        if (window.firebase && firebase.auth) {
+            resolve();
             return;
         }
 
-        try {
-            isSigningIn = true;
+        console.log("[AndroidAuth] Waiting for Firebase to load...");
 
-            const userCred = await firebase.auth().signInWithCustomToken(token);
-
-            debug("Firebase Web Auth Complete:", userCred.user.uid);
-
-        } catch (e) {
-            console.error("[AndroidAuth] Sign-in failed:", e);
-        } finally {
-            isSigningIn = false;
-        }
-    }
-
-    // ---------------------------
-    // 🔥 Auto-reauth if Firebase token expires
-    // ---------------------------
-    firebase.auth().onIdTokenChanged(async (user) => {
-        if (!user) {
-            debug("User signed out on web");
-            return;
-        }
-
-        debug("Web Firebase user detected:", user.uid);
-
-        // If we still have the original Android token, reuse it
-        if (pendingToken && !isSigningIn) {
-            debug("Re-validating Android token after token refresh...");
-            handleTokenFromAndroid(pendingToken);
-        }
+        const interval = setInterval(() => {
+            if (window.firebase && firebase.auth) {
+                clearInterval(interval);
+                console.log("%c[AndroidAuth] Firebase is ready", "color:lightgreen");
+                resolve();
+            }
+        }, 100);
     });
+}
 
-    // ---------------------------
-    // 🔥 Expose global callback used by Android WebView
-    // ---------------------------
-    window.receiveAndroidToken = function (token) {
-        debug("receiveAndroidToken() called from Android WebView");
-        handleTokenFromAndroid(token);
-    };
+// =======================================================
+// 2. Handle Android Token
+// =======================================================
+async function handleAndroidToken(token) {
+    console.log("%c[AndroidAuth] Token received:", "color:#D4AF37", token);
 
-    return {
-        receiveAndroidToken,
-    };
-})();
+    await waitForFirebase();
 
-export default AndroidAuth;
+    firebase.auth().signInWithCustomToken(token)
+        .then((cred) => {
+            console.log("%c[AndroidAuth] Firebase login success:", "color:lightgreen", cred.user.uid);
+        })
+        .catch((err) => {
+            console.error("[AndroidAuth] Firebase login FAILED:", err);
+        });
+}
+
+// =======================================================
+// 3. Global callback — Android WebView calls this
+// =======================================================
+window.receiveAndroidToken = function (token) {
+    console.log("%c[AndroidAuth] receiveAndroidToken() triggered", "color:#D4AF37");
+
+    handleAndroidToken(token);
+};
