@@ -1,1 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NightCore OS — Vehicle Service Records</title>
 
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- html2pdf (Export to PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: url("https://morrow-industries.com/NightCore/assets/bg/nightcore-bg.jpg") center/cover fixed no-repeat;
+    }
+
+    .glass {
+      backdrop-filter: blur(18px);
+      background: rgba(20, 20, 20, 0.55);
+      border: 1px solid rgba(255, 215, 0, 0.18);
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.15);
+    }
+
+    .gold-text {
+      color: #e9c46a;
+      font-family: "Cinzel", serif;
+    }
+
+    .modal-bg {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(10px);
+    }
+  </style>
+</head>
+
+<body class="text-white">
+
+  <!-- ======================= HEADER ======================= -->
+  <header class="w-full p-6 flex justify-between items-center glass">
+    <h1 class="gold-text text-3xl">Vehicle Service Records</h1>
+    <button id="addCarBtn" class="px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 transition">Add Car</button>
+  </header>
+
+  <!-- ======================= MAIN LAYOUT ======================= -->
+  <main class="p-6">
+
+    <!-- CAR LIST -->
+    <div id="carList" class="grid md:grid-cols-2 xl:grid-cols-3 gap-6 mt-6"></div>
+
+  </main>
+
+
+  <!-- ============================================================== -->
+  <!-- ADD CAR MODAL -->
+  <!-- ============================================================== -->
+  <div id="addCarModal" class="fixed inset-0 hidden modal-bg flex items-center justify-center p-4">
+    <div class="glass p-6 rounded-xl w-full max-w-md">
+      <h2 class="text-xl gold-text mb-4">Add New Car</h2>
+
+      <label class="block mb-2">Car Name / Nickname</label>
+      <input id="carName" class="w-full p-2 rounded bg-black/40 border border-yellow-700 mb-3" placeholder="NightCam, Camry SE, etc">
+
+      <label class="block mb-2">Year</label>
+      <input id="carYear" type="number" class="w-full p-2 rounded bg-black/40 border border-yellow-700 mb-3" placeholder="2025">
+
+      <label class="block mb-2">Make</label>
+      <input id="carMake" class="w-full p-2 rounded bg-black/40 border border-yellow-700 mb-3" placeholder="Toyota">
+
+      <label class="block mb-2">Model</label>
+      <input id="carModel" class="w-full p-2 rounded bg-black/40 border border-yellow-700 mb-3" placeholder="Camry SE AWD">
+
+      <div class="flex justify-between mt-4">
+        <button id="cancelAddCar" class="px-4 py-2 bg-gray-600 rounded">Cancel</button>
+        <button id="saveCar" class="px-4 py-2 bg-yellow-600 rounded">Save</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- ============================================================== -->
+  <!-- ADD SERVICE MODAL -->
+  <!-- ============================================================== -->
+  <div id="addServiceModal" class="fixed inset-0 hidden modal-bg flex items-center justify-center p-4">
+    <div class="glass p-6 rounded-xl w-full max-w-md overflow-y-auto max-h-[90vh]">
+      <h2 class="text-xl gold-text mb-4">Add Service Record</h2>
+
+      <input id="serviceCarId" type="hidden">
+
+      <label class="block mb-1">Date</label>
+      <input id="serviceDate" type="date" class="w-full p-2 rounded bg-black/40 border border-yellow-700 mb-3">
+
+      <label class="block mb-1">Service Type</label>
+      <input id="serviceType" class="w-full p-2 rounded bg-black/40 border border-yellow-700 mb-3" placeholder="Oil Change, Tire Rotation, etc">
+
+      <label class="block mb-1">Mileage</label>
+      <input id="serviceMileage" type="number" class="w-full p-2 rounded bg-black/40 border border-yellow-700 mb-3">
+
+      <label class="block mb-1">Cost ($)</label>
+      <input id="serviceCost" type="number" class="w-full p-2 rounded bg-black/40 border border-yellow-700 mb-3">
+
+      <label class="block mb-1">Notes</label>
+      <textarea id="serviceNotes" rows="3" class="w-full p-2 rounded bg-black/40 border border-yellow-700 mb-3"></textarea>
+
+      <label class="block mb-1">Receipt Image</label>
+      <input id="serviceImage" type="file" accept="image/*" class="mb-4">
+
+      <div class="flex justify-between mt-4">
+        <button id="cancelAddService" class="px-4 py-2 bg-gray-600 rounded">Cancel</button>
+        <button id="saveService" class="px-4 py-2 bg-yellow-600 rounded">Save</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- VIEW RECEIPT MODAL -->
+  <!-- ============================================================== -->
+  <div id="receiptModal" class="fixed inset-0 hidden modal-bg flex items-center justify-center p-4">
+    <div class="glass p-6 rounded-xl max-w-lg w-full">
+      <h2 class="text-xl gold-text mb-4">Receipt</h2>
+      <img id="receiptImageDisplay" src="" class="rounded-lg w-full object-cover">
+      <button id="closeReceipt" class="w-full mt-4 py-2 bg-yellow-600 rounded">Close</button>
+    </div>
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- FIREBASE + APP LOGIC -->
+  <!-- ============================================================== -->
+  <script type="module">
+    import {
+      db, storage,
+      collection, doc, addDoc, updateDoc, deleteDoc,
+      getDocs, onSnapshot, setDoc
+    } from "/assets/js/firebase-init.js";
+
+    import {
+      ref as storageRef,
+      uploadBytes,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+
+    const carListEl = document.getElementById("carList");
+
+    const addCarBtn = document.getElementById("addCarBtn");
+    const addCarModal = document.getElementById("addCarModal");
+    const cancelAddCar = document.getElementById("cancelAddCar");
+    const saveCar = document.getElementById("saveCar");
+
+    const addServiceModal = document.getElementById("addServiceModal");
+    const cancelAddService = document.getElementById("cancelAddService");
+    const saveService = document.getElementById("saveService");
+
+    const receiptModal = document.getElementById("receiptModal");
+    const closeReceipt = document.getElementById("closeReceipt");
+    const receiptImageDisplay = document.getElementById("receiptImageDisplay");
+
+    let selectedCarId = null;
+
+
+
+    /* ========================= SHOW/HIDE MODALS ========================= */
+
+    addCarBtn.onclick = () => addCarModal.classList.remove("hidden");
+    cancelAddCar.onclick = () => addCarModal.classList.add("hidden");
+
+    cancelAddService.onclick = () => addServiceModal.classList.add("hidden");
+    closeReceipt.onclick = () => receiptModal.classList.add("hidden");
+
+
+    /* ========================= SAVE NEW CAR ========================= */
+
+    saveCar.onclick = async () => {
+      const newCar = {
+        name: document.getElementById("carName").value,
+        year: document.getElementById("carYear").value,
+        make: document.getElementById("carMake").value,
+        model: document.getElementById("carModel").value,
+        created: Date.now()
+      };
+
+      await addDoc(collection(db, "cars"), newCar);
+
+      addCarModal.classList.add("hidden");
+    };
+
+
+
+    /* ========================= RENDER CAR LIST ========================= */
+
+    onSnapshot(collection(db, "cars"), (snapshot) => {
+      carListEl.innerHTML = "";
+
+      snapshot.forEach((carDoc) => {
+        const car = carDoc.data();
+
+        const card = document.createElement("div");
+        card.className = "glass p-5 rounded-xl";
+
+        card.innerHTML = `
+          <h2 class="text-2xl gold-text">${car.year} ${car.make} ${car.model}</h2>
+          <p class="text-gray-300 mb-4">${car.name}</p>
+
+          <button class="addServiceBtn bg-yellow-600 px-3 py-2 rounded mb-3 w-full">Add Service</button>
+
+          <div class="serviceList space-y-3"></div>
+
+          <button class="exportPDF bg-gray-700 px-3 py-2 rounded w-full mt-3">Export as PDF</button>
+        `;
+
+        /* ========================= LOAD SERVICES ========================= */
+        const serviceListEl = card.querySelector(".serviceList");
+
+        onSnapshot(collection(db, "cars", carDoc.id, "services"), (serviceSnap) => {
+          serviceListEl.innerHTML = "";
+
+          serviceSnap.forEach((s) => {
+            const serv = s.data();
+
+            const entry = document.createElement("div");
+            entry.className = "p-3 rounded-lg bg-black/40 border border-yellow-900";
+
+            entry.innerHTML = `
+              <p class="gold-text text-lg">${serv.serviceType}</p>
+              <p class="text-sm text-gray-300">Date: ${serv.date}</p>
+              <p class="text-sm text-gray-300">Mileage: ${serv.mileage}</p>
+              <p class="text-sm text-gray-300">$${serv.cost}</p>
+              <p class="text-sm mb-2">${serv.notes}</p>
+
+              ${serv.imageUrl ? `
+                <button class="viewReceipt bg-yellow-700 px-2 py-1 rounded mt-2" data-url="${serv.imageUrl}">
+                  View Receipt
+                </button>
+              ` : ""}
+            `;
+
+            entry.querySelector(".viewReceipt")?.addEventListener("click", (ev) => {
+              receiptImageDisplay.src = ev.target.dataset.url;
+              receiptModal.classList.remove("hidden");
+            });
+
+            serviceListEl.appendChild(entry);
+          });
+        });
+
+
+
+        /* ========================= ADD SERVICE BUTTON ========================= */
+        card.querySelector(".addServiceBtn").onclick = () => {
+          selectedCarId = carDoc.id;
+          document.getElementById("serviceCarId").value = carDoc.id;
+          addServiceModal.classList.remove("hidden");
+        };
+
+
+
+        /* ========================= EXPORT TO PDF ========================= */
+        card.querySelector(".exportPDF").onclick = () => {
+          html2pdf().from(card).save(`${car.name}-service-history.pdf`);
+        };
+
+        carListEl.appendChild(card);
+      });
+    });
+
+
+
+    /* ========================= SAVE SERVICE RECORD ========================= */
+
+    saveService.onclick = async () => {
+      const carId = document.getElementById("serviceCarId").value;
+
+      let imageUrl = null;
+      const file = document.getElementById("serviceImage").files[0];
+
+      if (file) {
+        const imgRef = storageRef(storage, `serviceReceipts/${carId}/${Date.now()}-${file.name}`);
+        await uploadBytes(imgRef, file);
+        imageUrl = await getDownloadURL(imgRef);
+      }
+
+      const rec = {
+        date: document.getElementById("serviceDate").value,
+        serviceType: document.getElementById("serviceType").value,
+        mileage: document.getElementById("serviceMileage").value,
+        cost: document.getElementById("serviceCost").value,
+        notes: document.getElementById("serviceNotes").value,
+        imageUrl,
+        created: Date.now()
+      };
+
+      await addDoc(collection(db, "cars", carId, "services"), rec);
+
+      addServiceModal.classList.add("hidden");
+    };
+
+  </script>
+
+  <script>
+    lucide.createIcons();
+  </script>
+
+</body>
+</html>
