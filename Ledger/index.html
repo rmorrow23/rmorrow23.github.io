@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morrow Industries — Business Ledger</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Firebase (existing project files) -->
+  <script type="module" src="/js/firebase-init.js"></script>
+  <script type="module" src="/js/isAdmin.js"></script>
+
+  <style>
+    :root {
+      --gold:#d4af37;
+      --bg:#050505;
+      --glass:rgba(255,255,255,0.08);
+      --border:rgba(255,255,255,0.15);
+      --text:#f5f5f5;
+      --muted:#9b9b9b;
+    }
+
+    * { box-sizing:border-box; font-family:Inter,sans-serif; }
+
+    body {
+      margin:0;
+      background:radial-gradient(circle at top,#111,#000);
+      color:var(--text);
+      padding:16px;
+    }
+
+    h1 {
+      font-family:Cinzel,serif;
+      text-align:center;
+      font-size:1.8rem;
+      margin-bottom:6px;
+      letter-spacing:1px;
+    }
+
+    .subtitle {
+      text-align:center;
+      font-size:.85rem;
+      color:var(--muted);
+      margin-bottom:18px;
+    }
+
+    .card {
+      background:var(--glass);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:16px;
+      backdrop-filter:blur(16px);
+      margin-bottom:16px;
+    }
+
+    label {
+      font-size:.8rem;
+      color:var(--muted);
+      display:block;
+      margin-top:10px;
+    }
+
+    input,select {
+      width:100%;
+      padding:12px;
+      margin-top:4px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.4);
+      color:var(--text);
+      font-size:.95rem;
+    }
+
+    input[type="date"] { color-scheme:dark; }
+
+    button {
+      width:100%;
+      margin-top:14px;
+      padding:14px;
+      border-radius:14px;
+      border:none;
+      background:linear-gradient(135deg,#f0d36a,var(--gold));
+      color:#000;
+      font-weight:600;
+      cursor:pointer;
+    }
+
+    .ledger { display:flex; flex-direction:column; gap:10px; }
+
+    .entry {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:12px;
+      border-radius:14px;
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--border);
+    }
+
+    .entry .left { max-width:72%; }
+
+    .entry .name { font-weight:500; font-size:.95rem; }
+
+    .entry .meta {
+      font-size:.75rem;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    .amount {
+      font-weight:600;
+      color:var(--gold);
+      white-space:nowrap;
+    }
+
+    /* Monthly */
+    .month {
+      padding:12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      margin-bottom:10px;
+    }
+
+    .month-title {
+      font-size:.9rem;
+      font-weight:600;
+      margin-bottom:6px;
+    }
+
+    .month-stats {
+      font-size:.8rem;
+      color:var(--muted);
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .month-net { font-weight:600; color:var(--gold); }
+
+    @media (min-width:768px) {
+      body { max-width:920px; margin:auto; }
+      h1 { font-size:2.2rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Business Ledger</h1>
+  <div class="subtitle">Permanent income & expense record</div>
+
+  <!-- Add Entry -->
+  <div class="card">
+    <label>Type</label>
+    <select id="type">
+      <option value="expense">Expense</option>
+      <option value="income">Income</option>
+    </select>
+
+    <label>Name / Description</label>
+    <input id="name" placeholder="Google Play Developer Fee" />
+
+    <label>Amount</label>
+    <input id="amount" type="number" step="0.01" placeholder="25.00" />
+
+    <label>Date Paid / Collected</label>
+    <input id="date" type="date" />
+
+    <button id="addBtn">Add Record</button>
+  </div>
+
+  <!-- Monthly Breakdown -->
+  <div class="card">
+    <h3 style="font-family:Cinzel;margin-top:0;">Monthly Breakdown</h3>
+    <div id="monthlyBreakdown"></div>
+    <button id="exportPdf">Export PDF</button>
+  </div>
+
+  <!-- Ledger -->
+  <div class="card">
+    <div class="ledger" id="ledger"></div>
+  </div>
+
+<script type="module">
+  import { auth, db } from "/js/firebase-init.js";
+  import { requireAdmin } from "/js/isAdmin.js";
+
+  import { onAuthStateChanged } from
+    "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  import {
+    collection, addDoc, serverTimestamp,
+    onSnapshot, query, orderBy
+  } from
+    "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const ledgerEl = document.getElementById("ledger");
+  const monthlyEl = document.getElementById("monthlyBreakdown");
+
+  const renderedIds = new Set();
+  const monthlyMap = {};
+
+  function renderMonthly() {
+    monthlyEl.innerHTML = "";
+    Object.keys(monthlyMap).sort().reverse().forEach(m => {
+      const d = monthlyMap[m];
+      const net = d.income - d.expense;
+      const div = document.createElement("div");
+      div.className = "month";
+      div.innerHTML = `
+        <div class="month-title">${m}</div>
+        <div class="month-stats">
+          <span>Income: $${d.income.toFixed(2)}</span>
+          <span>Expenses: $${d.expense.toFixed(2)}</span>
+          <span class="month-net">Net: $${net.toFixed(2)}</span>
+        </div>`;
+      monthlyEl.appendChild(div);
+    });
+  }
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) return;
+    await requireAdmin(user.uid);
+
+    const ledgerRef = collection(db, "businessLedger");
+    const q = query(ledgerRef, orderBy("date","desc"));
+
+    onSnapshot(q, snap => {
+      snap.docChanges().forEach(change => {
+        if (change.type !== "added") return;
+        if (renderedIds.has(change.doc.id)) return;
+
+        renderedIds.add(change.doc.id);
+        const d = change.doc.data();
+        const date = d.date.toDate();
+        const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
+
+        if (!monthlyMap[key]) monthlyMap[key] = { income:0, expense:0 };
+        if (d.type === "income") monthlyMap[key].income += d.amount;
+        else monthlyMap[key].expense += d.amount;
+
+        const row = document.createElement("div");
+        row.className = "entry";
+        row.innerHTML = `
+          <div class="left">
+            <div class="name">${d.name}</div>
+            <div class="meta">
+              ${d.type.toUpperCase()} • ${date.toLocaleDateString()} • ${d.addedByName}
+            </div>
+          </div>
+          <div class="amount">
+            ${d.type==="expense"?"-":"+"}$${d.amount.toFixed(2)}
+          </div>`;
+        ledgerEl.appendChild(row);
+        renderMonthly();
+      });
+    });
+
+    document.getElementById("addBtn").onclick = async () => {
+      const name = document.getElementById("name").value.trim();
+      const amount = parseFloat(document.getElementById("amount").value);
+      const type = document.getElementById("type").value;
+      const dateVal = document.getElementById("date").value;
+      if (!name || !amount || !dateVal) return alert("All fields required");
+
+      await addDoc(ledgerRef,{
+        name, amount, type,
+        date: new Date(dateVal),
+        addedByUid: user.uid,
+        addedByName: user.displayName || user.email,
+        createdAt: serverTimestamp()
+      });
+
+      document.getElementById("name").value = "";
+      document.getElementById("amount").value = "";
+    };
+
+    document.getElementById("exportPdf").onclick = () => {
+      const win = window.open("","_blank");
+      let rows = "";
+      document.querySelectorAll(".entry").forEach(e=>{
+        rows += `<tr><td>${e.innerText.replace(/\n/g,"</td><td>")}</td></tr>`;
+      });
+
+      win.document.write(`
+        <html><head>
+          <title>Morrow Industries — Ledger</title>
+          <style>
+            body{font-family:Inter;padding:24px}
+            h1{font-family:Cinzel}
+            table{width:100%;border-collapse:collapse}
+            td,th{border:1px solid #ccc;padding:8px;font-size:12px}
+          </style>
+        </head>
+        <body>
+          <h1>Morrow Industries — Business Ledger</h1>
+          <p>Generated: ${new Date().toLocaleString()}</p>
+          <table>
+            <tr><th>Record</th><th>Details</th></tr>
+            ${rows}
+          </table>
+          <script>window.print()</script>
+        </body></html>`);
+      win.document.close();
+    };
+  });
+</script>
+
+</body>
+</html>
