@@ -15,7 +15,6 @@
   <style>
     :root {
       --gold:#d4af37;
-      --bg:#050505;
       --glass:rgba(255,255,255,0.08);
       --border:rgba(255,255,255,0.15);
       --text:#f5f5f5;
@@ -36,7 +35,6 @@
       text-align:center;
       font-size:1.8rem;
       margin-bottom:6px;
-      letter-spacing:1px;
     }
 
     .subtitle {
@@ -46,6 +44,7 @@
       margin-bottom:18px;
     }
 
+    /* MOBILE-FIRST CARDS */
     .card {
       background:var(--glass);
       border:1px solid var(--border);
@@ -58,8 +57,8 @@
     label {
       font-size:.8rem;
       color:var(--muted);
-      display:block;
       margin-top:10px;
+      display:block;
     }
 
     input,select {
@@ -87,12 +86,16 @@
       cursor:pointer;
     }
 
-    .ledger { display:flex; flex-direction:column; gap:10px; }
+    .ledger {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
 
     .entry {
       display:flex;
       justify-content:space-between;
-      align-items:center;
+      gap:12px;
       padding:12px;
       border-radius:14px;
       background:rgba(255,255,255,.04);
@@ -100,14 +103,8 @@
     }
 
     .entry .left { max-width:72%; }
-
-    .entry .name { font-weight:500; font-size:.95rem; }
-
-    .entry .meta {
-      font-size:.75rem;
-      color:var(--muted);
-      margin-top:2px;
-    }
+    .entry .name { font-size:.95rem; font-weight:500; }
+    .entry .meta { font-size:.75rem; color:var(--muted); }
 
     .amount {
       font-weight:600;
@@ -115,46 +112,87 @@
       white-space:nowrap;
     }
 
-    /* Monthly */
+    /* MONTHLY */
     .month {
       padding:12px;
       border-radius:14px;
-      border:1px solid var(--border);
       background:rgba(255,255,255,.04);
+      border:1px solid var(--border);
       margin-bottom:10px;
     }
 
-    .month-title {
-      font-size:.9rem;
-      font-weight:600;
-      margin-bottom:6px;
-    }
-
+    .month-title { font-weight:600; margin-bottom:6px; }
     .month-stats {
       font-size:.8rem;
-      color:var(--muted);
       display:flex;
       justify-content:space-between;
-      gap:8px;
       flex-wrap:wrap;
+      color:var(--muted);
     }
 
-    .month-net { font-weight:600; color:var(--gold); }
+    .month-net { color:var(--gold); font-weight:600; }
 
-    @media (min-width:768px) {
-      body { max-width:920px; margin:auto; }
-      h1 { font-size:2.2rem; }
+    /* ================================
+       DESKTOP / TABLET — FULL REDESIGN
+       ================================ */
+    @media (min-width:1024px) {
+
+      body {
+        padding:32px;
+      }
+
+      h1, .subtitle {
+        text-align:left;
+      }
+
+      .desktop-grid {
+        display:grid;
+        grid-template-columns:320px 320px 1fr;
+        gap:24px;
+        align-items:start;
+      }
+
+      .card {
+        margin-bottom:0;
+      }
+
+      .entry-card,
+      .monthly-card {
+        position:sticky;
+        top:32px;
+      }
+
+      .ledger-card {
+        max-height:calc(100vh - 64px);
+        overflow-y:auto;
+        padding-right:6px;
+      }
+
+      button {
+        padding:10px;
+        font-size:.9rem;
+      }
+
+      .entry {
+        padding:10px 14px;
+      }
+
+      .entry .meta {
+        font-size:.7rem;
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <h1>Business Ledger</h1>
-  <div class="subtitle">Permanent income & expense record</div>
+<h1>Business Ledger</h1>
+<div class="subtitle">Permanent income & expense record</div>
 
-  <!-- Add Entry -->
-  <div class="card">
+<div class="desktop-grid">
+
+  <!-- ADD ENTRY -->
+  <div class="card entry-card">
     <label>Type</label>
     <select id="type">
       <option value="expense">Expense</option>
@@ -162,41 +200,37 @@
     </select>
 
     <label>Name / Description</label>
-    <input id="name" placeholder="Google Play Developer Fee" />
+    <input id="name" placeholder="Google Play Developer Fee">
 
     <label>Amount</label>
-    <input id="amount" type="number" step="0.01" placeholder="25.00" />
+    <input id="amount" type="number" step="0.01">
 
     <label>Date Paid / Collected</label>
-    <input id="date" type="date" />
+    <input id="date" type="date">
 
     <button id="addBtn">Add Record</button>
   </div>
 
-  <!-- Monthly Breakdown -->
-  <div class="card">
+  <!-- MONTHLY -->
+  <div class="card monthly-card">
     <h3 style="font-family:Cinzel;margin-top:0;">Monthly Breakdown</h3>
     <div id="monthlyBreakdown"></div>
     <button id="exportPdf">Export PDF</button>
   </div>
 
-  <!-- Ledger -->
-  <div class="card">
+  <!-- LEDGER -->
+  <div class="card ledger-card">
     <div class="ledger" id="ledger"></div>
   </div>
+
+</div>
 
 <script type="module">
   import { auth, db } from "/js/firebase-init.js";
   import { requireAdmin } from "/js/isAdmin.js";
-
-  import { onAuthStateChanged } from
-    "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-  import {
-    collection, addDoc, serverTimestamp,
-    onSnapshot, query, orderBy
-  } from
-    "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const ledgerEl = document.getElementById("ledger");
   const monthlyEl = document.getElementById("monthlyBreakdown");
@@ -206,109 +240,88 @@
 
   function renderMonthly() {
     monthlyEl.innerHTML = "";
-    Object.keys(monthlyMap).sort().reverse().forEach(m => {
+    Object.keys(monthlyMap).sort().reverse().forEach(m=>{
       const d = monthlyMap[m];
       const net = d.income - d.expense;
-      const div = document.createElement("div");
-      div.className = "month";
-      div.innerHTML = `
-        <div class="month-title">${m}</div>
-        <div class="month-stats">
-          <span>Income: $${d.income.toFixed(2)}</span>
-          <span>Expenses: $${d.expense.toFixed(2)}</span>
-          <span class="month-net">Net: $${net.toFixed(2)}</span>
+      monthlyEl.innerHTML += `
+        <div class="month">
+          <div class="month-title">${m}</div>
+          <div class="month-stats">
+            <span>Income: $${d.income.toFixed(2)}</span>
+            <span>Expenses: $${d.expense.toFixed(2)}</span>
+            <span class="month-net">Net: $${net.toFixed(2)}</span>
+          </div>
         </div>`;
-      monthlyEl.appendChild(div);
     });
   }
 
-  onAuthStateChanged(auth, async user => {
-    if (!user) return;
+  onAuthStateChanged(auth, async user=>{
+    if(!user) return;
     await requireAdmin(user.uid);
 
-    const ledgerRef = collection(db, "businessLedger");
-    const q = query(ledgerRef, orderBy("date","desc"));
+    const ref = collection(db,"businessLedger");
+    const q = query(ref, orderBy("date","desc"));
 
-    onSnapshot(q, snap => {
-      snap.docChanges().forEach(change => {
-        if (change.type !== "added") return;
-        if (renderedIds.has(change.doc.id)) return;
-
+    onSnapshot(q, snap=>{
+      snap.docChanges().forEach(change=>{
+        if(change.type!=="added" || renderedIds.has(change.doc.id)) return;
         renderedIds.add(change.doc.id);
+
         const d = change.doc.data();
         const date = d.date.toDate();
         const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
 
-        if (!monthlyMap[key]) monthlyMap[key] = { income:0, expense:0 };
-        if (d.type === "income") monthlyMap[key].income += d.amount;
-        else monthlyMap[key].expense += d.amount;
+        if(!monthlyMap[key]) monthlyMap[key]={income:0,expense:0};
+        d.type==="income" ? monthlyMap[key].income+=d.amount : monthlyMap[key].expense+=d.amount;
 
-        const row = document.createElement("div");
-        row.className = "entry";
-        row.innerHTML = `
-          <div class="left">
-            <div class="name">${d.name}</div>
-            <div class="meta">
-              ${d.type.toUpperCase()} • ${date.toLocaleDateString()} • ${d.addedByName}
+        ledgerEl.innerHTML += `
+          <div class="entry">
+            <div class="left">
+              <div class="name">${d.name}</div>
+              <div class="meta">${d.type.toUpperCase()} • ${date.toLocaleDateString()} • ${d.addedByName}</div>
             </div>
-          </div>
-          <div class="amount">
-            ${d.type==="expense"?"-":"+"}$${d.amount.toFixed(2)}
+            <div class="amount">${d.type==="expense"?"-":"+"}$${d.amount.toFixed(2)}</div>
           </div>`;
-        ledgerEl.appendChild(row);
+
         renderMonthly();
       });
     });
 
-    document.getElementById("addBtn").onclick = async () => {
-      const name = document.getElementById("name").value.trim();
-      const amount = parseFloat(document.getElementById("amount").value);
-      const type = document.getElementById("type").value;
-      const dateVal = document.getElementById("date").value;
-      if (!name || !amount || !dateVal) return alert("All fields required");
+    document.getElementById("addBtn").onclick = async ()=>{
+      const name=nameInput.value.trim();
+      const amount=parseFloat(amountInput.value);
+      const type=typeInput.value;
+      const date=dateInput.value;
+      if(!name||!amount||!date) return alert("All fields required");
 
-      await addDoc(ledgerRef,{
-        name, amount, type,
-        date: new Date(dateVal),
-        addedByUid: user.uid,
-        addedByName: user.displayName || user.email,
-        createdAt: serverTimestamp()
+      await addDoc(ref,{
+        name,amount,type,
+        date:new Date(date),
+        addedByUid:user.uid,
+        addedByName:user.displayName||user.email,
+        createdAt:serverTimestamp()
       });
 
-      document.getElementById("name").value = "";
-      document.getElementById("amount").value = "";
+      nameInput.value="";
+      amountInput.value="";
     };
 
-    document.getElementById("exportPdf").onclick = () => {
-      const win = window.open("","_blank");
-      let rows = "";
-      document.querySelectorAll(".entry").forEach(e=>{
-        rows += `<tr><td>${e.innerText.replace(/\n/g,"</td><td>")}</td></tr>`;
-      });
-
+    document.getElementById("exportPdf").onclick = ()=>{
+      const win=window.open("","_blank");
       win.document.write(`
-        <html><head>
-          <title>Morrow Industries — Ledger</title>
-          <style>
-            body{font-family:Inter;padding:24px}
-            h1{font-family:Cinzel}
-            table{width:100%;border-collapse:collapse}
-            td,th{border:1px solid #ccc;padding:8px;font-size:12px}
-          </style>
-        </head>
-        <body>
-          <h1>Morrow Industries — Business Ledger</h1>
-          <p>Generated: ${new Date().toLocaleString()}</p>
-          <table>
-            <tr><th>Record</th><th>Details</th></tr>
-            ${rows}
-          </table>
-          <script>window.print()<\/script>
-        </body></html>
-      `);
+        <html><body>
+        <h1>Morrow Industries — Business Ledger</h1>
+        <p>Generated ${new Date().toLocaleString()}</p>
+        <script>window.print()<\/script>
+        </body></html>`);
       win.document.close();
     };
   });
+
+  const nameInput=document.getElementById("name");
+  const amountInput=document.getElementById("amount");
+  const typeInput=document.getElementById("type");
+  const dateInput=document.getElementById("date");
 </script>
 
 </body>
