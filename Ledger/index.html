@@ -1,121 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Morrow Industries — Business Ledger</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Morrow Industries — Business Ledger</title>
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
-  <!-- Firebase -->
-  <script type="module" src="/js/firebase-init.js"></script>
+<!-- Firebase -->
+<script type="module" src="/js/firebase-init.js"></script>
 
-  <style>
-    :root {
-      --gold:#d4af37;
-      --glass:rgba(255,255,255,0.08);
-      --border:rgba(255,255,255,0.15);
-      --text:#f5f5f5;
-      --muted:#9b9b9b;
-    }
+<style>
+:root {
+  --gold:#d4af37;
+  --glass:rgba(255,255,255,.08);
+  --border:rgba(255,255,255,.15);
+  --text:#f5f5f5;
+  --muted:#9b9b9b;
+}
 
-    * { box-sizing:border-box; font-family:Inter,sans-serif; }
+* { box-sizing:border-box; font-family:Inter,sans-serif; }
 
-    body {
-      margin:0;
-      background:radial-gradient(circle at top,#111,#000);
-      color:var(--text);
-      padding:16px;
-    }
+body {
+  margin:0;
+  background:radial-gradient(circle at top,#111,#000);
+  color:var(--text);
+  padding:16px;
+}
 
-    h1 {
-      font-family:Cinzel,serif;
-      font-size:1.8rem;
-      margin-bottom:6px;
-    }
+h1 {
+  font-family:Cinzel,serif;
+  margin-bottom:4px;
+}
 
-    .subtitle {
-      font-size:.85rem;
-      color:var(--muted);
-      margin-bottom:18px;
-    }
+.subtitle {
+  color:var(--muted);
+  font-size:.85rem;
+  margin-bottom:16px;
+}
 
-    .card {
-      background:var(--glass);
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:16px;
-      backdrop-filter:blur(16px);
-    }
+/* Cards */
+.card {
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:16px;
+  backdrop-filter:blur(16px);
+}
 
-    label { font-size:.8rem; color:var(--muted); margin-top:10px; display:block; }
-    input,select {
-      width:100%;
-      padding:12px;
-      margin-top:4px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background:rgba(0,0,0,.4);
-      color:var(--text);
-    }
+/* Ledger */
+.ledger {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
 
-    input[type="date"] { color-scheme:dark; }
+.entry {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--border);
+}
 
-    button {
-      width:100%;
-      margin-top:14px;
-      padding:14px;
-      border-radius:14px;
-      border:none;
-      background:linear-gradient(135deg,#f0d36a,var(--gold));
-      font-weight:600;
-      cursor:pointer;
-    }
+.entry .meta {
+  font-size:.75rem;
+  color:var(--muted);
+}
 
-    .ledger { display:flex; flex-direction:column; gap:10px; }
+.amount {
+  font-weight:600;
+  color:var(--gold);
+  white-space:nowrap;
+}
 
-    .entry {
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      padding:12px;
-      border-radius:14px;
-      background:rgba(255,255,255,.04);
-      border:1px solid var(--border);
-    }
+.empty {
+  text-align:center;
+  padding:40px 10px;
+  color:var(--muted);
+  font-size:.9rem;
+}
 
-    .entry .meta { font-size:.75rem; color:var(--muted); }
-    .amount { font-weight:600; color:var(--gold); }
+/* Floating Add Button */
+.fab {
+  position:fixed;
+  bottom:22px;
+  right:22px;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#f0d36a,var(--gold));
+  color:#000;
+  font-size:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
 
-    .month {
-      padding:12px;
-      border-radius:14px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.04);
-      margin-bottom:10px;
-    }
+/* Modal */
+.modal {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:100;
+}
 
-    /* Desktop layout */
-    @media (min-width:1024px) {
-      .desktop-grid {
-        display:grid;
-        grid-template-columns:320px 320px 1fr;
-        gap:24px;
-      }
+.modal.active { display:flex; }
 
-      .entry-card,
-      .monthly-card {
-        position:sticky;
-        top:24px;
-      }
+.modal-card {
+  width:100%;
+  max-width:420px;
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:18px;
+  backdrop-filter:blur(20px);
+}
 
-      .ledger-card {
-        max-height:calc(100vh - 64px);
-        overflow-y:auto;
-      }
-    }
-  </style>
+label {
+  font-size:.8rem;
+  color:var(--muted);
+  margin-top:10px;
+  display:block;
+}
+
+input,select {
+  width:100%;
+  padding:12px;
+  margin-top:4px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:rgba(0,0,0,.4);
+  color:var(--text);
+}
+
+button {
+  width:100%;
+  margin-top:14px;
+  padding:14px;
+  border-radius:14px;
+  border:none;
+  background:linear-gradient(135deg,#f0d36a,var(--gold));
+  font-weight:600;
+  cursor:pointer;
+}
+
+/* Desktop */
+@media(min-width:1024px){
+  body { padding:32px; max-width:1100px; margin:auto; }
+}
+</style>
 </head>
 
 <body>
@@ -123,128 +165,114 @@
 <h1>Business Ledger</h1>
 <div class="subtitle">Permanent income & expense record</div>
 
-<div class="desktop-grid">
+<div class="card">
+  <div id="ledger" class="ledger"></div>
+  <div id="emptyState" class="empty">No ledger entries yet.</div>
+</div>
 
-  <!-- ADD -->
-  <div class="card entry-card">
+<!-- Floating Add -->
+<div class="fab" id="openModal">+</div>
+
+<!-- Add Modal -->
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <h3 style="font-family:Cinzel;margin-top:0;">Add Record</h3>
+
     <label>Type</label>
     <select id="type">
       <option value="expense">Expense</option>
       <option value="income">Income</option>
     </select>
 
-    <label>Name</label>
+    <label>Name / Description</label>
     <input id="name">
 
     <label>Amount</label>
     <input id="amount" type="number" step="0.01">
 
-    <label>Date</label>
+    <label>Date Paid / Collected</label>
     <input id="date" type="date">
 
     <button id="addBtn">Add Record</button>
   </div>
-
-  <!-- MONTHLY -->
-  <div class="card monthly-card">
-    <h3 style="font-family:Cinzel;">Monthly Breakdown</h3>
-    <div id="monthly"></div>
-    <button id="exportPdf">Export PDF</button>
-  </div>
-
-  <!-- LEDGER -->
-  <div class="card ledger-card">
-    <div class="ledger" id="ledger"></div>
-  </div>
-
 </div>
 
 <script type="module">
-  import { auth, db } from "/assets/js/firebase-init.js";
-  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import {
-    collection, addDoc, serverTimestamp,
-    onSnapshot, query, orderBy,
-    doc, getDoc
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "/js/firebase-init.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  collection, addDoc, serverTimestamp,
+  onSnapshot, query, orderBy,
+  doc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const ledgerEl = document.getElementById("ledger");
-  const monthlyEl = document.getElementById("monthly");
-  const rendered = new Set();
-  const monthly = {};
+const ledgerEl = document.getElementById("ledger");
+const emptyEl  = document.getElementById("emptyState");
+const modal    = document.getElementById("modal");
 
-  function renderMonthly() {
-    monthlyEl.innerHTML = "";
-    Object.keys(monthly).sort().reverse().forEach(m=>{
-      const d = monthly[m];
-      monthlyEl.innerHTML += `
-        <div class="month">
-          <div>${m}</div>
-          <div>Income: $${d.income.toFixed(2)}</div>
-          <div>Expenses: $${d.expense.toFixed(2)}</div>
-          <div style="color:var(--gold)">Net: $${(d.income-d.expense).toFixed(2)}</div>
-        </div>`;
-    });
+const nameInput = document.getElementById("name");
+const amountInput = document.getElementById("amount");
+const typeInput = document.getElementById("type");
+const dateInput = document.getElementById("date");
+
+const rendered = new Set();
+
+openModal.onclick = () => modal.classList.add("active");
+modal.onclick = e => { if(e.target===modal) modal.classList.remove("active"); };
+
+onAuthStateChanged(auth, async user=>{
+  if(!user) return location.href="/login.html";
+
+  const snap = await getDoc(doc(db,"users",user.uid));
+  if(!snap.exists() || !snap.data().isAdmin){
+    document.body.innerHTML="<h2>Access Denied</h2>";
+    return;
   }
 
-  onAuthStateChanged(auth, async user => {
-    if (!user) return location.href = "/login.html";
+  const ref = collection(db,"businessLedger");
+  const q = query(ref, orderBy("date","desc"));
 
-    // 🔐 ADMIN CHECK
-    const userSnap = await getDoc(doc(db,"users",user.uid));
-    if (!userSnap.exists() || !userSnap.data().isAdmin) {
-      document.body.innerHTML = "<h2>Access Denied</h2>";
-      return;
-    }
+  onSnapshot(q, snap=>{
+    if(snap.size===0) emptyEl.style.display="block";
+    snap.docChanges().forEach(c=>{
+      if(c.type!=="added" || rendered.has(c.doc.id)) return;
+      rendered.add(c.doc.id);
+      emptyEl.style.display="none";
 
-    const ref = collection(db,"businessLedger");
-    const q = query(ref, orderBy("date","desc"));
+      const d=c.doc.data();
+      const dt=d.date.toDate();
 
-    onSnapshot(q, snap=>{
-      snap.docChanges().forEach(c=>{
-        if (c.type!=="added" || rendered.has(c.doc.id)) return;
-        rendered.add(c.doc.id);
+      ledgerEl.innerHTML+=`
+        <div class="entry">
+          <div>
+            <div>${d.name}</div>
+            <div class="meta">${dt.toLocaleDateString()} • ${d.addedByName}</div>
+          </div>
+          <div class="amount">${d.type==="expense"?"-":"+"}$${d.amount.toFixed(2)}</div>
+        </div>`;
+    });
+  });
 
-        const d=c.doc.data();
-        const dt=d.date.toDate();
-        const key=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
+  addBtn.onclick = async ()=>{
+    const name=nameInput.value.trim();
+    const amount=parseFloat(amountInput.value);
+    const date=dateInput.value;
+    if(!name || isNaN(amount) || !date) return alert("All fields required");
 
-        if(!monthly[key]) monthly[key]={income:0,expense:0};
-        d.type==="income" ? monthly[key].income+=d.amount : monthly[key].expense+=d.amount;
-
-        ledgerEl.innerHTML+=`
-          <div class="entry">
-            <div>
-              <div>${d.name}</div>
-              <div class="meta">${dt.toLocaleDateString()} • ${d.addedByName}</div>
-            </div>
-            <div class="amount">${d.type==="expense"?"-":"+"}$${d.amount.toFixed(2)}</div>
-          </div>`;
-
-        renderMonthly();
-      });
+    await addDoc(ref,{
+      name, amount,
+      type:typeInput.value,
+      date:new Date(date),
+      addedByUid:user.uid,
+      addedByName:user.displayName||user.email,
+      createdAt:serverTimestamp()
     });
 
-    addBtn.onclick = async ()=>{
-      if(!name.value||!amount.value||!date.value) return alert("All fields required");
-      await addDoc(ref,{
-        name:name.value,
-        amount:parseFloat(amount.value),
-        type:type.value,
-        date:new Date(date.value),
-        addedByUid:user.uid,
-        addedByName:user.displayName||user.email,
-        createdAt:serverTimestamp()
-      });
-      name.value=""; amount.value="";
-    };
-
-    exportPdf.onclick=()=>{
-      const w=window.open("","_blank");
-      w.document.write(`<h1>Morrow Industries — Ledger</h1><script>window.print()<\/script>`);
-      w.document.close();
-    };
-  });
+    nameInput.value="";
+    amountInput.value="";
+    modal.classList.remove("active");
+  };
+});
 </script>
 
 </body>
