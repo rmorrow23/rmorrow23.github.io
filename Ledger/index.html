@@ -1,279 +1,556 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Morrow Industries — Business Ledger</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morrow Industries — Business Ledger</title>
 
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
-<!-- Firebase -->
-<script type="module" src="/assets/js/firebase-init.js"></script>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;600&display=swap"
+    rel="stylesheet">
 
-<style>
-:root {
-  --gold:#d4af37;
-  --glass:rgba(255,255,255,.08);
-  --border:rgba(255,255,255,.15);
-  --text:#f5f5f5;
-  --muted:#9b9b9b;
-}
+  <!-- Firebase -->
+  <script type="module" src="/assets/js/firebase-init.js"></script>
 
-* { box-sizing:border-box; font-family:Inter,sans-serif; }
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-body {
-  margin:0;
-  background:#000;
-  color:var(--text);
-  padding:16px;
-}
+  <style>
+    :root {
+      --gold: #d4af37;
+      --glass: rgba(255, 255, 255, .008);
+      --border: rgba(255, 255, 255, .15);
+      --text: #f5f5f5;
+      --muted: #9b9b9b;
+    }
 
-h1 {
-  font-family:Cinzel,serif;
-  margin-bottom:4px;
-}
+    * {
+      box-sizing: border-box;
+      font-family: Inter, sans-serif;
+    }
 
-.subtitle {
-  color:var(--muted);
-  font-size:.85rem;
-  margin-bottom:16px;
-}
+    body {
+      margin: 0;
+      background: #000;
+      color: var(--text);
+      padding: 16px;
+    }
 
-/* Cards */
-.card {
-  background:var(--glass);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:16px;
-  backdrop-filter:blur(16px);
-}
+    h1 {
+      font-family: Cinzel, serif;
+      margin-bottom: 4px;
+    }
 
-/* Ledger */
-.ledger {
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
+    .subtitle {
+      color: var(--muted);
+      font-size: .85rem;
+      margin-bottom: 16px;
+    }
 
-.entry {
-  display:flex;
-  justify-content:space-between;
-  gap:12px;
-  padding:12px;
-  border-radius:14px;
-  background:rgba(255,255,255,.04);
-  border:1px solid var(--border);
-}
+    /* Cards */
+    .card {
+      background: rgba(255, 255, 255, .024);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 16px;
+      backdrop-filter: blur(16px);
+    }
 
-.entry .meta {
-  font-size:.75rem;
-  color:var(--muted);
-}
+    /* Ledger */
+    .ledger {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-.amount {
-  font-weight:600;
-  color:var(--gold);
-  white-space:nowrap;
-}
+    .entry {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 0px;
+      background: rgba(255, 255, 255, 0);
+      /* border-left:2px solid var(--border); */
+    }
 
-.empty {
-  text-align:center;
-  padding:40px 10px;
-  color:var(--muted);
-  font-size:.9rem;
-}
+    .entry+.entry {
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+    }
 
-/* Floating Add Button */
-.fab {
-  position:fixed;
-  bottom:22px;
-  right:22px;
-  width:58px;
-  height:58px;
-  border-radius:50%;
-  background:linear-gradient(135deg,#f0d36a,var(--gold));
-  color:#000;
-  font-size:32px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  box-shadow:0 10px 30px rgba(0,0,0,.4);
-}
 
-/* Modal */
-.modal {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:100;
-}
+    .entry .meta {
+      font-size: .75rem;
+      color: var(--muted);
+    }
 
-.modal.active { display:flex; }
+    .amount {
+      font-weight: 600;
+      color: var(--gold);
+      white-space: nowrap;
+    }
 
-.modal-card {
-  width:100%;
-  max-width:420px;
-  background:var(--glass);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:18px;
-  backdrop-filter:blur(20px);
-}
+    .empty {
+      text-align: center;
+      padding: 40px 10px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
 
-label {
-  font-size:.8rem;
-  color:var(--muted);
-  margin-top:10px;
-  display:block;
-}
+    /* Floating Add Button */
+    .fab {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f0d36a, var(--gold));
+      color: #000;
+      font-size: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+    }
 
-input,select {
-  width:100%;
-  padding:12px;
-  margin-top:4px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:rgba(0,0,0,.4);
-  color:var(--text);
-}
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
 
-button {
-  width:100%;
-  margin-top:14px;
-  padding:14px;
-  border-radius:14px;
-  border:none;
-  background:linear-gradient(135deg,#f0d36a,var(--gold));
-  font-weight:600;
-  cursor:pointer;
-}
+    .modal.active {
+      display: flex;
+    }
 
-/* Desktop */
-@media(min-width:1024px){
-  body { padding:32px; max-width:1100px; margin:auto; }
-}
-</style>
+    .modal-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      backdrop-filter: blur(20px);
+    }
+
+    label {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-top: 10px;
+      display: block;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px;
+      margin-top: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, .4);
+      color: var(--text);
+    }
+
+    button {
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #f0d36a, var(--gold));
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .totals {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .total-item span {
+      font-size: 0.75rem;
+      color: #9b9b9b;
+    }
+
+    .total-item strong {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .total-item.net strong {
+      color: var(--gold);
+    }
+
+    .export-controls {
+      display: flex;
+      gap: 25px;
+      margin-top: 12px;
+      margin-bottom: 12px;
+    }
+
+    .export-controls select {
+      flex: 1;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 5px;
+      padding: 8px;
+      width: 75%;
+      overflow: hidden;
+    }
+
+    .export-btn {
+      background: transparent;
+      border: 1px solid rgba(212, 175, 55, 0);
+      color: var(--gold);
+      padding: 10px;
+      width: 25%;
+      border-radius: 5px;
+      font-size: 1.0rem;
+    }
+
+    /* Desktop */
+    @media(min-width:1024px) {
+      body {
+        padding: 32px;
+        max-width: 1100px;
+        margin: auto;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<h1>Business Ledger</h1>
-<div class="subtitle">Permanent income & expense record</div>
+  <h1>Business Ledger</h1>
+  <div class="subtitle">Permanent income & expense record</div>
+  <div class="totals">
+    <div class="total-item">
+      <span>Total Income</span>
+      <strong id="totalIncome">$0.00</strong>
+    </div>
+    <div class="total-item">
+      <span>Total Expenses</span>
+      <strong id="totalExpenses">$0.00</strong>
+    </div>
+    <div class="total-item net">
+      <span>Net</span>
+      <strong id="totalNet">$0.00</strong>
+    </div>
+  </div>
 
-<div class="card">
-  <div id="ledger" class="ledger"></div>
-  <div id="emptyState" class="empty">No ledger entries yet.</div>
-</div>
-
-<!-- Floating Add -->
-<div class="fab" id="openModal">+</div>
-
-<!-- Add Modal -->
-<div class="modal" id="modal">
-  <div class="modal-card">
-    <h3 style="font-family:Cinzel;margin-top:0;">Add Record</h3>
-
-    <label>Type</label>
-    <select id="type">
-      <option value="expense">Expense</option>
-      <option value="income">Income</option>
+  <div class="export-controls">
+    <select id="exportMonths" multiple>
+      <!-- populated dynamically -->
     </select>
 
-    <label>Name / Description</label>
-    <input id="name">
-
-    <label>Amount</label>
-    <input id="amount" type="number" step="0.01">
-
-    <label>Date Paid / Collected</label>
-    <input id="date" type="date">
-
-    <button id="addBtn">Add Record</button>
+    <button id="exportPdf" class="export-btn">Export Statement</button>
   </div>
-</div>
 
-<script type="module">
-import { auth, db } from "/assets/js/firebase-init.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  collection, addDoc, serverTimestamp,
-  onSnapshot, query, orderBy,
-  doc, getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <div class="card">
+    <div id="ledger" class="ledger"></div>
+    <div id="emptyState" class="empty">No ledger entries yet.</div>
+  </div>
 
-const ledgerEl = document.getElementById("ledger");
-const emptyEl  = document.getElementById("emptyState");
-const modal    = document.getElementById("modal");
+  <!-- Floating Add -->
+  <div class="fab" id="openModal">+</div>
 
-const nameInput = document.getElementById("name");
-const amountInput = document.getElementById("amount");
-const typeInput = document.getElementById("type");
-const dateInput = document.getElementById("date");
+  <!-- Add Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-card">
+      <h3 style="font-family:Cinzel;margin-top:0;">Add Record</h3>
 
-const rendered = new Set();
+      <label>Type</label>
+      <select id="type">
+        <option value="expense">Expense</option>
+        <option value="income">Income</option>
+      </select>
 
-openModal.onclick = () => modal.classList.add("active");
-modal.onclick = e => { if(e.target===modal) modal.classList.remove("active"); };
+      <label>Name / Description</label>
+      <input id="name">
 
-onAuthStateChanged(auth, async user=>{
-  if(!user) return location.href="/login.html";
+      <label>Amount</label>
+      <input id="amount" type="number" step="0.01">
 
-  const snap = await getDoc(doc(db,"users",user.uid));
-  if(!snap.exists() || !snap.data().isAdmin){
-    document.body.innerHTML="<h2>Access Denied</h2>";
-    return;
+      <label>Date Paid / Collected</label>
+      <input id="date" type="date">
+
+      <button id="addBtn">Add Record</button>
+    </div>
+  </div>
+  <script type="module">
+    import { auth, db } from "/assets/js/firebase-init.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      collection, addDoc, serverTimestamp,
+      onSnapshot, query, orderBy,
+      doc, getDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const ledgerEl = document.getElementById("ledger");
+    const emptyEl = document.getElementById("emptyState");
+    const modal = document.getElementById("modal");
+
+    const nameInput = document.getElementById("name");
+    const amountInput = document.getElementById("amount");
+    const typeInput = document.getElementById("type");
+    const dateInput = document.getElementById("date");
+
+    const totalIncomeEl = document.getElementById("totalIncome");
+    const totalExpensesEl = document.getElementById("totalExpenses");
+    const totalNetEl = document.getElementById("totalNet");
+    const exportMonthsEl = document.getElementById("exportMonths");
+    const exportBtn = document.getElementById("exportPdf");
+
+    const rendered = new Set();
+
+    let totalIncome = 0;
+    let totalExpenses = 0;
+
+    // monthKey => { label, entries[] }
+    const monthBuckets = {};
+
+    openModal.onclick = () => modal.classList.add("active");
+    modal.onclick = e => { if (e.target === modal) modal.classList.remove("active"); };
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return location.href = "/login.html";
+
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (!snap.exists() || !snap.data().isAdmin) {
+        document.body.innerHTML = "<h2>Access Denied</h2>";
+        return;
+      }
+
+      const ref = collection(db, "businessLedger");
+      const q = query(
+        ref,
+        orderBy("date", "desc"),
+        orderBy("createdAt", "desc")
+      );
+
+
+      onSnapshot(q, snap => {
+        if (snap.size === 0) emptyEl.style.display = "block";
+
+        snap.docChanges().forEach(c => {
+          if (c.type !== "added" || rendered.has(c.doc.id)) return;
+          rendered.add(c.doc.id);
+          emptyEl.style.display = "none";
+
+          const d = c.doc.data();
+          processLedgerEntry(d);
+
+          const dt = d.date.toDate();
+
+          ledgerEl.innerHTML += `
+          <div class="entry">
+            <div>
+              <div>${d.name}</div>
+              <div class="meta">${dt.toLocaleDateString()} • ${d.addedByName}</div>
+            </div>
+            <div class="amount">${d.type === "expense" ? "-" : "+"}$${d.amount.toFixed(2)}</div>
+          </div>`;
+        });
+      });
+
+      addBtn.onclick = async () => {
+        const name = nameInput.value.trim();
+        const amount = parseFloat(amountInput.value);
+        const date = dateInput.value;
+        if (!name || isNaN(amount) || !date) return alert("All fields required");
+
+        await addDoc(ref, {
+          name,
+          amount,
+          type: typeInput.value,
+          date: new Date(date),
+          addedByUid: user.uid,
+          addedByName: user.displayName || user.email,
+          createdAt: serverTimestamp()
+        });
+
+        nameInput.value = "";
+        amountInput.value = "";
+        modal.classList.remove("active");
+      };
+    });
+
+    function processLedgerEntry(entry) {
+      const amount = entry.amount;
+
+      if (entry.type === "income") totalIncome += amount;
+      else totalExpenses += amount;
+
+      totalIncomeEl.textContent = `$${totalIncome.toFixed(2)}`;
+      totalExpensesEl.textContent = `$${totalExpenses.toFixed(2)}`;
+      totalNetEl.textContent = `$${(totalIncome - totalExpenses).toFixed(2)}`;
+
+      const date = entry.date.toDate();
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const label = date.toLocaleString("default", { month: "long", year: "numeric" });
+
+      if (!monthBuckets[monthKey]) {
+        monthBuckets[monthKey] = { label, entries: [] };
+
+        const opt = document.createElement("option");
+        opt.value = monthKey;
+        opt.textContent = label;
+        exportMonthsEl.appendChild(opt);
+      }
+
+      monthBuckets[monthKey].entries.push(entry);
+    }
+
+    exportBtn.onclick = () => {
+      const selected = Array.from(exportMonthsEl.selectedOptions).map(o => o.value);
+      if (selected.length === 0) {
+        alert("Select at least one month to export.");
+        return;
+      }
+
+      let rows = "";
+      let income = 0;
+      let expenses = 0;
+
+      selected.forEach(key => {
+        const bucket = monthBuckets[key];
+        if (!bucket) return;
+
+        rows += `<tr><th colspan="4" style="padding-top:16px">${bucket.label}</th></tr>`;
+
+        bucket.entries.forEach(e => {
+          const date = e.date.toDate().toLocaleDateString();
+          const amt = e.amount.toFixed(2);
+          const sign = e.type === "income" ? "+" : "-";
+
+          if (e.type === "income") income += e.amount;
+          else expenses += e.amount;
+
+          rows += `
+          <tr>
+            <td>${date}</td>
+            <td>${e.name}</td>
+            <td>${e.addedByName}</td>
+            <td style="text-align:right">${sign}$${amt}</td>
+          </tr>`;
+        });
+      });
+
+      const win = window.open("", "_blank");
+      win.document.write(`
+      <html>
+      <head>
+        <title>Business Ledger Statement</title>
+        <style>
+  body {
+    font-family: Inter, sans-serif;
+    padding: 40px;
   }
 
-  const ref = collection(db,"businessLedger");
-  const q = query(ref, orderBy("date","desc"));
+  /* Header row */
+ .header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
 
-  onSnapshot(q, snap=>{
-    if(snap.size===0) emptyEl.style.display="block";
-    snap.docChanges().forEach(c=>{
-      if(c.type!=="added" || rendered.has(c.doc.id)) return;
-      rendered.add(c.doc.id);
-      emptyEl.style.display="none";
+.header img {
+  height: 48px;
+  margin-right: 20px;
+}
 
-      const d=c.doc.data();
-      const dt=d.date.toDate();
+.header-text {
+  padding-left: 20px;
+  border-left: 2px solid #999;
+}
 
-      ledgerEl.innerHTML+=`
-        <div class="entry">
-          <div>
-            <div>${d.name}</div>
-            <div class="meta">${dt.toLocaleDateString()} • ${d.addedByName}</div>
+h1 {
+  margin: 0;
+  font-family: Cinzel, serif;
+  font-size: 22px;
+}
+
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 24px;
+  }
+
+  th, td {
+    border-bottom: 1px solid #ddd;
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  th {
+    text-align: left;
+  }
+
+  .totals {
+    margin-top: 16px;
+    font-size: 13px;
+  }
+</style>
+
+      </head>
+      <body>
+       <div class="header">
+          <img src="/assets/logo/morrow-logo.png" alt="Morrow Industries Logo">
+          <div class="header-text">
+            <h1>Morrow Industries</h1>
           </div>
-          <div class="amount">${d.type==="expense"?"-":"+"}$${d.amount.toFixed(2)}</div>
-        </div>`;
-    });
-  });
+        </div>
 
-  addBtn.onclick = async ()=>{
-    const name=nameInput.value.trim();
-    const amount=parseFloat(amountInput.value);
-    const date=dateInput.value;
-    if(!name || isNaN(amount) || !date) return alert("All fields required");
 
-    await addDoc(ref,{
-      name, amount,
-      type:typeInput.value,
-      date:new Date(date),
-      addedByUid:user.uid,
-      addedByName:user.displayName||user.email,
-      createdAt:serverTimestamp()
-    });
 
-    nameInput.value="";
-    amountInput.value="";
-    modal.classList.remove("active");
-  };
-});
-</script>
+        <h1>Business Ledger Statement</h1>
+
+        <div class="totals">
+          Income: $${income.toFixed(2)}<br>
+          Expenses: $${expenses.toFixed(2)}<br>
+          Net: $${(income - expenses).toFixed(2)}
+        </div>
+
+        <table>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Added By</th>
+            <th style="text-align:right">Amount</th>
+          </tr>
+          ${rows}
+        </table>
+
+        <script>
+            const img = document.querySelector("img");
+          if (img.complete) {
+            window.print();
+          } else {
+            img.onload = () => window.print();
+          }
+        <\/script>
+
+      </body>
+      </html>
+    `);
+      win.document.close();
+    };
+  </script>
+
 
 </body>
+
 </html>
