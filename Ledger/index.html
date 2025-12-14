@@ -8,7 +8,8 @@
 
 
   <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;600&display=swap"
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=helvetica:wght@300;400;600&display=swap"
     rel="stylesheet">
 
   <!-- Firebase -->
@@ -28,7 +29,7 @@
 
     * {
       box-sizing: border-box;
-      font-family: Inter, sans-serif;
+      font-family: helvetica, sans-serif;
     }
 
     body {
@@ -112,7 +113,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
+      cursor: pohelvetica;
       box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
     }
 
@@ -167,7 +168,7 @@
       border: none;
       background: linear-gradient(135deg, #f0d36a, var(--gold));
       font-weight: 600;
-      cursor: pointer;
+      cursor: pohelvetica;
     }
 
     .totals {
@@ -369,13 +370,15 @@
         const name = nameInput.value.trim();
         const amount = parseFloat(amountInput.value);
         const date = dateInput.value;
+
+        const [year, month, day] = dateInput.value.split("-").map(Number);
         if (!name || isNaN(amount) || !date) return alert("All fields required");
 
         await addDoc(ref, {
           name,
           amount,
           type: typeInput.value,
-          date: new Date(date),
+          date: new Date(year, month - 1, day, 12, 0, 0),
           addedByUid: user.uid,
           addedByName: user.displayName || user.email,
           createdAt: serverTimestamp()
@@ -413,141 +416,234 @@
       monthBuckets[monthKey].entries.push(entry);
     }
 
-    exportBtn.onclick = () => {
+    exportBtn.onclick = async () => {
       const selected = Array.from(exportMonthsEl.selectedOptions).map(o => o.value);
       if (selected.length === 0) {
         alert("Select at least one month to export.");
         return;
       }
 
-      let rows = "";
-      let income = 0;
-      let expenses = 0;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF("p", "pt", "a4");
 
-      selected.forEach(key => {
+      const pageWidth =
+        doc.internal.pageSize.getWidth?.() ||
+        doc.internal.pageSize.width;
+
+      const pageHeight =
+        doc.internal.pageSize.getHeight?.() ||
+        doc.internal.pageSize.height;
+
+
+      const marginX = 40;
+      let y = 40;
+
+      let totalIncome = 0;
+      let totalExpenses = 0;
+
+      // ===== HEADER =====
+      const logo = new Image();
+      logo.src = "/assets/logo/morrow-logo.png";
+
+      await new Promise(r => logo.onload = r);
+
+      // Logo sizing (aspect-safe)
+      const logoWidth = 90;
+      const logoHeight = logoWidth * (logo.naturalHeight / logo.naturalWidth);
+
+      // Top margin baseline
+      const headerTop = 40;
+
+      // Draw logo
+      doc.addImage(
+        logo,
+        "PNG",
+        marginX,
+        headerTop,
+        logoWidth,
+        logoHeight
+      );
+
+      // Vertical divider (centered to logo)
+      const dividerX = marginX + logoWidth + 16;
+      doc.setLineWidth(1);
+      doc.line(
+        dividerX,
+        headerTop - 4,
+        dividerX,
+        headerTop + logoHeight + 4
+      );
+
+      // Company name — vertically aligned to logo center
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text(
+        "Morrow Industries",
+        dividerX + 16,
+        headerTop + logoHeight / 2 + 6
+      );
+
+      // Move cursor below header
+      y = headerTop + logoHeight + 26;
+
+      // Statement title (restored)
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        "Business Ledger Statement",
+        marginX,
+        y
+      );
+
+      y += 18;
+
+      // Optional generated date (clean + subtle)
+      doc.setFontSize(9);
+      doc.text(
+        `Generated ${new Date().toLocaleDateString()}`,
+        marginX,
+        y
+      );
+
+      y += 20;
+
+
+
+      // ---------- TABLE HEADER ----------
+      function drawTableHeader() {
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Date", marginX, y);
+        doc.text("Description", marginX + 80, y);
+        doc.text("Added By", marginX + 300, y);
+        doc.text("Amount", pageWidth - marginX - 60, y, { align: "right" });
+
+        y += 10;
+        doc.setLineWidth(0.5);
+        doc.line(marginX, y, pageWidth - marginX, y);
+        y += 12;
+        doc.setFont("helvetica", "normal");
+      }
+
+      drawTableHeader();
+
+      // ---------- TABLE ROWS ----------
+      for (const key of selected) {
         const bucket = monthBuckets[key];
-        if (!bucket) return;
+        if (!bucket) continue;
 
-        rows += `<tr><th colspan="4" style="padding-top:16px">${bucket.label}</th></tr>`;
+        doc.setFont("helvetica", "bold");
+        doc.text(bucket.label, marginX, y);
+        y += 16;
+        doc.setFont("helvetica", "normal");
 
-        bucket.entries.forEach(e => {
-          const date = e.date.toDate().toLocaleDateString();
-          const amt = e.amount.toFixed(2);
+        for (const e of bucket.entries) {
+          if (y > pageHeight - 100) {
+            doc.addPage();
+            y = 40;
+            drawTableHeader();
+          }
+
+          const dateStr = e.date.toDate().toLocaleDateString();
           const sign = e.type === "income" ? "+" : "-";
 
-          if (e.type === "income") income += e.amount;
-          else expenses += e.amount;
+          if (e.type === "income") totalIncome += e.amount;
+          else totalExpenses += e.amount;
 
-          rows += `
-          <tr>
-            <td>${date}</td>
-            <td>${e.name}</td>
-            <td>${e.addedByName}</td>
-            <td style="text-align:right">${sign}$${amt}</td>
-          </tr>`;
-        });
-      });
+          doc.text(dateStr, marginX, y);
+          doc.text(e.name, marginX + 80, y, { maxWidth: 200 });
+          doc.text(e.addedByName, marginX + 300, y, { maxWidth: 150 });
+          doc.text(
+            `${sign}$${e.amount.toFixed(2)}`,
+            pageWidth - marginX - 60,
+            y,
+            { align: "right" }
+          );
 
-      const win = window.open("", "_blank");
-      win.document.write(`
-      <html>
-      <head>
-        <title>Business Ledger Statement</title>
-        <style>
-  body {
-    font-family: Inter, sans-serif;
-    padding: 40px;
-  }
+          y += 14;
+        }
 
-  /* Header row */
- .header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 24px;
-}
+        y += 10;
+      }
 
-.header img {
-  height: 48px;
-  margin-right: 20px;
-}
+      // ---------- TOTALS ----------
+      if (y > pageHeight - 120) {
+        doc.addPage();
+        y = 40;
+      }
 
-.header-text {
-  padding-left: 20px;
-  border-left: 2px solid #999;
-}
+      doc.setFont("helvetica", "bold");
+      doc.text(`Total Income: $${totalIncome.toFixed(2)}`, marginX, y);
+      y += 14;
+      doc.text(`Total Expenses: $${totalExpenses.toFixed(2)}`, marginX, y);
+      y += 14;
+      doc.text(`Net: $${(totalIncome - totalExpenses).toFixed(2)}`, marginX, y);
+      doc.setFont("helvetica", "normal");
 
-h1 {
-  margin: 0;
-  font-family: Cinzel, serif;
-  font-size: 22px;
-}
+      // ---------- CERTIFICATION (FINAL PAGE ONLY) ----------
+      doc.addPage();
+      y = 60;
 
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("Certification of Accuracy", marginX, y);
+      y += 20;
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 24px;
-  }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.text(
+        "I certify that the information contained in this statement has been reviewed and is accurate and complete to the best of my knowledge. This statement is prepared for helveticanal record-keeping and financial reporting purposes.",
+        marginX,
+        y,
+        { maxWidth: pageWidth - marginX * 2 }
+      );
 
-  th, td {
-    border-bottom: 1px solid #ddd;
-    padding: 8px;
-    font-size: 12px;
-  }
+      y += 80;
 
-  th {
-    text-align: left;
-  }
+      doc.line(marginX, y, marginX + 220, y);
+      doc.text("Authorized Signature", marginX, y + 14);
 
-  .totals {
-    margin-top: 16px;
-    font-size: 13px;
-  }
-</style>
+      doc.line(pageWidth - marginX - 220, y, pageWidth - marginX, y);
+      doc.text("Date", pageWidth - marginX - 220, y + 14);
 
-      </head>
-      <body>
-       <div class="header">
-          <img src="/assets/logo/morrow-logo.png" alt="Morrow Industries Logo">
-          <div class="header-text">
-            <h1>Morrow Industries</h1>
-          </div>
-        </div>
+      y += 40;
+      doc.text("Printed Name: Randal Morrow — Owner", marginX, y);
+
+      // ---------- FOOTERS + PAGE NUMBERS ----------
+      const totalPages =
+        typeof doc.getNumberOfPages === "function"
+          ? doc.getNumberOfPages()
+          : doc.internal.pages.length - 1;
 
 
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(9);
+        doc.text(
+          `Page ${i} of ${totalPages}`,
+          pageWidth / 2,
+          pageHeight - 50,
+          { align: "center" }
+        );
+        doc.text(
+          "Morrow Industries — Internal Record",
+          pageWidth / 2,
+          pageHeight - 38,
+          { align: "center" }
+        );
+        doc.text(
+          "© 2025 Morrow Industries LLC",
+          pageWidth / 2,
+          pageHeight - 28,
+          { align: "center" }
+        );
 
-        <h1>Business Ledger Statement</h1>
+      }
 
-        <div class="totals">
-          Income: $${income.toFixed(2)}<br>
-          Expenses: $${expenses.toFixed(2)}<br>
-          Net: $${(income - expenses).toFixed(2)}
-        </div>
-
-        <table>
-          <tr>
-            <th>Date</th>
-            <th>Description</th>
-            <th>Added By</th>
-            <th style="text-align:right">Amount</th>
-          </tr>
-          ${rows}
-        </table>
-
-        <script>
-            const img = document.querySelector("img");
-          if (img.complete) {
-            window.print();
-          } else {
-            img.onload = () => window.print();
-          }
-        <\/script>
-
-      </body>
-      </html>
-    `);
-      win.document.close();
+      // ---------- SAVE ----------
+      doc.save("Business Ledger Statement.pdf");
     };
+
   </script>
 
 
