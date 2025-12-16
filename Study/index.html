@@ -23,8 +23,23 @@
   }
 
   h2 {
-    margin-top: 0;
+    margin: 0 0 10px;
     text-align: center;
+  }
+
+  .progress {
+    height: 8px;
+    background: #2a2f3a;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 15px;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #d4af37;
+    transition: width 0.3s ease;
   }
 
   .task {
@@ -69,7 +84,11 @@
 
 <div class="container">
 
-  <h2 id="blockTitle">Block 1</h2>
+  <h2 id="blockTitle"></h2>
+
+  <div class="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
 
   <div id="checklist"></div>
 
@@ -80,6 +99,7 @@
 </div>
 
 <script>
+/* CONFIG */
 const blocks = [
   ["Work on task", "Continue if finished early", "Write re-entry note"],
   ["Work on task", "Stay in same task type", "Write re-entry note"],
@@ -87,12 +107,36 @@ const blocks = [
 ];
 
 const breakLengths = [15, 30, 10]; // minutes
-let currentBlock = 0;
+
+/* STATE */
+let state = JSON.parse(localStorage.getItem("focusState")) || {
+  block: 0,
+  checks: []
+};
+
+let timerInterval = null;
 
 const checklist = document.getElementById("checklist");
 const breakBtn = document.getElementById("breakBtn");
 const timerEl = document.getElementById("timer");
 const title = document.getElementById("blockTitle");
+const progressBar = document.getElementById("progressBar");
+
+/* AUDIO */
+const beep = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=");
+
+/* INIT */
+updateProgress();
+loadBlock();
+
+/* FUNCTIONS */
+function saveState() {
+  localStorage.setItem("focusState", JSON.stringify(state));
+}
+
+function updateProgress() {
+  progressBar.style.width = `${(state.block / blocks.length) * 100}%`;
+}
 
 function loadBlock() {
   checklist.innerHTML = "";
@@ -100,26 +144,43 @@ function loadBlock() {
   breakBtn.disabled = true;
   breakBtn.classList.remove("enabled");
 
-  title.textContent = `Block ${currentBlock + 1}`;
+  if (state.block >= blocks.length) {
+    title.textContent = "All Blocks Complete 🎉";
+    checklist.innerHTML = "<p style='text-align:center'>You're done for the day.</p>";
+    return;
+  }
 
-  blocks[currentBlock].forEach(text => {
+  title.textContent = `Block ${state.block + 1}`;
+
+  state.checks = state.checks || [];
+
+  blocks[state.block].forEach((text, i) => {
     const div = document.createElement("div");
     div.className = "task";
-    div.innerHTML = `<label><input type="checkbox"> ${text}</label>`;
+    div.innerHTML = `
+      <label>
+        <input type="checkbox" ${state.checks[i] ? "checked" : ""}>
+        ${text}
+      </label>
+    `;
     checklist.appendChild(div);
   });
 
-  checklist.addEventListener("change", checkCompletion);
+  checklist.addEventListener("change", handleCheck);
+  handleCheck();
 }
 
-function checkCompletion() {
-  const checks = checklist.querySelectorAll("input");
-  const done = [...checks].every(c => c.checked);
+function handleCheck() {
+  const checks = [...checklist.querySelectorAll("input")];
+  state.checks = checks.map(c => c.checked);
+  saveState();
+
+  const done = checks.every(c => c.checked);
   breakBtn.disabled = !done;
   breakBtn.classList.toggle("enabled", done);
 }
 
-breakBtn.onclick = () => startBreak(breakLengths[currentBlock]);
+breakBtn.onclick = () => startBreak(breakLengths[state.block]);
 
 function startBreak(minutes) {
   checklist.innerHTML = "";
@@ -130,22 +191,26 @@ function startBreak(minutes) {
   let seconds = minutes * 60;
   updateTimer(seconds);
 
-  const interval = setInterval(() => {
+  timerInterval = setInterval(() => {
     seconds--;
     updateTimer(seconds);
 
     if (seconds <= 0) {
-      clearInterval(interval);
-      currentBlock++;
-
-      if (currentBlock < blocks.length) {
-        loadBlock();
-      } else {
-        title.textContent = "All Blocks Complete 🎉";
-        timerEl.textContent = "You're done for the day!";
-      }
+      clearInterval(timerInterval);
+      endBreak();
     }
   }, 1000);
+}
+
+function endBreak() {
+  beep.play();
+  if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+
+  state.block++;
+  state.checks = [];
+  saveState();
+  updateProgress();
+  loadBlock();
 }
 
 function updateTimer(sec) {
@@ -153,8 +218,6 @@ function updateTimer(sec) {
   const s = sec % 60;
   timerEl.textContent = `Break: ${m}:${s.toString().padStart(2, "0")}`;
 }
-
-loadBlock();
 </script>
 
 </body>
