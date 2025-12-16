@@ -278,8 +278,13 @@
         <option value="income">Income</option>
       </select>
 
-      <label>Name / Description</label>
-      <input id="name">
+      <label>
+  <input type="checkbox" id="isCorrection">
+  This entry is a correction
+</label>
+
+<label>Name / Description</label>
+<input id="name">
 
       <label>Amount</label>
       <input id="amount" type="number" step="0.01">
@@ -367,27 +372,38 @@
       });
 
       addBtn.onclick = async () => {
-        const name = nameInput.value.trim();
-        const amount = parseFloat(amountInput.value);
-        const date = dateInput.value;
+  const rawName = nameInput.value.trim();
+  const amount = parseFloat(amountInput.value);
+  const date = dateInput.value;
+  const isCorrection = document.getElementById("isCorrection").checked;
 
-        const [year, month, day] = dateInput.value.split("-").map(Number);
-        if (!name || isNaN(amount) || !date) return alert("All fields required");
+  if (!rawName || isNaN(amount) || !date) {
+    alert("All fields required");
+    return;
+  }
 
-        await addDoc(ref, {
-          name,
-          amount,
-          type: typeInput.value,
-          date: new Date(year, month - 1, day, 12, 0, 0),
-          addedByUid: user.uid,
-          addedByName: user.displayName || user.email,
-          createdAt: serverTimestamp()
-        });
+  const [year, month, day] = date.split("-").map(Number);
 
-        nameInput.value = "";
-        amountInput.value = "";
-        modal.classList.remove("active");
-      };
+  const name = isCorrection
+    ? `Correction — ${rawName}`
+    : rawName;
+
+  await addDoc(ref, {
+    name,
+    amount,
+    type: typeInput.value,
+    date: new Date(year, month - 1, day, 12, 0, 0),
+    isCorrection, // optional but VERY useful later
+    addedByUid: user.uid,
+    addedByName: user.displayName || user.email,
+    createdAt: serverTimestamp()
+  });
+
+  nameInput.value = "";
+  amountInput.value = "";
+  document.getElementById("isCorrection").checked = false;
+  modal.classList.remove("active");
+};
     });
 
     function processLedgerEntry(entry) {
