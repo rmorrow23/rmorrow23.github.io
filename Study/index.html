@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Focus Blocks</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #0f1115;
+    color: #fff;
+    margin: 0;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 500px;
+    margin: auto;
+    background: #161a22;
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  h2 {
+    margin-top: 0;
+    text-align: center;
+  }
+
+  .task {
+    margin: 10px 0;
+  }
+
+  input[type="checkbox"] {
+    transform: scale(1.3);
+    margin-right: 10px;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background: #d4af37;
+    color: #000;
+    cursor: pointer;
+    opacity: 0.5;
+  }
+
+  button.enabled {
+    opacity: 1;
+  }
+
+  .timer {
+    text-align: center;
+    font-size: 22px;
+    margin-top: 15px;
+  }
+
+  .hidden {
+    display: none;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h2 id="blockTitle">Block 1</h2>
+
+  <div id="checklist"></div>
+
+  <button id="breakBtn" disabled>Start Break</button>
+
+  <div class="timer hidden" id="timer"></div>
+
+</div>
+
+<script>
+const blocks = [
+  ["Work on task", "Continue if finished early", "Write re-entry note"],
+  ["Work on task", "Stay in same task type", "Write re-entry note"],
+  ["Light work or polish", "Stop if focus drops", "Write re-entry note"]
+];
+
+const breakLengths = [15, 30, 10]; // minutes
+let currentBlock = 0;
+
+const checklist = document.getElementById("checklist");
+const breakBtn = document.getElementById("breakBtn");
+const timerEl = document.getElementById("timer");
+const title = document.getElementById("blockTitle");
+
+function loadBlock() {
+  checklist.innerHTML = "";
+  timerEl.classList.add("hidden");
+  breakBtn.disabled = true;
+  breakBtn.classList.remove("enabled");
+
+  title.textContent = `Block ${currentBlock + 1}`;
+
+  blocks[currentBlock].forEach(text => {
+    const div = document.createElement("div");
+    div.className = "task";
+    div.innerHTML = `<label><input type="checkbox"> ${text}</label>`;
+    checklist.appendChild(div);
+  });
+
+  checklist.addEventListener("change", checkCompletion);
+}
+
+function checkCompletion() {
+  const checks = checklist.querySelectorAll("input");
+  const done = [...checks].every(c => c.checked);
+  breakBtn.disabled = !done;
+  breakBtn.classList.toggle("enabled", done);
+}
+
+breakBtn.onclick = () => startBreak(breakLengths[currentBlock]);
+
+function startBreak(minutes) {
+  checklist.innerHTML = "";
+  breakBtn.disabled = true;
+  breakBtn.classList.remove("enabled");
+  timerEl.classList.remove("hidden");
+
+  let seconds = minutes * 60;
+  updateTimer(seconds);
+
+  const interval = setInterval(() => {
+    seconds--;
+    updateTimer(seconds);
+
+    if (seconds <= 0) {
+      clearInterval(interval);
+      currentBlock++;
+
+      if (currentBlock < blocks.length) {
+        loadBlock();
+      } else {
+        title.textContent = "All Blocks Complete 🎉";
+        timerEl.textContent = "You're done for the day!";
+      }
+    }
+  }, 1000);
+}
+
+function updateTimer(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  timerEl.textContent = `Break: ${m}:${s.toString().padStart(2, "0")}`;
+}
+
+loadBlock();
+</script>
+
+</body>
+</html>
