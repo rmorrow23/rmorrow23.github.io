@@ -1,4 +1,4 @@
-const CACHE_NAME = 'morrow-industries-cache-v4';
+const CACHE_NAME = 'morrow-industries-cache-v0.0.1';
 const urlsToCache = [
   //  '/',
   //  '/index.html',
