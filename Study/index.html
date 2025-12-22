@@ -82,11 +82,15 @@ button {
   background: #d4af37;
   color: #000;
   cursor: pointer;
-  opacity: 0.6;
+  opacity: 0.8;
+  box-shadow: 0 2px 10px rgba(255,255,255,0.15);
 }
 
-button.enabled {
-  opacity: 1;
+.notice {
+  text-align: center;
+  margin-top: 12px;
+  color: #d4af37;
+  font-size: 14px;
 }
 
 .hidden { display: none; }
@@ -108,13 +112,18 @@ button.enabled {
     </div>
   </div>
 
-  <button id="startFocus">Start Focus</button>
+  <button id="startFocus">▶ Start Focus</button>
+  <button id="audioToggle">🔊 Sound: ON</button>
 
   <div id="checklist"></div>
+  <div id="autoNotice" class="notice hidden">
+    All tasks complete — advancing to next block…
+  </div>
 </div>
 
 <script>
-/* CONFIG */
+/* ================= CONFIG ================= */
+
 const blocks = [
   {
     title: "Block 1 – Set A (Discussions)",
@@ -147,27 +156,53 @@ const blocks = [
 
 const focusMinutes = [75, 75, 90];
 
-/* STATE */
+/* ================= STATE ================= */
+
 let state = JSON.parse(localStorage.getItem("focusState")) || {
   block: 0,
   checks: []
 };
 
 let focusInterval = null;
+let autoAdvanceTimeout = null;
 let showTime = false;
+
+/* ================= AUDIO ================= */
+
+const beep = new Audio(
+  "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA="
+);
+
+let soundEnabled = true;
+let audioUnlocked = false;
+
+function unlockAudio() {
+  if (audioUnlocked || !soundEnabled) return;
+  beep.currentTime = 0;
+  beep.play().then(() => {
+    beep.pause();
+    beep.currentTime = 0;
+    audioUnlocked = true;
+  }).catch(() => {});
+}
+
+function playBeep() {
+  if (!soundEnabled) return;
+  beep.currentTime = 0;
+  beep.play().catch(() => {});
+}
+
+/* ================= ELEMENTS ================= */
 
 const titleEl = document.getElementById("blockTitle");
 const checklist = document.getElementById("checklist");
 const progressBar = document.getElementById("progressBar");
 const focusCircle = document.getElementById("focusCircle");
 const focusTime = document.getElementById("focusTime");
+const autoNotice = document.getElementById("autoNotice");
+const audioToggleBtn = document.getElementById("audioToggle");
 
-const beep = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=");
-
-focusCircle.onclick = () => {
-  showTime = !showTime;
-  focusTime.style.display = showTime ? "block" : "none";
-};
+/* ================= HELPERS ================= */
 
 function save() {
   localStorage.setItem("focusState", JSON.stringify(state));
@@ -177,8 +212,30 @@ function updateProgress() {
   progressBar.style.width = `${(state.block / blocks.length) * 100}%`;
 }
 
+function advanceBlock() {
+  state.block++;
+  state.checks = [];
+  save();
+  loadBlock();
+}
+
+/* ================= UI LOGIC ================= */
+
+focusCircle.onclick = () => {
+  showTime = !showTime;
+  focusTime.style.display = showTime ? "block" : "none";
+};
+
+audioToggleBtn.onclick = () => {
+  soundEnabled = !soundEnabled;
+  audioToggleBtn.textContent = soundEnabled ? "🔊 Sound: ON" : "🔇 Sound: OFF";
+};
+
+/* ================= LOAD BLOCK ================= */
+
 function loadBlock() {
   checklist.innerHTML = "";
+  autoNotice.classList.add("hidden");
 
   if (state.block >= blocks.length) {
     titleEl.textContent = "All Planned Blocks Complete 🎉";
@@ -201,16 +258,32 @@ function loadBlock() {
     `;
   });
 
-  checklist.onchange = () => {
-    const checks = [...checklist.querySelectorAll("input")];
-    state.checks = checks.map(c => c.checked);
-    save();
-  };
-
+  checklist.onchange = handleChecks;
   updateProgress();
 }
 
+function handleChecks() {
+  const checks = [...checklist.querySelectorAll("input")];
+  state.checks = checks.map(c => c.checked);
+  save();
+
+  const allDone = state.checks.length && state.checks.every(Boolean);
+
+  if (allDone && !autoAdvanceTimeout) {
+    autoNotice.classList.remove("hidden");
+    autoAdvanceTimeout = setTimeout(() => {
+      autoAdvanceTimeout = null;
+      advanceBlock();
+    }, 3000);
+  }
+}
+
+/* ================= FOCUS TIMER ================= */
+
 document.getElementById("startFocus").onclick = () => {
+  unlockAudio();      // 🔓 unlock sound
+  playBeep();         // ▶ start beep
+
   let total = focusMinutes[state.block] * 60;
   let seconds = total;
 
@@ -218,25 +291,25 @@ document.getElementById("startFocus").onclick = () => {
 
   focusInterval = setInterval(() => {
     seconds--;
+
     const percent = 360 * (1 - seconds / total);
     focusCircle.style.background =
       `conic-gradient(#d4af37 ${percent}deg, #2a2f3a ${percent}deg)`;
 
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    focusTime.textContent = `${m}:${s.toString().padStart(2,"0")}`;
+    focusTime.textContent = `${m}:${s.toString().padStart(2, "0")}`;
 
     if (seconds <= 0) {
       clearInterval(focusInterval);
-      beep.play();
+      playBeep();                       // ⏱ end beep
       if (navigator.vibrate) navigator.vibrate(200);
-      state.block++;
-      state.checks = [];
-      save();
-      loadBlock();
+      advanceBlock();
     }
   }, 1000);
 };
+
+/* ================= INIT ================= */
 
 loadBlock();
 </script>
