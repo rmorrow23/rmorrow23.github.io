@@ -229,7 +229,8 @@
   <script type="module">
     import { auth, db } from "/assets/js/firebase-init.js";
     import {
-      collection, query, orderBy, getDocs, doc, setDoc, getDoc, updateDoc, onSnapshot
+      collection, query,
+      where, orderBy, getDocs, doc, setDoc, getDoc, updateDoc, onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -290,7 +291,12 @@
 
     async function loadProducts() {
       try {
-        const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
+        const q = query(
+          collection(db, "products"),
+          where("visible", "!=", false),
+          orderBy("createdAt", "desc")
+        );
+
         const snap = await getDocs(q);
         if (snap.empty) {
           grid.innerHTML = "<div class='text-[var(--muted)]'>No products yet.</div>";

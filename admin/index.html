@@ -430,7 +430,7 @@
     import { signInWithPopup, signOut, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
-      doc, getDoc, collection, addDoc, updateDoc, deleteDoc, query, orderBy, onSnapshot
+      doc, getDoc, collection, addDoc, updateDoc, deleteDoc, where, query, orderBy, onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { ref, uploadBytes, getDownloadURL, deleteObject }
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
@@ -623,35 +623,91 @@
     function productCard(id, p) {
       const availability = p.availability === "in_stock" ? "In Stock" : "Made to Order";
       const colors = (p.colors || []).join(" • ");
-      const img = p.image ? `<img src="${p.image}" alt="${p.title}" class="w-full h-36 object-cover rounded-t-2xl border-b border-[var(--border)]">` : "";
+      const img = p.image
+        ? `<img src="${p.image}" alt="${p.title}" class="w-full h-36 object-cover rounded-t-2xl border-b border-[var(--border)]">`
+        : "";
+
+      const isVisible = p.visible !== false; // default true
+
       return `
-      <article class="glass card overflow-hidden">
-        ${img}
-        <div class="p-4">
-          <div class="text-xs text-[var(--muted)]">${p.category || "General"} • ${availability}</div>
-          <h3 class="mt-1 text-lg font-semibold text-[var(--gold)]">${p.title || "Untitled"}</h3>
-          <div class="mt-1 text-sm text-[var(--muted)]">${p.description || ""}</div>
-          <div class="mt-3 font-semibold text-[var(--gold)]">$${Number(p.price || 0).toFixed(2)}</div>
-          <div class="mt-1 text-sm text-[var(--muted)]">${colors ? ("Colors: " + colors) : ""}</div>
-          <div class="mt-1 text-sm text-[var(--muted)]">ETA: ${p.estimatedDelivery || "—"}</div>
-          <div class="mt-4 flex gap-2">
-            <button class="btn btn-primary" data-edit="${id}">Edit</button>
-            <button class="btn" data-delete="${id}">Delete</button>
-          </div>
-        </div>
-      </article>`;
+  <article class="glass card overflow-hidden ${!isVisible ? "opacity-60" : ""}">
+    ${img}
+    <div class="p-4">
+      <div class="flex items-center justify-between text-xs text-[var(--muted)]">
+        <span>${p.category || "General"} • ${availability}</span>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox"
+                 class="sr-only"
+                 data-toggle-visible="${id}"
+                 ${isVisible ? "checked" : ""}>
+          <span class="px-2 py-0.5 rounded border border-[var(--border)] text-[var(--gold)] text-xs">
+            ${isVisible ? "Visible" : "Hidden"}
+          </span>
+        </label>
+      </div>
+
+      <h3 class="mt-2 text-lg font-semibold text-[var(--gold)]">
+        ${p.title || "Untitled"}
+      </h3>
+
+      <div class="mt-1 text-sm text-[var(--muted)]">${p.description || ""}</div>
+
+      <div class="mt-3 font-semibold text-[var(--gold)]">
+        $${Number(p.price || 0).toFixed(2)}
+      </div>
+
+      <div class="mt-1 text-sm text-[var(--muted)]">
+        ${colors ? "Colors: " + colors : ""}
+      </div>
+
+      <div class="mt-1 text-sm text-[var(--muted)]">
+        ETA: ${p.estimatedDelivery || "—"}
+      </div>
+
+      <div class="mt-4 flex gap-2">
+        <button class="btn btn-primary" data-edit="${id}">Edit</button>
+        <button class="btn" data-delete="${id}">Delete</button>
+      </div>
+    </div>
+  </article>`;
     }
 
+
     function bindProducts() {
-      const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
+      const q = query(
+        collection(db, "products"),
+        //where("visible", "!=", false),
+        orderBy("createdAt", "desc")
+      )
+
       unsubProducts = onSnapshot(q, snap => {
         if (snap.empty) { panelProducts.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">No products yet.</div>`; return; }
         const html = []; snap.forEach(d => html.push(productCard(d.id, d.data())));
         panelProducts.innerHTML = html.join("");
         document.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => openEdit(b.dataset.edit)));
         document.querySelectorAll("[data-delete]").forEach(b => b.addEventListener("click", () => deleteProduct(b.dataset.delete)));
+        document.querySelectorAll("[data-toggle-visible]").forEach(input => {
+          input.addEventListener("change", e => {
+            const id = e.target.dataset.toggleVisible;
+            toggleProductVisibility(id, e.target.checked);
+          });
+        });
+
       });
     }
+    async function toggleProductVisibility(id, value) {
+      try {
+        await updateDoc(doc(db, "products", id), {
+          visible: value,
+          updatedAt: new Date()
+        });
+        showToast(value ? "Product visible" : "Product hidden");
+      } catch (e) {
+        console.error(e);
+        showToast("Failed to update visibility");
+      }
+    }
+
 
     productForm.addEventListener("submit", async e => {
       e.preventDefault(); modalStatus.textContent = "Saving…";
@@ -678,7 +734,21 @@
           }
           await updateDoc(refDoc, data); showToast("Product updated");
         } else {
-          await addDoc(collection(db, "products"), { title, description, category, price, availability, colors, estimatedDelivery, image, imagePath, createdAt: new Date(), updatedAt: new Date() });
+          await addDoc(collection(db, "products"), {
+            title,
+            description,
+            category,
+            price,
+            availability,
+            colors,
+            estimatedDelivery,
+            image,
+            imagePath,
+            visible: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+
           showToast("Product added");
         }
         modalStatus.textContent = "Saved."; closeModal();

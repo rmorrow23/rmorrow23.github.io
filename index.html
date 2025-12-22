@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0a0b0f">
   <title>Morrow Industries — Home</title>
   <script src="https://cdn.tailwindcss.com"></script>
-<script type="module" src="/assets/js/maintenance-listener.js"></script>
+  <script type="module" src="/assets/js/maintenance-listener.js"></script>
   <style>
     :root {
       --bg: #000;
@@ -18,7 +18,7 @@
       --gold: #d4af37;
       --border: rgba(255, 255, 255, 0.08)
     }
-    
+
 
 
     /* page background + overlay to match your 404 */
@@ -159,39 +159,39 @@
   <!-- blur overlay + particles -->
   <div class="page-overlay"></div>
   <div class="particles" id="particles"></div>
-<div id="navbar-container"></div>
-    <script>
-      fetch("/assets/modules/navbar.html")
-        .then(res => res.text())
-        .then(html => {
-          const container = document.getElementById("navbar-container");
-          const temp = document.createElement("div");
-          temp.innerHTML = html;
+  <div id="navbar-container"></div>
+  <script>
+    fetch("/assets/modules/navbar.html")
+      .then(res => res.text())
+      .then(html => {
+        const container = document.getElementById("navbar-container");
+        const temp = document.createElement("div");
+        temp.innerHTML = html;
 
-          // Append styles properly
-          temp.querySelectorAll("style").forEach(style => {
-            const newStyle = document.createElement("style");
-            newStyle.textContent = style.textContent;
-            document.head.appendChild(newStyle);
-            style.remove();
-          });
+        // Append styles properly
+        temp.querySelectorAll("style").forEach(style => {
+          const newStyle = document.createElement("style");
+          newStyle.textContent = style.textContent;
+          document.head.appendChild(newStyle);
+          style.remove();
+        });
 
-          // Insert main HTML (without script/style)
-          container.innerHTML = temp.innerHTML;
+        // Insert main HTML (without script/style)
+        container.innerHTML = temp.innerHTML;
 
-          // Execute scripts safely
-          container.querySelectorAll("script").forEach(oldScript => {
-            const s = document.createElement("script");
-            s.type = oldScript.type || "text/javascript";
-            if (oldScript.src) s.src = oldScript.src;
-            else s.textContent = oldScript.textContent;
-            document.body.appendChild(s);
-          });
-        })
-        .catch(err => console.error("Navbar load failed:", err));
-    </script>
+        // Execute scripts safely
+        container.querySelectorAll("script").forEach(oldScript => {
+          const s = document.createElement("script");
+          s.type = oldScript.type || "text/javascript";
+          if (oldScript.src) s.src = oldScript.src;
+          else s.textContent = oldScript.textContent;
+          document.body.appendChild(s);
+        });
+      })
+      .catch(err => console.error("Navbar load failed:", err));
+  </script>
   <header class="border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
-    
+
   </header>
 
   <main class="mx-auto max-w-7xl px-4 relative z-[2]">
@@ -334,7 +334,7 @@
   <!-- Firestore + Auth kept exactly as before -->
   <script type="module">
     import { db } from "/assets/js/firebase-init.js";
-    import { doc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     (async () => {
       try {
@@ -353,7 +353,13 @@
     (async () => {
       const container = document.getElementById("recentProjects");
       try {
-        const q = query(collection(db, "projects"), orderBy("updatedAt", "desc"), limit(3));
+        const q = query(
+          collection(db, "projects"),   // ✅ CORRECT
+          orderBy("updatedAt", "desc"),
+          limit(3)
+        );
+
+
         const snaps = await getDocs(q);
         if (snaps.empty) {
           container.innerHTML = `<div class='text-[var(--muted)]'>No projects yet.</div>`;
@@ -386,7 +392,13 @@
     (async () => {
       const container = document.getElementById("recentProducts");
       try {
-        const q = query(collection(db, "products"), orderBy("createdAt", "desc"), limit(3));
+        const q = query(
+          collection(db, "products"),
+          where("visible", "!=", false),
+          orderBy("createdAt", "desc"),
+          limit(3)
+        );
+
         const snaps = await getDocs(q);
 
         if (snaps.empty) {
