@@ -5,7 +5,11 @@
 <title>Image Print Tracker</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- ZIP extraction -->
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+<!-- HEIC → PNG conversion -->
+<script src="https://cdn.jsdelivr.net/npm/heic2any/dist/heic2any.min.js"></script>
 
 <style>
   body {
@@ -31,10 +35,6 @@
     color: white;
     border-radius: 6px;
     cursor: pointer;
-  }
-
-  button:hover {
-    opacity: 0.9;
   }
 
   .image-list {
@@ -71,11 +71,6 @@
     padding: 12px;
     border-radius: 8px;
   }
-
-  .remaining ul {
-    margin: 0;
-    padding-left: 18px;
-  }
 </style>
 </head>
 
@@ -95,8 +90,8 @@
 </div>
 
 <script>
-const imageList = document.getElementById("imageList");
 const zipInput = document.getElementById("zipInput");
+const imageList = document.getElementById("imageList");
 const remainingList = document.getElementById("remainingList");
 const remainingUl = document.getElementById("remainingUl");
 
@@ -112,52 +107,68 @@ zipInput.addEventListener("change", async (e) => {
   const zip = await JSZip.loadAsync(file);
 
   for (const [filename, entry] of Object.entries(zip.files)) {
-    if (!entry.dir && /\.(png|jpg|jpeg|gif|webp)$/i.test(filename)) {
-      const blob = await entry.async("blob");
-      const url = URL.createObjectURL(blob);
+    if (entry.dir) continue;
 
-      const imageData = {
-        filename,
-        printed: false
-      };
-      images.push(imageData);
+    if (!/\.(png|jpg|jpeg|heic|heif)$/i.test(filename)) continue;
 
-      const row = document.createElement("div");
-      row.className = "image-item";
+    let blob = await entry.async("blob");
 
-      const img = document.createElement("img");
-      img.src = url;
-
-      const name = document.createElement("div");
-      name.className = "filename";
-      name.textContent = filename;
-
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.title = "Printed";
-      checkbox.addEventListener("change", () => {
-        imageData.printed = checkbox.checked;
-      });
-
-      row.appendChild(img);
-      row.appendChild(name);
-      row.appendChild(checkbox);
-      imageList.appendChild(row);
+    // Convert HEIC / HEIF → PNG
+    if (/\.(heic|heif)$/i.test(filename)) {
+      try {
+        blob = await heic2any({
+          blob,
+          toType: "image/png"
+        });
+      } catch (err) {
+        console.error("HEIC conversion failed:", filename, err);
+        continue;
+      }
     }
+
+    const url = URL.createObjectURL(blob);
+
+    const imageData = {
+      filename,
+      printed: false
+    };
+    images.push(imageData);
+
+    const row = document.createElement("div");
+    row.className = "image-item";
+
+    const img = document.createElement("img");
+    img.src = url;
+
+    const name = document.createElement("div");
+    name.className = "filename";
+    name.textContent = filename;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.title = "Printed";
+    checkbox.onchange = () => {
+      imageData.printed = checkbox.checked;
+    };
+
+    row.appendChild(img);
+    row.appendChild(name);
+    row.appendChild(checkbox);
+    imageList.appendChild(row);
   }
 });
 
 function showRemaining() {
   remainingUl.innerHTML = "";
 
-  const remaining = images.filter(img => !img.printed);
+  const remaining = images.filter(i => !i.printed);
 
   if (remaining.length === 0) {
-    remainingUl.innerHTML = "<li>All images have been printed 🎉</li>";
+    remainingUl.innerHTML = "<li>All images printed 🎉</li>";
   } else {
-    remaining.forEach(img => {
+    remaining.forEach(i => {
       const li = document.createElement("li");
-      li.textContent = img.filename;
+      li.textContent = i.filename;
       remainingUl.appendChild(li);
     });
   }
