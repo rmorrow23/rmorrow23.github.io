@@ -1,120 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ReelRequests – Movie Requests</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ReelRequests – Movie Requests</title>
 
-  <script type="module" src="/assets/js/maintenance-listener.js"></script>
+<script type="module" src="/assets/js/maintenance-listener.js"></script>
 
-  <style>
-    :root {
-      --bg:#0a0b0f;
-      --surface:#12141b;
-      --muted:#a9b0be;
-      --text:#e9eef8;
-      --primary:#5b8aff;
-      --accent:#7cf8d2;
-      --green:#16c784;
-      --border:rgba(255,255,255,.08);
-    }
+<style>
+:root{
+  --bg:#0a0b0f;
+  --surface:#12141b;
+  --muted:#a9b0be;
+  --text:#e9eef8;
+  --primary:#5b8aff;
+  --accent:#7cf8d2;
+  --green:#16c784;
+  --border:rgba(255,255,255,.08);
+}
 
-    body{
-      margin:0;
-      font:14px system-ui;
-      background:var(--bg);
-      color:var(--text);
-    }
+body{margin:0;font:14px system-ui;background:var(--bg);color:var(--text)}
+.container{max-width:520px;margin:auto;padding:16px}
 
-    .container{max-width:520px;margin:auto;padding:16px}
+header{position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);background:rgba(0,0,0,.45);border-bottom:1px solid var(--border)}
+header .bar{display:flex;gap:10px;padding:14px 16px}
+.logo{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.08)}
+h1{font-size:18px;margin:0}
+.sub{color:var(--muted);font-size:11px}
 
-    header{
-      position:sticky;top:0;z-index:100;
-      backdrop-filter:blur(10px);
-      background:rgba(0,0,0,.45);
-      border-bottom:1px solid var(--border)
-    }
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;margin:16px 0}
+.grid{display:grid;gap:8px;margin-top:8px}
 
-    header .bar{display:flex;gap:10px;padding:14px 16px}
-    .logo{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.08)}
-    h1{font-size:18px;margin:0}
-    .sub{color:var(--muted);font-size:11px}
+.row{
+  display:flex;align-items:center;gap:10px;
+  background:#0d1117;border:1px solid var(--border);
+  border-radius:12px;padding:10px;
+  animation:fadeSlideIn .3s ease forwards
+}
 
-    .card{
-      background:var(--surface);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:14px;
-      margin:16px 0
-    }
+.title{flex:1;font-weight:500}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot.pending{background:#f5c84c}
+.dot.comingsoon{background:#5b8aff}
+.dot.completed{background:#16c784}
 
-    .grid{display:grid;gap:8px;margin-top:8px}
+.badge{
+  font-size:12px;padding:5px 10px;border-radius:999px;
+  font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--primary));
+  color:#00152d;
+  animation:pulseGlow 2s infinite
+}
 
-    .row{
-      display:flex;gap:10px;align-items:center;
-      background:#0d1117;
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:10px;
-      animation:fadeSlideIn .3s ease forwards
-    }
+.input{
+  flex:1;padding:12px;border-radius:12px;
+  background:var(--surface);border:1px solid var(--border);color:var(--text)
+}
 
-    .title{flex:1;font-weight:500}
-    .dot{width:10px;height:10px;border-radius:50%}
-    .pending{background:#f5c84c}
-    .comingsoon{background:#5b8aff}
-    .completed{background:#16c784}
+.btn{padding:12px 16px;border-radius:12px;border:0;background:var(--primary);color:#fff;font-weight:600;cursor:pointer}
 
-    .badge{
-      font-size:12px;padding:5px 10px;border-radius:999px;
-      font-weight:700;
-      background:linear-gradient(135deg,var(--accent),var(--primary));
-      color:#00152d;
-      animation:pulseGlow 2s infinite
-    }
+.admin{background:#1a1e2a;border:1px solid var(--border);border-radius:18px;margin-top:20px;overflow:hidden}
+.admin-header{padding:14px 16px;display:flex;justify-content:space-between;font-weight:600;cursor:pointer}
+.admin-content{padding:14px 16px}
+.admin-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 12px;border:1px solid var(--border);
+  border-radius:12px;background:var(--surface);margin-bottom:10px
+}
 
-    .input{
-      flex:1;padding:12px;border-radius:12px;
-      background:var(--surface);
-      border:1px solid var(--border);
-      color:var(--text)
-    }
+.action-btn{font-size:12px;padding:6px 10px;border-radius:8px;border:0;font-weight:600;cursor:pointer}
+.action-btn.next{background:var(--accent)}
+.action-btn.soon{background:var(--primary);color:#fff}
+.action-btn.done{background:var(--green)}
+.action-btn.active{outline:2px solid #fff}
 
-    .btn{
-      padding:12px 16px;border-radius:12px;border:0;
-      background:var(--primary);color:#fff;font-weight:600;cursor:pointer
-    }
+.in-progress-widget{
+  position:fixed;bottom:16px;right:16px;
+  max-width:280px;padding:14px 16px;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  color:#00152d;border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+  display:none;z-index:999
+}
 
-    /* ADMIN */
-    .admin{background:#1a1e2a;border:1px solid var(--border);border-radius:18px;margin-top:20px;overflow:hidden}
-    .admin-header{padding:14px 16px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between}
-    .admin-content{padding:14px 16px}
-    .admin-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px}
-    .action-btn{padding:6px 10px;border-radius:8px;border:0;font-weight:600;cursor:pointer}
-    .active{outline:2px solid #fff}
+.in-progress-widget h4{margin:0;font-size:13px;font-weight:700}
+.in-progress-widget .title{font-size:15px;font-weight:700}
 
-    /* IN PROGRESS WIDGET */
-    .in-progress-widget{
-      position:fixed;
-      bottom:16px;
-      right:16px;
-      max-width:280px;
-      padding:14px 16px;
-      background:linear-gradient(135deg,var(--primary),var(--accent));
-      color:#00152d;
-      border-radius:16px;
-      box-shadow:0 10px 30px rgba(0,0,0,.4);
-      display:none;
-      z-index:999
-    }
-
-    .in-progress-widget h4{margin:0;font-size:13px;font-weight:700}
-    .in-progress-widget .title{font-size:15px;font-weight:700}
-
-    @keyframes fadeSlideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
-    @keyframes pulseGlow{0%,100%{box-shadow:0 0 6px rgba(124,248,210,.6)}50%{box-shadow:0 0 14px rgba(124,248,210,1)}}
-  </style>
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 6px rgba(124,248,210,.6)}50%{box-shadow:0 0 14px rgba(124,248,210,1)}}
+</style>
 </head>
+
 <body>
 <header>
   <div class="bar">
@@ -130,24 +106,13 @@
   <section class="card">
     <form id="requestForm">
       <input id="title" class="input" placeholder="Movie title" required>
-      <button class="btn">Submit Request</button>
+      <button class="btn">Submit</button>
     </form>
   </section>
 
-  <section class="card">
-    <h2>Pending</h2>
-    <div id="pending" class="grid"></div>
-  </section>
-
-  <section class="card">
-    <h2>Coming Soon</h2>
-    <div id="comingSoon" class="grid"></div>
-  </section>
-
-  <section class="card">
-    <h2>Completed</h2>
-    <div id="completed" class="grid"></div>
-  </section>
+  <section class="card"><h2>Pending</h2><div id="pending" class="grid"></div></section>
+  <section class="card"><h2>Coming Soon</h2><div id="comingSoon" class="grid"></div></section>
+  <section class="card"><h2>Completed</h2><div id="completed" class="grid"></div></section>
 
   <section id="adminPanel" class="admin" style="display:none">
     <div class="admin-header">Admin Panel ▾</div>
@@ -157,94 +122,86 @@
   </section>
 </div>
 
-<!-- IN PROGRESS WIDGET (VISIBLE TO ALL) -->
 <div id="inProgressWidget" class="in-progress-widget">
   <h4>🎯 In Progress</h4>
   <div id="inProgressTitle" class="title"></div>
-  <div id="inProgressHint" style="font-size:11px;opacity:.7;display:none">
-    Admin controlled
-  </div>
 </div>
+
 <script type="module">
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  updateDoc,
-  doc,
-  onSnapshot,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const firebaseConfig={
+  apiKey:"AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
+  authDomain:"morrow-industries.firebaseapp.com",
+  projectId:"morrow-industries"
+};
 
-const showAdmin = new URLSearchParams(location.search).get("admin")==="1";
-if(showAdmin) document.getElementById("adminPanel").style.display="block";
-document.getElementById("inProgressHint").style.display = showAdmin?"block":"none";
+const app=getApps().length?getApp():initializeApp(firebaseConfig);
+const db=getFirestore(app);
 
-const elPending = document.getElementById("pending");
-const elSoon = document.getElementById("comingSoon");
-const elDone = document.getElementById("completed");
-const adminList = document.getElementById("adminList");
-const widget = document.getElementById("inProgressWidget");
-const widgetTitle = document.getElementById("inProgressTitle");
+const showAdmin=new URLSearchParams(location.search).get("admin")==="1";
+if(showAdmin)document.getElementById("adminPanel").style.display="block";
 
-function row(d){return`
-<div class="row">
-<span class="dot ${d.status}"></span>
-<div class="title">${d.title}</div>
-${d.inProgress?'<span class="badge">Working</span>':''}
-</div>`}
+const elPending=pending, elSoon=comingSoon, elDone=completed, adminList=document.getElementById("adminList");
+const widget=document.getElementById("inProgressWidget"), widgetTitle=document.getElementById("inProgressTitle");
+
+function row(d){
+  return `<div class="row">
+    <span class="dot ${d.status}"></span>
+    <div class="title">${d.title}</div>
+    ${d.inProgress?'<span class="badge">Working</span>':''}
+  </div>`;
+}
 
 async function setInProgress(id){
-  const snap = await new Promise(r=>onSnapshot(collection(db,"requests"),s=>r(s.docs.map(d=>({id:d.id,...d.data()})))));
+  const snap=await new Promise(r=>onSnapshot(collection(db,"requests"),s=>r(s.docs.map(d=>({id:d.id,...d.data()})))));
   for(const d of snap){
     await updateDoc(doc(db,"requests",d.id),{inProgress:d.id===id});
   }
 }
 
-let holdTimer;
+let holdTimer=null;
 window.startHold=id=>{
   if(!showAdmin)return;
   holdTimer=setTimeout(()=>setInProgress(id),600);
 };
 window.cancelHold=()=>holdTimer&&clearTimeout(holdTimer);
 
-onSnapshot(collection(db,"requests"),snap=>{
-  const d=snap.docs.map(x=>({id:x.id,...x.data()}));
-  elPending.innerHTML=d.filter(x=>x.status==="pending").map(row).join("");
-  elSoon.innerHTML=d.filter(x=>x.status==="comingsoon").map(row).join("");
-  elDone.innerHTML=d.filter(x=>x.status==="completed").map(row).join("");
+onSnapshot(collection(db,"requests"),s=>{
+  const arr=s.docs.map(d=>({id:d.id,...d.data()}));
 
-  const active=d.find(x=>x.inProgress);
-  if(active){
-    widgetTitle.textContent=active.title;
-    widget.style.display="block";
-  }else widget.style.display="none";
+  elPending.innerHTML=arr.filter(d=>d.status==="pending").map(row).join("");
+  elSoon.innerHTML=arr.filter(d=>d.status==="comingsoon").map(row).join("");
+  elDone.innerHTML=arr.filter(d=>d.status==="completed").map(row).join("");
+
+  const active=arr.find(d=>d.inProgress);
+  if(active){widgetTitle.textContent=active.title;widget.style.display="block";}
+  else widget.style.display="none";
 
   if(showAdmin){
-    adminList.innerHTML=d.map(x=>`
-    <div class="admin-row"
-      onmousedown="startHold('${x.id}')"
-      onmouseup="cancelHold()"
-      onmouseleave="cancelHold()"
-      ontouchstart="startHold('${x.id}')"
-      ontouchend="cancelHold()">
-      <span>${x.title}</span>
-      <button class="action-btn ${x.inProgress?'active':''}">Hold</button>
-    </div>`).join("");
+    adminList.innerHTML=arr.map(d=>`
+      <div class="admin-row"
+        onmousedown="startHold('${d.id}')"
+        onmouseup="cancelHold()"
+        onmouseleave="cancelHold()"
+        ontouchstart="startHold('${d.id}')"
+        ontouchend="cancelHold()">
+        <span>${d.title}</span>
+        <div>
+          <button class="action-btn next ${d.nextUp?'active':''}" onclick="updateDoc(doc(db,'requests','${d.id}'),{nextUp:${!d.nextUp}})">Next</button>
+          <button class="action-btn soon ${d.status==='comingsoon'?'active':''}" onclick="updateDoc(doc(db,'requests','${d.id}'),{status:'comingsoon'})">Soon</button>
+          <button class="action-btn done ${d.status==='completed'?'active':''}" onclick="updateDoc(doc(db,'requests','${d.id}'),{status:'completed',inProgress:false,completedAt:serverTimestamp()})">Done</button>
+        </div>
+      </div>`).join("");
   }
 });
 
-document.getElementById("requestForm").onsubmit=async e=>{
+requestForm.onsubmit=async e=>{
   e.preventDefault();
   const t=title.value.trim();
   if(!t)return;
-  await addDoc(collection(db,"requests"),{
-    title:t,status:"pending",inProgress:false,createdAt:serverTimestamp()
-  });
+  await addDoc(collection(db,"requests"),{title:t,status:"pending",nextUp:false,inProgress:false,createdAt:serverTimestamp()});
   title.value="";
 };
 </script>
