@@ -1,209 +1,552 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ReelRequests – Movie Requests</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ReelRequests – Movie Requests</title>
+  <script type="module" src="/assets/js/maintenance-listener.js"></script>
+  <style>
+    :root {
+      --bg: #0a0b0f;
+      --surface: #12141b;
+      --muted: #a9b0be;
+      --text: #e9eef8;
+      --primary: #5b8aff;
+      --accent: #7cf8d2;
+      --green: #16c784;
+      --border: rgba(255, 255, 255, 0.08);
+    }
 
-<script type="module" src="/assets/js/maintenance-listener.js"></script>
+    body {
+      margin: 0;
+      font: 14px system-ui;
+      background: var(--bg);
+      color: var(--text);
+    }
 
-<style>
-:root{
-  --bg:#0a0b0f;
-  --surface:#12141b;
-  --muted:#a9b0be;
-  --text:#e9eef8;
-  --primary:#5b8aff;
-  --accent:#7cf8d2;
-  --green:#16c784;
-  --border:rgba(255,255,255,.08);
-}
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 16px;
+    }
 
-body{margin:0;font:14px system-ui;background:var(--bg);color:var(--text)}
-.container{max-width:520px;margin:auto;padding:16px}
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, .45);
+      border-bottom: 1px solid var(--border);
+    }
 
-header{position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);background:rgba(0,0,0,.45);border-bottom:1px solid var(--border)}
-header .bar{display:flex;gap:10px;padding:14px 16px}
-.logo{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.08)}
-h1{font-size:18px;margin:0}
-.sub{color:var(--muted);font-size:11px}
+    header .bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+    }
 
-.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;margin:16px 0}
-.grid{display:grid;gap:8px;margin-top:8px}
+    .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, .08);
+    }
 
-.row{
-  display:flex;align-items:center;gap:10px;
-  background:#0d1117;border:1px solid var(--border);
-  border-radius:12px;padding:10px;
-  animation:fadeSlideIn .3s ease forwards
-}
+    h1 {
+      font-size: 18px;
+      margin: 0;
+    }
 
-.title{flex:1;font-weight:500}
-.dot{width:10px;height:10px;border-radius:50%}
-.dot.pending{background:#f5c84c}
-.dot.comingsoon{background:#5b8aff}
-.dot.completed{background:#16c784}
+    .sub {
+      color: var(--muted);
+      font-size: 11px;
+    }
 
-.badge{
-  font-size:12px;padding:5px 10px;border-radius:999px;
-  font-weight:700;
-  background:linear-gradient(135deg,var(--accent),var(--primary));
-  color:#00152d;
-  animation:pulseGlow 2s infinite
-}
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      margin: 16px 0;
+    }
 
-.input{
-  flex:1;padding:12px;border-radius:12px;
-  background:var(--surface);border:1px solid var(--border);color:var(--text)
-}
+    .section h2 {
+      margin: 16px 0 8px;
+      font-size: 16px;
+    }
 
-.btn{padding:12px 16px;border-radius:12px;border:0;background:var(--primary);color:#fff;font-weight:600;cursor:pointer}
+    .grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
 
-.admin{background:#1a1e2a;border:1px solid var(--border);border-radius:18px;margin-top:20px;overflow:hidden}
-.admin-header{padding:14px 16px;display:flex;justify-content:space-between;font-weight:600;cursor:pointer}
-.admin-content{padding:14px 16px}
-.admin-row{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:10px 12px;border:1px solid var(--border);
-  border-radius:12px;background:var(--surface);margin-bottom:10px
-}
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      opacity: 0;
+      animation: fadeSlideIn .4s ease forwards;
+    }
 
-.action-btn{font-size:12px;padding:6px 10px;border-radius:8px;border:0;font-weight:600;cursor:pointer}
-.action-btn.next{background:var(--accent)}
-.action-btn.soon{background:var(--primary);color:#fff}
-.action-btn.done{background:var(--green)}
-.action-btn.active{outline:2px solid #fff}
+    .title {
+      flex: 1;
+      font-weight: 500;
+    }
 
-.in-progress-widget{
-  position:fixed;bottom:16px;right:16px;
-  max-width:280px;padding:14px 16px;
-  background:linear-gradient(135deg,var(--primary),var(--accent));
-  color:#00152d;border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.4);
-  display:none;z-index:999
-}
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #666;
+    }
 
-.in-progress-widget h4{margin:0;font-size:13px;font-weight:700}
-.in-progress-widget .title{font-size:15px;font-weight:700}
+    .dot.pending {
+      background: #f5c84c;
+    }
 
-@keyframes fadeSlideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
-@keyframes pulseGlow{0%,100%{box-shadow:0 0 6px rgba(124,248,210,.6)}50%{box-shadow:0 0 14px rgba(124,248,210,1)}}
-</style>
+    .dot.comingsoon {
+      background: #5b8aff;
+    }
+
+    .dot.completed {
+      background: #16c784;
+    }
+
+    .badge {
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      color: #00152d;
+      animation: pulseGlow 2s infinite;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 12px;
+    }
+
+    .date-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    #requestForm {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .input {
+      flex: 1;
+      min-width: 0;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn {
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    /* Admin panel */
+    .admin {
+      background: #1a1e2a;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    .admin-header {
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .admin-header:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .admin-header span {
+      font-size: 18px;
+      transition: transform .3s;
+    }
+
+    .admin.collapsed .admin-header span {
+      transform: rotate(-90deg);
+    }
+
+    .admin-content {
+      max-height: 1000px;
+      overflow: hidden;
+      transition: max-height .4s ease, padding .3s ease;
+      padding: 14px 16px;
+    }
+
+    .admin.collapsed .admin-content {
+      max-height: 0;
+      padding: 0 16px;
+    }
+
+    .admin-list-wrapper {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .admin-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      margin-bottom: 10px;
+    }
+
+    .admin-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .action-btn {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 0;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .action-btn.next {
+      background: var(--accent);
+      color: #001;
+    }
+
+    .action-btn.soon {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .action-btn.done {
+      background: var(--green);
+      color: #001;
+    }
+
+    /* Highlight border for active state */
+    .action-btn.active {
+      border: 2px solid var(--text);
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+    }
+
+    /* Toggle */
+    .toggle-wrapper {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toggle-wrapper span {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .toggle-checkbox {
+      width: 40px;
+      height: 20px;
+      background: #444;
+      border-radius: 20px;
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+
+    .toggle-checkbox input {
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: pointer;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .3s;
+    }
+
+    .toggle-checkbox input:checked+.toggle-slider {
+      transform: translateX(20px);
+      background: var(--accent);
+    }
+
+    /* Batch */
+    .batch-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .textarea {
+      width: 100%;
+      min-height: 100px;
+      max-height: 250px;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 14px;
+      resize: none;
+      overflow-y: auto;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+
+    .btn.batch {
+      align-self: flex-end;
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Animations */
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulseGlow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 6px rgba(124, 248, 210, 0.6);
+      }
+
+      50% {
+        box-shadow: 0 0 14px rgba(124, 248, 210, 1);
+      }
+    }
+  </style>
 </head>
 
 <body>
-<header>
-  <div class="bar">
-    <div class="logo">🎬</div>
-    <div>
-      <h1>ReelRequests</h1>
-      <div class="sub">Request movies • Track status</div>
+  <header>
+    <div class="bar">
+      <div class="logo">🎬</div>
+      <div>
+        <h1>ReelRequests</h1>
+        <div class="sub">Request movies • Track status</div>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
-<div class="container">
-  <section class="card">
-    <form id="requestForm">
-      <input id="title" class="input" placeholder="Movie title" required>
-      <button class="btn">Submit Request</button>
-    </form>
-  </section>
+  <div class="container">
+    <!-- Submit -->
+    <section class="card">
+      <form id="requestForm">
+        <input id="title" class="input" placeholder="Movie title" required />
+        <button class="btn" type="submit">Submit Request</button>
+      </form>
+    </section>
 
-  <section class="card"><h2>Pending</h2><div id="pending" class="grid"></div></section>
-  <section class="card"><h2>Coming Soon</h2><div id="comingSoon" class="grid"></div></section>
-  <section class="card"><h2>Completed</h2><div id="completed" class="grid"></div></section>
+    <section class="card">
+      <h2>Pending Requests</h2>
+      <div id="pending" class="grid"></div>
+    </section>
+    <section class="card">
+      <h2>Coming Soon</h2>
+      <div id="comingSoon" class="grid"></div>
+    </section>
+    <section class="card">
+      <h2>Completed</h2>
+      <div id="completed" class="grid"></div>
+    </section>
 
-  <section id="adminPanel" class="admin" style="display:none">
-    <div class="admin-header">Admin Panel ▾</div>
-    <div class="admin-content">
-      <div id="adminList"></div>
-    </div>
-  </section>
-</div>
-
-<div id="inProgressWidget" class="in-progress-widget">
-  <h4>🎯 In Progress</h4>
-  <div id="inProgressTitle" class="title"></div>
-</div>
-
-<script type="module">
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig={
-  apiKey:"AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
-  authDomain:"morrow-industries.firebaseapp.com",
-  projectId:"morrow-industries"
-};
-
-const app=getApps().length?getApp():initializeApp(firebaseConfig);
-const db=getFirestore(app);
-
-const showAdmin=new URLSearchParams(location.search).get("admin")==="1";
-if(showAdmin)document.getElementById("adminPanel").style.display="block";
-
-const elPending=pending, elSoon=comingSoon, elDone=completed, adminList=document.getElementById("adminList");
-const widget=document.getElementById("inProgressWidget"), widgetTitle=document.getElementById("inProgressTitle");
-
-function row(d){
-  return `<div class="row">
-    <span class="dot ${d.status}"></span>
-    <div class="title">${d.title}</div>
-    ${d.inProgress?'<span class="badge">Working</span>':''}
-  </div>`;
-}
-
-async function setInProgress(id){
-  const snap=await new Promise(r=>onSnapshot(collection(db,"requests"),s=>r(s.docs.map(d=>({id:d.id,...d.data()})))));
-  for(const d of snap){
-    await updateDoc(doc(db,"requests",d.id),{inProgress:d.id===id});
-  }
-}
-
-let holdTimer=null;
-window.startHold=id=>{
-  if(!showAdmin)return;
-  holdTimer=setTimeout(()=>setInProgress(id),600);
-};
-window.cancelHold=()=>holdTimer&&clearTimeout(holdTimer);
-
-onSnapshot(collection(db,"requests"),s=>{
-  const arr=s.docs.map(d=>({id:d.id,...d.data()}));
-
-  elPending.innerHTML=arr.filter(d=>d.status==="pending").map(row).join("");
-  elSoon.innerHTML=arr.filter(d=>d.status==="comingsoon").map(row).join("");
-  elDone.innerHTML=arr.filter(d=>d.status==="completed").map(row).join("");
-
-  const active=arr.find(d=>d.inProgress);
-  if(active){widgetTitle.textContent=active.title;widget.style.display="block";}
-  else widget.style.display="none";
-
-  if(showAdmin){
-    adminList.innerHTML=arr.map(d=>`
-      <div class="admin-row"
-        onmousedown="startHold('${d.id}')"
-        onmouseup="cancelHold()"
-        onmouseleave="cancelHold()"
-        ontouchstart="startHold('${d.id}')"
-        ontouchend="cancelHold()">
-        <span>${d.title}</span>
-        <div>
-          <button class="action-btn next ${d.nextUp?'active':''}" onclick="updateDoc(doc(db,'requests','${d.id}'),{nextUp:${!d.nextUp}})">Next</button>
-          <button class="action-btn soon ${d.status==='comingsoon'?'active':''}" onclick="updateDoc(doc(db,'requests','${d.id}'),{status:'comingsoon'})">Soon</button>
-          <button class="action-btn done ${d.status==='completed'?'active':''}" onclick="updateDoc(doc(db,'requests','${d.id}'),{status:'completed',inProgress:false,completedAt:serverTimestamp()})">Done</button>
+    <!-- Admin -->
+    <section id="adminPanel" class="admin collapsed" style="display:none;">
+      <div class="admin-header">
+        <div>Admin Panel</div>
+        <span>▾</span>
+      </div>
+      <div class="admin-content">
+        <!-- Toggle -->
+        <div class="toggle-wrapper">
+          <label class="toggle-checkbox">
+            <input type="checkbox" id="toggleCompleted" />
+            <span class="toggle-slider"></span>
+          </label>
+          <span>Show Completed</span>
         </div>
-      </div>`).join("");
-  }
-});
+        <!-- Scrollable list -->
+        <div class="admin-list-wrapper">
+          <div id="adminList" class="grid"></div>
+        </div>
+        <hr style="margin:14px 0;border:0;border-top:1px solid var(--border)">
+        <h4>Batch add Coming Soon</h4>
+        <div class="batch-section">
+          <textarea id="batchTitles" class="textarea" placeholder="One title per line"></textarea>
+          <button id="batchBtn" class="btn batch">Add Batch</button>
+        </div>
+      </div>
+    </section>
+  </div>
 
-requestForm.onsubmit=async e=>{
-  e.preventDefault();
-  const t=title.value.trim();
-  if(!t)return;
-  await addDoc(collection(db,"requests"),{title:t,status:"pending",nextUp:false,inProgress:false,createdAt:serverTimestamp()});
-  title.value="";
-};
-</script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
+      authDomain: "morrow-industries.firebaseapp.com",
+      projectId: "morrow-industries",
+      storageBucket: "morrow-industries.appspot.com",
+      messagingSenderId: "75190213345",
+      appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const form = document.getElementById("requestForm");
+    const titleInput = document.getElementById("title");
+    const elPending = document.getElementById("pending");
+    const elSoon = document.getElementById("comingSoon");
+    const elDone = document.getElementById("completed");
+    const adminPanel = document.getElementById("adminPanel");
+    const adminList = document.getElementById("adminList");
+    const toggleCompleted = document.getElementById("toggleCompleted");
+
+    const showAdmin = new URLSearchParams(location.search).get("admin") === "1";
+    if (showAdmin) adminPanel.style.display = "block";
+
+    adminPanel.querySelector(".admin-header").addEventListener("click", () => adminPanel.classList.toggle("collapsed"));
+
+    function escapeHtml(s = "") { return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c])); }
+    function rowHTML(d) {
+      let dateLine = "";
+      if (d.status === "completed" && d.completedAt?.seconds) {
+        const date = new Date(d.completedAt.seconds * 1000);
+        dateLine = `<div class="date-label">Completed on: ${date.toLocaleDateString()}</div>`;
+      }
+      return `<div class="row"><span class="dot ${d.status}"></span><div class="title">${escapeHtml(d.title)}${dateLine}</div>${d.nextUp ? '<span class="badge">Next Up</span>' : ''}</div>`;
+    }
+    function render(el, docs, empty) { el.innerHTML = docs.length ? docs.map(rowHTML).join("") : `<div class="empty">${empty}</div>`; }
+
+    // Requests listener
+    onSnapshot(collection(db, "requests"), s => {
+      const arr = s.docs.map(d => ({ id: d.id, ...d.data() }));
+      render(elPending, arr.filter(d => d.status === "pending"), "No pending");
+      render(elSoon, arr.filter(d => d.status === "comingsoon"), "No upcoming");
+      render(elDone, arr.filter(d => d.status === "completed"), "No completed");
+      if (showAdmin) renderAdmin(arr);
+    });
+
+    function renderAdmin(docs) {
+      let filtered = docs;
+      if (!toggleCompleted.checked) { filtered = docs.filter(d => d.status !== "completed"); }
+      adminList.innerHTML = filtered.map(d => `
+        <div class="admin-row">
+          <div class="admin-title"><span class="dot ${d.status}"></span>${escapeHtml(d.title)} ${d.nextUp ? '<span class="badge">Next Up</span>' : ''}</div>
+          <div class="action-group">
+            <button class="action-btn next ${d.nextUp ? 'active' : ''}" onclick="toggleNextUp('${d.id}',${!d.nextUp})">Next</button>
+            <button class="action-btn soon ${d.status === 'comingsoon' ? 'active' : ''}" onclick="setStatus('${d.id}','comingsoon')">Soon</button>
+            <button class="action-btn done ${d.status === 'completed' ? 'active' : ''}" onclick="setStatus('${d.id}','completed')">Done</button>
+          </div>
+        </div>`).join("");
+    }
+
+    toggleCompleted.addEventListener("change", () => onSnapshot(collection(db, "requests"), s => {
+      const arr = s.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderAdmin(arr);
+    }));
+
+    window.toggleNextUp = async (id, val) => { await updateDoc(doc(db, "requests", id), { nextUp: val }); };
+    window.setStatus = async (id, status) => {
+      const updateData = { status: status, nextUp: false };
+      if (status === "completed") { updateData.completedAt = serverTimestamp(); }
+      await updateDoc(doc(db, "requests", id), updateData);
+    };
+
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const t = titleInput.value.trim(); if (!t) return;
+      await addDoc(collection(db, "requests"), { title: t, status: "pending", nextUp: false, createdAt: serverTimestamp() });
+      titleInput.value = "";
+    });
+
+    document.getElementById("batchBtn").addEventListener("click", async () => {
+      const lines = document.getElementById("batchTitles").value.split(/\n/).map(l => l.trim()).filter(Boolean);
+      for (const t of lines) { await addDoc(collection(db, "requests"), { title: t, status: "comingsoon", nextUp: false, createdAt: serverTimestamp() }); }
+      document.getElementById("batchTitles").value = "";
+    });
+  </script>
 </body>
+
 </html>
