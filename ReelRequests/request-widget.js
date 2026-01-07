@@ -110,7 +110,7 @@ class RequestWidget extends HTMLElement {
         }
         
         .movie-title {
-          font-size: 18px;
+          font-size: 15px;
           font-weight: 600;
           color: var(--text);
           max-width: 280px;
@@ -123,7 +123,7 @@ class RequestWidget extends HTMLElement {
         .season-info {
           color: var(--accent);
           font-weight: 700;
-          font-size: 17px;
+          font-size: 14px;
           text-transform: uppercase;
           color: var(--accent);
           font-weight: 700;
