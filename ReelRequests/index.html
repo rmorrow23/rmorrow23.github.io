@@ -18,11 +18,32 @@
       --border: rgba(255, 255, 255, 0.08);
     }
 
+    html {
+      /* Custom scrollbar styling to match your theme */
+      scrollbar-width: thin;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      scrollbar-color: var(--primary) transparent;
+    }
+
     body {
       margin: 0;
       font: 14px system-ui;
       background: var(--bg);
       color: var(--text);
+
+
+    }
+
+    /* Scrollbar styling for Chrome/Safari/Edge */
+    html::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    html::-webkit-scrollbar-thumb {
+      background-color: rgba(91, 138, 255, 0.5);
+      /* var(--primary) with opacity */
+      border-radius: 10px;
     }
 
     .container {
@@ -512,14 +533,23 @@
       let filtered = docs;
       if (!toggleCompleted.checked) { filtered = docs.filter(d => d.status !== "completed"); }
       adminList.innerHTML = filtered.map(d => `
-        <div class="admin-row">
-          <div class="admin-title"><span class="dot ${d.status}"></span>${escapeHtml(d.title)} ${d.nextUp ? '<span class="badge">Next Up</span>' : ''}</div>
-          <div class="action-group">
-            <button class="action-btn next ${d.nextUp ? 'active' : ''}" onclick="toggleNextUp('${d.id}',${!d.nextUp})">Next</button>
-            <button class="action-btn soon ${d.status === 'comingsoon' ? 'active' : ''}" onclick="setStatus('${d.id}','comingsoon')">Soon</button>
-            <button class="action-btn done ${d.status === 'completed' ? 'active' : ''}" onclick="setStatus('${d.id}','completed')">Done</button>
-          </div>
-        </div>`).join("");
+        // ... inside renderAdmin map function
+<div class="admin-row">
+  <div class="admin-title">
+    <span class="dot ${d.status}"></span>
+    <div style="display:flex; flex-direction:column;">
+       <span>${escapeHtml(d.title)}</span>
+       <input type="text" 
+              placeholder="Season (e.g. S02)" 
+              value="${d.season || ''}" 
+              style="background:transparent; border:none; color:var(--accent); font-size:11px; outline:none; padding:0;"
+              onchange="setSeason('${d.id}', this.value)">
+    </div>
+    ${d.nextUp ? '<span class="badge">Next Up</span>' : ''}
+  </div>
+  <div class="action-group">
+    </div>
+</div>`).join("");
     }
 
     toggleCompleted.addEventListener("change", () => onSnapshot(collection(db, "requests"), s => {
@@ -546,7 +576,16 @@
       for (const t of lines) { await addDoc(collection(db, "requests"), { title: t, status: "comingsoon", nextUp: false, createdAt: serverTimestamp() }); }
       document.getElementById("batchTitles").value = "";
     });
+
+    window.setSeason = async (id, val) => {
+      await updateDoc(doc(db, "requests", id), { season: val });
+    };
+    
   </script>
+  <request-widget></request-widget>
+  <movie-details></movie-details>
+  <script type="module" src="movie-details.js"></script>
+  <script type="module" src="request-widget.js"></script>
 </body>
 
 </html>
