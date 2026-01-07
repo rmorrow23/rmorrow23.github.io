@@ -56,7 +56,7 @@ class RequestWidget extends HTMLElement {
 
   render() {
     this.shadowRoot.innerHTML = `
-      <style> <style>
+      <style>
         :host {
           --primary: #5b8aff;
           --accent: #7cf8d2;
@@ -65,66 +65,78 @@ class RequestWidget extends HTMLElement {
         }
 
         .widget-container {
-          position: fixed;
-          bottom: 24px;
-          right: 24px;
+          margin: 16px;
           background: var(--surface);
           border: 1px solid rgba(255, 255, 255, 0.1);
-          padding: 12px 18px;
+          padding: 20px 18px;
           border-radius: 16px;
           display: flex;
           align-items: center;
           gap: 12px;
           box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-          transform: translateY(150%);
+          transform: translateX(150%);
           transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           z-index: 9999;
           backdrop-filter: blur(8px);
         }
 
         .widget-container.visible {
-          transform: translateY(0);
+          transform: translateX(0);
         }
 
         .pulse {
-          width: 10px;
-          height: 10px;
+          width: 50px;
+          height: 50px;
           background: var(--accent);
+          margin-left: 10px;
           border-radius: 50%;
           box-shadow: 0 0 0 0 rgba(124, 248, 210, 0.7);
           animation: pulse 2s infinite;
         }
+        
+        .pulse-divider {
+          width: 0.05px;
+          height: 50px;
+          margin: 0 20px;
+          background: var(--accent);
+        }
 
         .label {
-          font-size: 20px;
+          font-size: 18px;
           text-transform: uppercase;
           letter-spacing: 1px;
           color: var(--accent);
           font-weight: 700;
+          justify-self: center;
           margin-bottom: 2px;
         }
         
         .movie-title {
-          font-size: 24px;
+          font-size: 18px;
           font-weight: 600;
           color: var(--text);
           max-width: 280px;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          margin-left: 10px;
         }
 
         .season-info {
           color: var(--accent);
           font-weight: 700;
-          font-size: 23px;
+          font-size: 17px;
           text-transform: uppercase;
           color: var(--accent);
           font-weight: 700;
           font-size: 23px;  
           animation: glowText 2s ease-in-out infinite alternate;
         }
-
+        @keyframes pulse {
+          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 248, 210, 0.7); }
+          70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(124, 248, 210, 0); }
+          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 248, 210, 0); }
+        }
         @keyframes glowText {
           from { text-shadow: 0 0 2px rgba(124, 248, 210, 0.4); }
           to { text-shadow: 0 0 8px rgba(124, 248, 210, 0.8); }
@@ -138,6 +150,7 @@ class RequestWidget extends HTMLElement {
       </style>
       <div class="widget-container">
         <div class="pulse"></div>
+        <div class="pulse-divider"></div>
         <div class="content">
           <div class="label">Now Processing</div>
           <div class="content-row">
