@@ -89,16 +89,18 @@ class MovieDetails extends HTMLElement {
         /* 1. Ensure the overlay handles overflow */
 .modal-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(12px);
+  bottom: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0);
   display: grid;
   place-items: center;
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
   z-index: 2000;
-  padding: 20px;
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
   /* Custom scrollbar styling to match your theme */
   scrollbar-width: thin;
   scrollbar-color: var(--primary) transparent;
@@ -113,7 +115,7 @@ class MovieDetails extends HTMLElement {
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
   max-width: 700px;
-  width: 95%;
+  width: 90%;
   max-height: 90vh; /* Limits height to 90% of the viewport */
   overflow-y: scroll; /* Enables internal scrolling */
   position: relative;
