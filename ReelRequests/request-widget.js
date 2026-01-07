@@ -150,7 +150,7 @@ class RequestWidget extends HTMLElement {
         <div class="pulse"></div>
         <div class="pulse-divider"></div>
         <div class="content">
-          <div class="label">Now Processing</div>
+          <div class="label">In Progress</div>
           <div class="content-row">
             <span class="movie-title">Loading...</span>
             <span class="season-info"></span>
