@@ -37,9 +37,17 @@ class RequestWidget extends HTMLElement {
   updateWidget(data) {
     const container = this.shadowRoot.querySelector('.widget-container');
     const titleEl = this.shadowRoot.querySelector('.movie-title');
+    const seasonEl = this.shadowRoot.querySelector('.season-info');
     
     if (data) {
       titleEl.textContent = data.title;
+      // Show the season if it exists, otherwise hide the season span
+      if (data.season) {
+        seasonEl.textContent = ` • ${data.season}`;
+        seasonEl.style.display = 'inline';
+      } else {
+        seasonEl.style.display = 'none';
+      }
       container.classList.add('visible');
     } else {
       container.classList.remove('visible');
@@ -48,7 +56,7 @@ class RequestWidget extends HTMLElement {
 
   render() {
     this.shadowRoot.innerHTML = `
-      <style>
+      <style> <style>
         :host {
           --primary: #5b8aff;
           --accent: #7cf8d2;
@@ -88,35 +96,54 @@ class RequestWidget extends HTMLElement {
         }
 
         .label {
-          font-size: 10px;
+          font-size: 20px;
           text-transform: uppercase;
           letter-spacing: 1px;
           color: var(--accent);
           font-weight: 700;
           margin-bottom: 2px;
         }
-
+        
         .movie-title {
-          font-size: 14px;
+          font-size: 24px;
           font-weight: 600;
           color: var(--text);
-          max-width: 200px;
+          max-width: 280px;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
 
-        @keyframes pulse {
-          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 248, 210, 0.7); }
-          70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(124, 248, 210, 0); }
-          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 248, 210, 0); }
+        .season-info {
+          color: var(--accent);
+          font-weight: 700;
+          font-size: 23px;
+          text-transform: uppercase;
+          color: var(--accent);
+          font-weight: 700;
+          font-size: 23px;  
+          animation: glowText 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glowText {
+          from { text-shadow: 0 0 2px rgba(124, 248, 210, 0.4); }
+          to { text-shadow: 0 0 8px rgba(124, 248, 210, 0.8); }
+        }
+
+        .content-row {
+          display: flex;
+          align-items: center;
+          gap: 4px;
         }
       </style>
       <div class="widget-container">
         <div class="pulse"></div>
         <div class="content">
           <div class="label">Now Processing</div>
-          <div class="movie-title">Loading...</div>
+          <div class="content-row">
+            <span class="movie-title">Loading...</span>
+            <span class="season-info"></span>
+          </div>
         </div>
       </div>
     `;
