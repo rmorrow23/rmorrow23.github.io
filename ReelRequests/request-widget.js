@@ -88,7 +88,6 @@ class RequestWidget extends HTMLElement {
           width: 50px;
           height: 50px;
           background: var(--accent);
-          margin-left: 10px;
           border-radius: 50%;
           box-shadow: 0 0 0 0 rgba(124, 248, 210, 0.7);
           animation: pulse 2s infinite;
@@ -97,7 +96,6 @@ class RequestWidget extends HTMLElement {
         .pulse-divider {
           width: 0.05px;
           height: 49px;
-          margin: 0 20px;
           background: var(--accent);
         }
 
