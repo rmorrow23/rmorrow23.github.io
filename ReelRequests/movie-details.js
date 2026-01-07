@@ -84,19 +84,6 @@ class MovieDetails extends HTMLElement {
     render() {
         this.shadowRoot.innerHTML = `
       <style>
-        .modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.85);
-          backdrop-filter: blur(12px);
-          display: grid;
-          place-items: center;
-          opacity: 0;
-          visibility: hidden;
-          transition: all 0.3s ease;
-          z-index: 2000;
-          padding: 20px;
-        }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         
         /* 1. Ensure the overlay handles overflow */
