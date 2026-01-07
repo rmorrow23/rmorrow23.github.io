@@ -96,7 +96,7 @@ class RequestWidget extends HTMLElement {
         
         .pulse-divider {
           width: 0.05px;
-          height: 50px;
+          height: 49px;
           margin: 0 20px;
           background: var(--accent);
         }
