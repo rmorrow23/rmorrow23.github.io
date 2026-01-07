@@ -516,7 +516,7 @@
         const date = new Date(d.completedAt.seconds * 1000);
         dateLine = `<div class="date-label">Completed on: ${date.toLocaleDateString()}</div>`;
       }
-      return `<div class="row"><span class="dot ${d.status}"></span><div class="title">${escapeHtml(d.title)}${dateLine}</div>${d.nextUp ? '<span class="badge">Next Up</span>' : ''}</div>`;
+      return `<div class="row"><span class="dot ${d.status}"></span><div class="title">${escapeHtml(d.title)}${d.season ? `<span style="color:var(--accent); font-size:11px; margin-left:8px;">[${d.season}]</span>` : ''}${dateLine}</div>${d.nextUp ? '<span class="badge">Next Up</span>' : ''}</div>`;
     }
     function render(el, docs, empty) { el.innerHTML = docs.length ? docs.map(rowHTML).join("") : `<div class="empty">${empty}</div>`; }
 
@@ -533,7 +533,6 @@
       let filtered = docs;
       if (!toggleCompleted.checked) { filtered = docs.filter(d => d.status !== "completed"); }
       adminList.innerHTML = filtered.map(d => `
-        // ... inside renderAdmin map function
 <div class="admin-row">
   <div class="admin-title">
     <span class="dot ${d.status}"></span>
@@ -547,8 +546,11 @@
     </div>
     ${d.nextUp ? '<span class="badge">Next Up</span>' : ''}
   </div>
-  <div class="action-group">
-    </div>
+   <div class="action-group">
+            <button class="action-btn next ${d.nextUp ? 'active' : ''}" onclick="toggleNextUp('${d.id}',${!d.nextUp})">Next</button>
+            <button class="action-btn soon ${d.status === 'comingsoon' ? 'active' : ''}" onclick="setStatus('${d.id}','comingsoon')">Soon</button>
+            <button class="action-btn done ${d.status === 'completed' ? 'active' : ''}" onclick="setStatus('${d.id}','completed')">Done</button>
+          </div>
 </div>`).join("");
     }
 

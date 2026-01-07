@@ -1,63 +1,65 @@
 class MovieDetails extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    this.apiKey = 'efb26373'; // <--- REPLACE THIS
-  }
-
-  connectedCallback() {
-    this.render();
-    this.setupGlobalListener();
-  }
-
-  setupGlobalListener() {
-    // Listen for clicks on the parent document
-    document.addEventListener('click', async (e) => {
-      const row = e.target.closest('.row');
-      if (row) {
-        const title = row.querySelector('.title').firstChild.textContent.trim();
-        this.open(title);
-      }
-    });
-    
-    document.addEventListener('click', async (e) => {
-      const widget = e.target.closest('.widget-container');
-      if (widget) {
-        const title = widget.shadowRoot.querySelector('.movie-title').textContent.trim();
-        this.open(title);
-      }
-    });
-  }
-
-  async open(title) {
-    const modal = this.shadowRoot.querySelector('.modal-overlay');
-    const content = this.shadowRoot.querySelector('.modal-content');
-    
-    // Show loading state
-    modal.classList.add('active');
-    content.innerHTML = `<div class="loading">Searching archives for "${title}"...</div>`;
-
-    try {
-      const resp = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${this.apiKey}`);
-      const data = await resp.json();
-
-      if (data.Response === "True") {
-        this.renderDetails(data);
-      } else {
-        content.innerHTML = `<div class="error">Could not find details for "${title}".</div>`;
-      }
-    } catch (err) {
-      content.innerHTML = `<div class="error">Network error. Please try again.</div>`;
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+        this.apiKey = 'efb26373'; // <--- REPLACE THIS
     }
-  }
 
-  renderDetails(d) {
-    const content = this.shadowRoot.querySelector('.modal-content');
-    content.innerHTML = `
+    connectedCallback() {
+        this.render();
+        this.setupGlobalListener();
+    }
+
+    setupGlobalListener() {
+        // Listen for clicks on the parent document
+        document.addEventListener('click', async (e) => {
+            const row = e.target.closest('.row');
+            if (row) {
+                const title = row.querySelector('.title').firstChild.textContent.trim();
+                this.open(title);
+            }
+        });
+
+        document.addEventListener('click', async (e) => {
+            const widget = e.target.closest('.widget-container');
+            if (widget) {
+                const title = widget.shadowRoot.querySelector('.movie-title').textContent.trim();
+                this.open(title);
+            }
+        });
+    }
+
+    async open(title) {
+        const modal = this.shadowRoot.querySelector('.modal-overlay');
+        const content = this.shadowRoot.querySelector('.modal-content');
+
+        // Show loading state
+        modal.classList.add('active');
+        content.innerHTML = `<div class="loading">Searching archives for "${title}"...</div>`;
+
+        try {
+            const resp = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${this.apiKey}`);
+            const data = await resp.json();
+
+            if (data.Response === "True") {
+                this.renderDetails(data);
+            } else {
+                content.innerHTML = `<div class="error">Could not find details for "${title}".</div>`;
+            }
+        } catch (err) {
+            content.innerHTML = `<div class="error">Network error. Please try again.</div>`;
+        }
+    }
+
+    renderDetails(d) {
+        const activeSeason = document.querySelector(`[data-id-ref="${d.Title}"]`)?.dataset.season || "";
+        const content = this.shadowRoot.querySelector('.modal-content');
+        content.innerHTML = `
       <button class="close-btn">&times;</button>
       <div class="detail-grid" overflow="scroll">
         <img class="poster" src="${d.Poster !== 'N/A' ? d.Poster : 'https://via.placeholder.com/300x450?text=No+Poster'}" alt="${d.Title}">
         <div class="info">
+        ${activeSeason ? `<div class="season-tag">Currently Watching: ${activeSeason}</div>` : ''}
           <div class="badge">${d.Genre}</div>
           <h2 class="m-title">${d.Title} <span class="year">(${d.Year})</span></h2>
           <div class="meta">
@@ -71,16 +73,16 @@ class MovieDetails extends HTMLElement {
         </div>
       </div>
     `;
-    
-    content.querySelector('.close-btn').onclick = () => this.close();
-  }
 
-  close() {
-    this.shadowRoot.querySelector('.modal-overlay').classList.remove('active');
-  }
+        content.querySelector('.close-btn').onclick = () => this.close();
+    }
 
-  render() {
-    this.shadowRoot.innerHTML = `
+    close() {
+        this.shadowRoot.querySelector('.modal-overlay').classList.remove('active');
+    }
+
+    render() {
+        this.shadowRoot.innerHTML = `
       <style>
         .modal-overlay {
           position: fixed;
@@ -157,6 +159,17 @@ class MovieDetails extends HTMLElement {
           background: none; border: none; color: #a9b0be;
           font-size: 28px; cursor: pointer;
         }
+          .season-tag {
+            background: rgba(124, 248, 210, 0.1);
+            border: 1px solid var(--accent);
+            color: #7cf8d2;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: inline-block;
+}
 
         .badge { display: inline-block; background: #5b8aff; color: white; padding: 4px 10px; border-radius: 8px; font-size: 11px; margin-bottom: 10px; font-weight: bold; }
         .m-title { margin: 0; font-size: 24px; }
@@ -171,10 +184,10 @@ class MovieDetails extends HTMLElement {
       </div>
     `;
 
-    // Close when clicking overlay
-    this.shadowRoot.querySelector('.modal-overlay').onclick = (e) => {
-      if(e.target.classList.contains('modal-overlay')) this.close();
-    };
-  }
+        // Close when clicking overlay
+        this.shadowRoot.querySelector('.modal-overlay').onclick = (e) => {
+            if (e.target.classList.contains('modal-overlay')) this.close();
+        };
+    }
 }
 customElements.define('movie-details', MovieDetails);
