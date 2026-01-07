@@ -100,8 +100,9 @@ class MovieDetails extends HTMLElement {
   z-index: 2000;
   padding: 20px;
   /* Custom scrollbar styling to match your theme */
-  scrollbar-width: hidden;;
+  scrollbar-width: thin;
   scrollbar-color: var(--primary) transparent;
+  scrollbar-padding-right: 20px;
   overflow: hidden; /* Allows scrolling if the modal is taller than the screen */
 }
 
@@ -109,12 +110,14 @@ class MovieDetails extends HTMLElement {
 .modal-content {
   background: #12141b;
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 24px;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
   max-width: 700px;
-  width: 100%;
+  width: 95%;
   max-height: 90vh; /* Limits height to 90% of the viewport */
   overflow-y: scroll; /* Enables internal scrolling */
   position: relative;
+  justify-self: center;
   padding: 30px;
   color: #e9eef8;
   box-shadow: 0 20px 50px rgba(0,0,0,0.5);
@@ -122,7 +125,7 @@ class MovieDetails extends HTMLElement {
   transition: transform 0.3s ease;
   
   /* Custom scrollbar styling to match your theme */
-  scrollbar-width: hidden;;
+  scrollbar-width: thin;
   scrollbar-color: var(--primary) transparent;
 }
 
