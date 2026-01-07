@@ -127,7 +127,7 @@ class RequestWidget extends HTMLElement {
           text-transform: uppercase;
           color: var(--accent);
           font-weight: 700;
-          font-size: 23px;  
+          font-size: 18px;  
           animation: glowText 2s ease-in-out infinite alternate;
         }
         @keyframes pulse {
