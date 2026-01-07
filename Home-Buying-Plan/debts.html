@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Debt Tracker</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1c2e22",
+                        "text-main-light": "#111813",
+                        "text-main-dark": "#ffffff",
+                        "text-sec-light": "#61896f",
+                        "text-sec-dark": "#a3c2ad",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased transition-colors duration-200" data-page="debts">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto shadow-2xl">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 flex items-center bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur-sm p-4 pb-2 justify-between border-b border-gray-100 dark:border-gray-800 transition-colors">
+<div class="text-text-main-light dark:text-text-main-dark flex size-12 shrink-0 items-center justify-start cursor-pointer hover:opacity-70">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</div>
+<h2 class="text-text-main-light dark:text-text-main-dark text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">My Debts</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex size-12 cursor-pointer items-center justify-center rounded-lg bg-transparent text-text-main-light dark:text-text-main-dark hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined text-2xl">settings</span>
+</button>
+</div>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 flex flex-col gap-5 pb-24">
+<!-- Stats Section -->
+<div class="flex flex-wrap gap-3 px-4 pt-4">
+<div class="flex min-w-[150px] flex-1 flex-col gap-2 rounded-xl p-5 bg-surface-light dark:bg-surface-dark shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none border border-transparent dark:border-gray-800 transition-colors">
+<p class="text-text-sec-light dark:text-text-sec-dark text-sm font-medium leading-normal">Total Debt</p>
+<p class="text-text-main-light dark:text-text-main-dark tracking-tight text-2xl font-extrabold leading-tight">$14,500</p>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-sm font-bold">trending_down</span>
+<p class="text-sm font-bold leading-normal">2% down</p>
+</div>
+</div>
+<div class="flex min-w-[150px] flex-1 flex-col gap-2 rounded-xl p-5 bg-surface-light dark:bg-surface-dark shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none border border-transparent dark:border-gray-800 transition-colors">
+<p class="text-text-sec-light dark:text-text-sec-dark text-sm font-medium leading-normal">Monthly Fix</p>
+<p class="text-text-main-light dark:text-text-main-dark tracking-tight text-2xl font-extrabold leading-tight">$450</p>
+<p class="text-text-sec-light dark:text-text-sec-dark text-xs font-medium leading-normal mt-1">Due in 12 days</p>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-3 px-4 overflow-x-auto no-scrollbar pb-1">
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary text-background-dark pl-5 pr-5 shadow-sm transition-transform active:scale-95">
+<p class="text-sm font-bold leading-normal">All Debts</p>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 pl-5 pr-5 transition-transform active:scale-95">
+<p class="text-text-main-light dark:text-text-main-dark text-sm font-medium leading-normal">Highest Interest</p>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 pl-5 pr-5 transition-transform active:scale-95">
+<p class="text-text-main-light dark:text-text-main-dark text-sm font-medium leading-normal">Lowest Balance</p>
+</button>
+</div>
+<!-- Debt List Cards -->
+<div class="flex flex-col gap-4 px-4">
+<!-- Card 1: Chase -->
+<div class="flex flex-col gap-0 rounded-2xl bg-surface-light dark:bg-surface-dark shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-none dark:border dark:border-gray-800 overflow-hidden transition-colors group">
+<div class="p-5 pb-2 flex items-start justify-between gap-4">
+<div class="flex flex-col gap-1 flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Credit Card</span>
+</div>
+<h3 class="text-text-main-light dark:text-text-main-dark text-lg font-bold leading-tight">Chase Sapphire</h3>
+<p class="text-text-main-light dark:text-text-main-dark text-2xl font-extrabold tracking-tight mt-1">$2,400 <span class="text-text-sec-light dark:text-text-sec-dark text-sm font-normal">/ $5,000</span></p>
+<p class="text-text-sec-light dark:text-text-sec-dark text-sm font-medium mt-1">APR: 18.24% • Min: $85</p>
+</div>
+<div class="w-16 h-10 rounded-lg bg-cover bg-center shadow-sm" data-alt="Blue gradient credit card design" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB-CjULGg2r5WPv92VBZLWUJE_OsnaTa8m5mdLIFds6ggrPFDXkDznnSZ0d9wqNDNL_yN2q0h-pxHFyo_OBwcAyCcdySSCccuv5lCuKh0BFxNxaoOE576ydhqSaZ-XVl1b3HnKdOwCmMdIbkxC1cSGdRUEQbwjJ4erncRyUjMk871hcHhYaT0o9zFY6CUQnYaF3SDJtCuw-Xh7yjGiY2cc3yX5iA4ERoTUi5dXBKCykfnc2rGKj5MLp0Ab06uQMGV3xCYckdDQR1E0");'></div>
+</div>
+<!-- Progress Section -->
+<div class="px-5 pt-2 pb-4 flex flex-col gap-3">
+<div class="flex justify-between items-end">
+<span class="text-primary text-xs font-bold uppercase tracking-wider">52% Paid Off</span>
+<span class="text-text-sec-light dark:text-text-sec-dark text-xs">$2,600 paid</span>
+</div>
+<div class="h-2.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 52%;"></div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="bg-gray-50 dark:bg-[#15231a] px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+<p class="text-text-sec-light dark:text-text-sec-dark text-xs font-medium">Next payment due Oct 24</p>
+<button class="flex items-center justify-center gap-2 rounded-lg bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 text-primary-dark dark:text-primary px-4 py-2 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+<span class="text-sm font-bold text-green-800 dark:text-green-300">Log Payment</span>
+</button>
+</div>
+</div>
+<!-- Card 2: Student Loan -->
+<div class="flex flex-col gap-0 rounded-2xl bg-surface-light dark:bg-surface-dark shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-none dark:border dark:border-gray-800 overflow-hidden transition-colors group">
+<div class="p-5 pb-2 flex items-start justify-between gap-4">
+<div class="flex flex-col gap-1 flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Loan</span>
+</div>
+<h3 class="text-text-main-light dark:text-text-main-dark text-lg font-bold leading-tight">Federal Student Aid</h3>
+<p class="text-text-main-light dark:text-text-main-dark text-2xl font-extrabold tracking-tight mt-1">$8,200 <span class="text-text-sec-light dark:text-text-sec-dark text-sm font-normal">remaining</span></p>
+<p class="text-text-sec-light dark:text-text-sec-dark text-sm font-medium mt-1">APR: 4.5% • Fixed</p>
+</div>
+<div class="flex items-center justify-center w-16 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500">
+<span class="material-symbols-outlined text-2xl">school</span>
+</div>
+</div>
+<!-- Progress Section -->
+<div class="px-5 pt-2 pb-4 flex flex-col gap-3">
+<div class="flex justify-between items-end">
+<span class="text-primary text-xs font-bold uppercase tracking-wider">15% Paid Off</span>
+<span class="text-text-sec-light dark:text-text-sec-dark text-xs">$1,450 paid</span>
+</div>
+<div class="h-2.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 15%;"></div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="bg-gray-50 dark:bg-[#15231a] px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+<p class="text-text-sec-light dark:text-text-sec-dark text-xs font-medium">Auto-pay on Oct 15</p>
+<button class="flex items-center justify-center gap-2 rounded-lg bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 text-primary-dark dark:text-primary px-4 py-2 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+<span class="text-sm font-bold text-green-800 dark:text-green-300">Log Payment</span>
+</button>
+</div>
+</div>
+<!-- Card 3: Personal Loan (Avalanche focus) -->
+<div class="flex flex-col gap-0 rounded-2xl bg-surface-light dark:bg-surface-dark shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-none dark:border dark:border-gray-800 overflow-hidden transition-colors group">
+<div class="p-5 pb-2 flex items-start justify-between gap-4">
+<div class="flex flex-col gap-1 flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Personal</span>
+</div>
+<h3 class="text-text-main-light dark:text-text-main-dark text-lg font-bold leading-tight">Upstart Loan</h3>
+<p class="text-text-main-light dark:text-text-main-dark text-2xl font-extrabold tracking-tight mt-1">$3,900 <span class="text-text-sec-light dark:text-text-sec-dark text-sm font-normal">remaining</span></p>
+<p class="text-text-sec-light dark:text-text-sec-dark text-sm font-medium mt-1">APR: 12.0% • Min: $210</p>
+</div>
+<div class="w-16 h-10 rounded-lg bg-cover bg-center shadow-sm relative overflow-hidden" data-alt="Abstract orange geometric pattern" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBGawryL95HdLvRGobhN7VMabe8SSBkrJ1cV-hIWVgUfEACROQzB0PYD_UfWAlc5_Y8aZUAwAW0e3g5djfQczVjQBNPFnTw6I1D_Imjw26ecjPyD4Fsad9glwh_H-XnNDGTaKyBXr5fEY-t5OdS9smFoE4NFZz0D4QP9VGvItV9Wl2gcz5pwxUlPeF0VUh1wWm4PD7OCHWs_z6AFoiAYcm_GDDo75WMjaS_9NgUiR5YSFJuYDRJptmy0p4W5B0IuiCfd7Q7GJpqmPI");'>
+<div class="absolute inset-0 bg-black/20"></div>
+</div>
+</div>
+<!-- Progress Section -->
+<div class="px-5 pt-2 pb-4 flex flex-col gap-3">
+<div class="flex justify-between items-end">
+<span class="text-primary text-xs font-bold uppercase tracking-wider">35% Paid Off</span>
+<span class="text-text-sec-light dark:text-text-sec-dark text-xs">$2,100 paid</span>
+</div>
+<div class="h-2.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 35%;"></div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="bg-gray-50 dark:bg-[#15231a] px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+<p class="text-text-sec-light dark:text-text-sec-dark text-xs font-medium">Due in 5 days</p>
+<button class="flex items-center justify-center gap-2 rounded-lg bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 text-primary-dark dark:text-primary px-4 py-2 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+<span class="text-sm font-bold text-green-800 dark:text-green-300">Log Payment</span>
+</button>
+</div>
+</div>
+<!-- Empty spacer for scroll -->
+<div class="h-10"></div>
+</div>
+</div>
+<!-- Floating Add Button -->
+<div class="fixed bottom-6 right-6 z-50">
+<button class="flex size-14 items-center justify-center rounded-full bg-primary shadow-[0_4px_12px_rgba(19,236,91,0.4)] hover:shadow-[0_6px_16px_rgba(19,236,91,0.5)] transition-all active:scale-90 text-background-dark">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</div>
+
+<!-- App Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md border-t border-gray-100 dark:border-white/10 bg-white/95 dark:bg-[#15231a]/95 backdrop-blur-lg pb-safe">
+  <div class="flex h-16 items-center justify-around px-2">
+    <a data-nav="home" class="nav-item flex flex-col items-center justify-center gap-1 p-2 text-gray-400 dark:text-gray-500 hover:text-[#111813] dark:hover:text-white transition-colors" href="./index.html">
+      <span class="material-symbols-outlined text-2xl">dashboard</span>
+      <span class="text-[10px] font-bold tracking-wide">Home</span>
+    </a>
+    <a data-nav="debts" class="nav-item flex flex-col items-center justify-center gap-1 p-2 text-gray-400 dark:text-gray-500 hover:text-[#111813] dark:hover:text-white transition-colors" href="./debts.html">
+      <span class="material-symbols-outlined text-2xl">credit_card</span>
+      <span class="text-[10px] font-bold tracking-wide">Debts</span>
+    </a>
+    <a data-nav="advances" class="nav-item flex flex-col items-center justify-center gap-1 p-2 text-gray-400 dark:text-gray-500 hover:text-[#111813] dark:hover:text-white transition-colors" href="./advances.html">
+      <span class="material-symbols-outlined text-2xl">payments</span>
+      <span class="text-[10px] font-bold tracking-wide">Advances</span>
+    </a>
+    <a data-nav="milestones" class="nav-item flex flex-col items-center justify-center gap-1 p-2 text-gray-400 dark:text-gray-500 hover:text-[#111813] dark:hover:text-white transition-colors" href="./milestones.html">
+      <span class="material-symbols-outlined text-2xl">track_changes</span>
+      <span class="text-[10px] font-bold tracking-wide">Goals</span>
+    </a>
+    <a data-nav="profile" class="nav-item flex flex-col items-center justify-center gap-1 p-2 text-gray-400 dark:text-gray-500 hover:text-[#111813] dark:hover:text-white transition-colors" href="./profile.html">
+      <span class="material-symbols-outlined text-2xl">person</span>
+      <span class="text-[10px] font-bold tracking-wide">Profile</span>
+    </a>
+  </div>
+</nav>
+
+
+<script type="module" src="./js/navigation.js"></script>
+<script type="module" src="./js/debts.js"></script>
+
+</body></html>
