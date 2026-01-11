@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Family Shopping List</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: system-ui, sans-serif;
+  background: #0b0b0b;
+  color: #fff;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+}
+
+.container {
+  max-width: 520px;
+  margin: auto;
+}
+
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: none;
+}
+
+input {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+button {
+  background: #d4af37;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+li {
+  background: #161616;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.buy {
+  background: #2ecc71;
+  color: #000;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🛒 Family Shopping List</h1>
+
+<div class="container">
+  <input id="itemInput" placeholder="Add item (Milk, Bread, Ham)">
+  <button id="addBtn">Add Item</button>
+
+  <ul id="list"></ul>
+</div>
+
+<script type="module">
+/* 🔥 Firebase already initialized elsewhere */
+import { db } from "./firebase-init.js";
+
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const input = document.getElementById("itemInput");
+const list = document.getElementById("list");
+const addBtn = document.getElementById("addBtn");
+
+const shoppingRef = collection(db, "shoppingList");
+
+addBtn.onclick = async () => {
+  const name = input.value.trim();
+  if (!name) return;
+
+  await addDoc(shoppingRef, {
+    name,
+    addedAt: serverTimestamp()
+  });
+
+  input.value = "";
+};
+
+const q = query(shoppingRef, orderBy("addedAt"));
+
+onSnapshot(q, snapshot => {
+  list.innerHTML = "";
+
+  snapshot.forEach(item => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span>${item.data().name}</span>
+      <span class="buy">Bought</span>
+    `;
+
+    li.querySelector(".buy").onclick = () => {
+      deleteDoc(doc(db, "shoppingList", item.id));
+    };
+
+    list.appendChild(li);
+  });
+});
+</script>
+
+</body>
+</html>
