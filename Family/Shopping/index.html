@@ -82,122 +82,85 @@ li {
 </div>
 
 <script type="module">
-console.group("🛒 Shopping List Debug Boot");
+console.group("🛒 Shopping List Debug Boot (Compat)");
 
-/* STEP 1 — Verify module loading */
-console.log("✔ Script module loaded");
+import { db } from "../../../assets/js/firebase-init.js";
 
-/* STEP 2 — Import Firebase */
-import { db } from "../../assets/js/firebase-init.js";
-console.log("✔ Imported db:", db);
+console.log("DB instance:", db);
 
-/* STEP 3 — Import Firestore functions */
-import {
-  collection,
-  addDoc,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  query,
-  orderBy,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-console.log("✔ Firestore SDK loaded");
-
-/* STEP 4 — DOM checks */
+/* DOM */
 const input = document.getElementById("itemInput");
 const list = document.getElementById("list");
 const addBtn = document.getElementById("addBtn");
 
-console.log("DOM check:", {
-  inputExists: !!input,
-  listExists: !!list,
-  buttonExists: !!addBtn
-});
-
 if (!input || !list || !addBtn) {
-  console.error("❌ DOM ELEMENT MISSING — SCRIPT STOPPED");
-  throw new Error("Required DOM element missing");
+  console.error("❌ DOM missing");
+  throw new Error("DOM missing");
 }
 
-/* STEP 5 — Firestore reference */
+/* Firestore collection (COMPAT) */
 let shoppingRef;
 try {
-  shoppingRef = collection(db, "shoppingList");
-  console.log("✔ Firestore collection reference OK");
+  shoppingRef = db.collection("shoppingList");
+  console.log("✔ Compat collection reference created");
 } catch (e) {
-  console.error("❌ Failed to create collection ref", e);
+  console.error("❌ Failed to create compat collection", e);
 }
 
-/* STEP 6 — Button click handler */
+/* Add item */
 addBtn.onclick = async () => {
-  console.group("➕ Add Item Click");
-
+  console.group("➕ Add Item");
   const name = input.value.trim();
-  console.log("Item value:", name);
+  console.log("Name:", name);
 
   if (!name) {
-    console.warn("⚠ Empty input — aborting");
+    console.warn("Empty input");
     console.groupEnd();
     return;
   }
 
   try {
-    console.log("⏳ Attempting Firestore add...");
-    const result = await addDoc(shoppingRef, {
+    const result = await shoppingRef.add({
       name,
-      addedAt: serverTimestamp()
+      addedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    console.log("✅ Firestore write success:", result.id);
+    console.log("✅ Added:", result.id);
     input.value = "";
-  } catch (err) {
-    console.error("❌ Firestore write FAILED", err);
+  } catch (e) {
+    console.error("❌ Add failed", e);
   }
 
   console.groupEnd();
 };
 
-/* STEP 7 — Snapshot listener */
-try {
-  const q = query(shoppingRef, orderBy("addedAt"));
-  console.log("✔ Snapshot query created");
+/* Live listener */
+shoppingRef.orderBy("addedAt").onSnapshot(
+  snap => {
+    console.group("📡 Snapshot update");
+    console.log("Docs:", snap.size);
 
-  onSnapshot(
-    q,
-    snap => {
-      console.group("📡 Snapshot update");
-      console.log("Docs count:", snap.size);
+    list.innerHTML = "";
 
-      list.innerHTML = "";
+    snap.forEach(doc => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span>${doc.data().name}</span>
+        <span class="buy">Bought</span>
+      `;
 
-      snap.forEach(docSnap => {
-        console.log("Item:", docSnap.id, docSnap.data());
+      li.querySelector(".buy").onclick = async () => {
+        console.log("🗑 Deleting:", doc.id);
+        await shoppingRef.doc(doc.id).delete();
+      };
 
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <span>${docSnap.data().name}</span>
-          <span class="buy">Bought</span>
-        `;
+      list.appendChild(li);
+    });
 
-        li.querySelector(".buy").onclick = async () => {
-          console.log("🗑 Deleting:", docSnap.id);
-          await deleteDoc(doc(db, "shoppingList", docSnap.id));
-        };
-
-        list.appendChild(li);
-      });
-
-      console.groupEnd();
-    },
-    err => {
-      console.error("❌ Snapshot error", err);
-    }
-  );
-} catch (e) {
-  console.error("❌ Snapshot setup failed", e);
-}
+    console.groupEnd();
+  },
+  err => console.error("❌ Snapshot error", err)
+);
 
 console.groupEnd();
 </script>
