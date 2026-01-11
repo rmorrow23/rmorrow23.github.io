@@ -84,9 +84,8 @@ li {
 <script type="module">
 console.group("🛒 Shopping List Boot (MODULAR)");
 
-import { db } from "../../assets/js/firebase-init.js";
-
-import {
+import { 
+  db,
   collection,
   addDoc,
   deleteDoc,
@@ -94,8 +93,8 @@ import {
   onSnapshot,
   query,
   orderBy,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  serverTimestamp} from "../../assets/js/firebase-init.js";
+
 
 console.log("✔ Firestore DB:", db);
 
