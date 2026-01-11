@@ -21,7 +21,7 @@ body {
   background: radial-gradient(circle at top, #111, #000 60%);
   color: var(--text);
   min-height: 100vh;
- overflow:hidden;
+  overflow: hidden;
 }
 
 header {
@@ -32,11 +32,6 @@ header {
 header h1 {
   margin: 0;
   font-size: 28px;
-  letter-spacing: 0.5px;
-}
-
-header span {
-  color: var(--gold);
 }
 
 .list {
@@ -57,8 +52,13 @@ header span {
   align-items: center;
 }
 
-.item span {
+.item-name {
   font-size: 16px;
+}
+
+.item-qty {
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .buy {
@@ -70,7 +70,7 @@ header span {
   cursor: pointer;
 }
 
-/* Floating Action Button */
+/* Floating Button */
 .fab {
   position: fixed;
   bottom: 22px;
@@ -111,7 +111,6 @@ header span {
 
 .modal-card h3 {
   margin-top: 0;
-  font-weight: 600;
 }
 
 .modal-card input {
@@ -123,6 +122,16 @@ header span {
   color: #fff;
   font-size: 16px;
   margin-top: 12px;
+}
+
+.modal-card .qty {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-card .qty input {
+  width: 100%;
+  text-align: center;
 }
 
 .modal-card button {
@@ -142,7 +151,7 @@ header span {
 <body>
 
 <header>
-  <h1>🛒 Family <span>Shopping</span></h1>
+  <h1>🛒 Family Shopping</h1>
 </header>
 
 <div class="list" id="list"></div>
@@ -153,6 +162,11 @@ header span {
   <div class="modal-card">
     <h3>Add Item</h3>
     <input id="itemInput" placeholder="Milk, Bread, Ham">
+
+    <div class="qty">
+      <input id="qtyInput" type="number" min="1" value="1">
+    </div>
+
     <button id="addBtn">Add to List</button>
   </div>
 </div>
@@ -173,12 +187,13 @@ import {
 const list = document.getElementById("list");
 const fab = document.getElementById("fab");
 const modal = document.getElementById("modal");
-const input = document.getElementById("itemInput");
+const itemInput = document.getElementById("itemInput");
+const qtyInput = document.getElementById("qtyInput");
 const addBtn = document.getElementById("addBtn");
 
 fab.onclick = () => {
   modal.classList.add("active");
-  input.focus();
+  itemInput.focus();
 };
 
 modal.onclick = e => {
@@ -189,29 +204,40 @@ const ref = collection(db, "shoppingList");
 const q = query(ref, orderBy("addedAt"));
 
 addBtn.onclick = async () => {
-  const name = input.value.trim();
+  const name = itemInput.value.trim();
+  const quantity = Math.max(1, Number(qtyInput.value));
+
   if (!name) return;
 
   await addDoc(ref, {
     name,
+    quantity,
     addedAt: serverTimestamp()
   });
 
-  input.value = "";
+  itemInput.value = "";
+  qtyInput.value = 1;
   modal.classList.remove("active");
 };
 
 onSnapshot(q, snap => {
   list.innerHTML = "";
   snap.forEach(d => {
+    const { name, quantity = 1 } = d.data();
+
     const el = document.createElement("div");
     el.className = "item";
     el.innerHTML = `
-      <span>${d.data().name}</span>
+      <div>
+        <div class="item-name">${name}</div>
+        <div class="item-qty">Qty: ${quantity}</div>
+      </div>
       <div class="buy">Bought</div>
     `;
+
     el.querySelector(".buy").onclick = () =>
       deleteDoc(doc(db, "shoppingList", d.id));
+
     list.appendChild(el);
   });
 });
