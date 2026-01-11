@@ -2,89 +2,162 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Family Shopping List</title>
+<title>Family Shopping</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  font-family: system-ui, sans-serif;
-  background: #0b0b0b;
-  color: #fff;
-  margin: 0;
-  padding: 20px;
+:root {
+  --bg: #000;
+  --surface: rgba(18, 20, 27, 0.65);
+  --text: #f2f2f2;
+  --muted: #9aa0ac;
+  --gold: #d4af37;
+  --border: rgba(255,255,255,0.08);
 }
 
-h1 {
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: radial-gradient(circle at top, #111, #000 60%);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+header {
+  padding: 24px 16px 12px;
   text-align: center;
 }
 
-.container {
+header h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: 0.5px;
+}
+
+header span {
+  color: var(--gold);
+}
+
+.list {
   max-width: 520px;
   margin: auto;
+  padding: 16px;
 }
 
-input, button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  font-size: 16px;
-  border-radius: 6px;
-  border: none;
-}
-
-input {
-  background: #1a1a1a;
-  color: #fff;
-}
-
-button {
-  background: #d4af37;
-  color: #000;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-ul {
-  list-style: none;
-  padding: 0;
-  margin-top: 20px;
-}
-
-li {
-  background: #161616;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 10px;
+.item {
+  background: var(--surface);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
+.item span {
+  font-size: 16px;
+}
+
 .buy {
-  background: #2ecc71;
+  background: var(--gold);
   color: #000;
-  padding: 6px 10px;
-  border-radius: 4px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
   cursor: pointer;
+}
+
+/* Floating Action Button */
+.fab {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  width: 58px;
+  height: 58px;
+  background: var(--gold);
+  color: #000;
+  border-radius: 50%;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(212,175,55,0.4);
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: flex-end;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-card {
+  width: 100%;
+  background: #0d0f14;
+  border-radius: 20px 20px 0 0;
+  padding: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.modal-card h3 {
+  margin-top: 0;
+  font-weight: 600;
+}
+
+.modal-card input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: #1a1c22;
+  color: #fff;
+  font-size: 16px;
+  margin-top: 12px;
+}
+
+.modal-card button {
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  background: var(--gold);
+  color: #000;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🛒 Family Shopping List</h1>
+<header>
+  <h1>🛒 Family <span>Shopping</span></h1>
+</header>
 
-<div class="container">
-  <input id="itemInput" placeholder="Add item (Milk, Bread, Ham)">
-  <button id="addBtn">Add Item</button>
+<div class="list" id="list"></div>
 
-  <ul id="list"></ul>
+<div class="fab" id="fab">＋</div>
+
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <h3>Add Item</h3>
+    <input id="itemInput" placeholder="Milk, Bread, Ham">
+    <button id="addBtn">Add to List</button>
+  </div>
 </div>
 
 <script type="module">
-console.group("🛒 Shopping List Boot (MODULAR)");
-
-import { 
+import {
   db,
   collection,
   addDoc,
@@ -93,85 +166,54 @@ import {
   onSnapshot,
   query,
   orderBy,
-  serverTimestamp} from "../../assets/js/firebase-init.js";
+  serverTimestamp
+} from "../../assets/js/firebase-init.js";
 
-
-console.log("✔ Firestore DB:", db);
-
-/* DOM */
-const input = document.getElementById("itemInput");
 const list = document.getElementById("list");
+const fab = document.getElementById("fab");
+const modal = document.getElementById("modal");
+const input = document.getElementById("itemInput");
 const addBtn = document.getElementById("addBtn");
 
-if (!input || !list || !addBtn) {
-  console.error("❌ DOM elements missing");
-  throw new Error("DOM missing");
-}
-
-/* Collection */
-const shoppingRef = collection(db, "shoppingList");
-console.log("✔ Collection reference created");
-
-/* Add item */
-addBtn.onclick = async () => {
-  console.group("➕ Add Item");
-
-  const name = input.value.trim();
-  console.log("Input:", name);
-
-  if (!name) {
-    console.warn("Empty input");
-    console.groupEnd();
-    return;
-  }
-
-  try {
-    const docRef = await addDoc(shoppingRef, {
-      name,
-      addedAt: serverTimestamp()
-    });
-
-    console.log("✅ Added:", docRef.id);
-    input.value = "";
-  } catch (e) {
-    console.error("❌ Firestore add failed", e);
-  }
-
-  console.groupEnd();
+fab.onclick = () => {
+  modal.classList.add("active");
+  input.focus();
 };
 
-/* Live updates */
-const q = query(shoppingRef, orderBy("addedAt"));
+modal.onclick = e => {
+  if (e.target === modal) modal.classList.remove("active");
+};
 
-onSnapshot(
-  q,
-  snapshot => {
-    console.group("📡 Snapshot update");
-    console.log("Docs:", snapshot.size);
+const ref = collection(db, "shoppingList");
+const q = query(ref, orderBy("addedAt"));
 
-    list.innerHTML = "";
+addBtn.onclick = async () => {
+  const name = input.value.trim();
+  if (!name) return;
 
-    snapshot.forEach(docSnap => {
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <span>${docSnap.data().name}</span>
-        <span class="buy">Bought</span>
-      `;
+  await addDoc(ref, {
+    name,
+    addedAt: serverTimestamp()
+  });
 
-      li.querySelector(".buy").onclick = async () => {
-        console.log("🗑 Deleting:", docSnap.id);
-        await deleteDoc(doc(db, "shoppingList", docSnap.id));
-      };
+  input.value = "";
+  modal.classList.remove("active");
+};
 
-      list.appendChild(li);
-    });
-
-    console.groupEnd();
-  },
-  err => console.error("❌ Snapshot error", err)
-);
-
-console.groupEnd();
+onSnapshot(q, snap => {
+  list.innerHTML = "";
+  snap.forEach(d => {
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <span>${d.data().name}</span>
+      <div class="buy">Bought</div>
+    `;
+    el.querySelector(".buy").onclick = () =>
+      deleteDoc(doc(db, "shoppingList", d.id));
+    list.appendChild(el);
+  });
+});
 </script>
 
 </body>
