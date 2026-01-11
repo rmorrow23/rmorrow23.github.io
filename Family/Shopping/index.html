@@ -82,11 +82,22 @@ li {
 </div>
 
 <script type="module">
-console.group("🛒 Shopping List Debug Boot (Compat)");
+console.group("🛒 Shopping List Boot (MODULAR)");
 
 import { db } from "../../assets/js/firebase-init.js";
 
-console.log("DB instance:", db);
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+console.log("✔ Firestore DB:", db);
 
 /* DOM */
 const input = document.getElementById("itemInput");
@@ -94,24 +105,20 @@ const list = document.getElementById("list");
 const addBtn = document.getElementById("addBtn");
 
 if (!input || !list || !addBtn) {
-  console.error("❌ DOM missing");
+  console.error("❌ DOM elements missing");
   throw new Error("DOM missing");
 }
 
-/* Firestore collection (COMPAT) */
-let shoppingRef;
-try {
-  shoppingRef = db.collection("shoppingList");
-  console.log("✔ Compat collection reference created");
-} catch (e) {
-  console.error("❌ Failed to create compat collection", e);
-}
+/* Collection */
+const shoppingRef = collection(db, "shoppingList");
+console.log("✔ Collection reference created");
 
 /* Add item */
 addBtn.onclick = async () => {
   console.group("➕ Add Item");
+
   const name = input.value.trim();
-  console.log("Name:", name);
+  console.log("Input:", name);
 
   if (!name) {
     console.warn("Empty input");
@@ -120,38 +127,41 @@ addBtn.onclick = async () => {
   }
 
   try {
-    const result = await shoppingRef.add({
+    const docRef = await addDoc(shoppingRef, {
       name,
-      addedAt: firebase.firestore.FieldValue.serverTimestamp()
+      addedAt: serverTimestamp()
     });
 
-    console.log("✅ Added:", result.id);
+    console.log("✅ Added:", docRef.id);
     input.value = "";
   } catch (e) {
-    console.error("❌ Add failed", e);
+    console.error("❌ Firestore add failed", e);
   }
 
   console.groupEnd();
 };
 
-/* Live listener */
-shoppingRef.orderBy("addedAt").onSnapshot(
-  snap => {
+/* Live updates */
+const q = query(shoppingRef, orderBy("addedAt"));
+
+onSnapshot(
+  q,
+  snapshot => {
     console.group("📡 Snapshot update");
-    console.log("Docs:", snap.size);
+    console.log("Docs:", snapshot.size);
 
     list.innerHTML = "";
 
-    snap.forEach(doc => {
+    snapshot.forEach(docSnap => {
       const li = document.createElement("li");
       li.innerHTML = `
-        <span>${doc.data().name}</span>
+        <span>${docSnap.data().name}</span>
         <span class="buy">Bought</span>
       `;
 
       li.querySelector(".buy").onclick = async () => {
-        console.log("🗑 Deleting:", doc.id);
-        await shoppingRef.doc(doc.id).delete();
+        console.log("🗑 Deleting:", docSnap.id);
+        await deleteDoc(doc(db, "shoppingList", docSnap.id));
       };
 
       list.appendChild(li);
