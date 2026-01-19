@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Shopping Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Shopping Manager</h1>
+
+        <div class="mb-8 p-4 bg-blue-50 rounded-lg">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">My Lists</label>
+            <div class="flex gap-2">
+                <select id="listSelector" onchange="switchList()" class="flex-1 p-2 border rounded shadow-sm"></select>
+                <button onclick="createNewList()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ New</button>
+                <button onclick="deleteCurrentList()" class="bg-red-100 text-red-600 px-3 py-2 rounded hover:bg-red-200">Delete</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="p-4 bg-green-50 rounded-lg">
+                <label class="block text-xs font-bold text-green-700 uppercase">Total Budget</label>
+                <input type="number" id="budgetInput" oninput="updateBudget()" placeholder="0.00" class="w-full bg-transparent text-xl font-bold outline-none">
+            </div>
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <label class="block text-xs font-bold text-gray-700 uppercase">Remaining</label>
+                <div id="remainingBudget" class="text-xl font-bold">$0.00</div>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-6 border-b pb-6">
+            <input type="text" id="itemName" placeholder="Item name" class="flex-1 min-w-[150px] p-2 border rounded">
+            <input type="number" id="itemQty" placeholder="Qty" value="1" class="w-20 p-2 border rounded">
+            <input type="number" id="itemPrice" placeholder="Price" class="w-24 p-2 border rounded">
+            <button onclick="addItem()" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-bold">Add</button>
+        </div>
+
+        <ul id="shoppingList" class="space-y-3"></ul>
+    </div>
+
+    <script>
+        let data = JSON.parse(localStorage.getItem('shoppingAppData')) || {
+            currentList: 'Default',
+            lists: { 'Default': { budget: 0, items: [] } }
+        };
+
+        function saveData() {
+            localStorage.setItem('shoppingAppData', JSON.stringify(data));
+            render();
+        }
+
+        function createNewList() {
+            const name = prompt("Enter list name:");
+            if (name && !data.lists[name]) {
+                data.lists[name] = { budget: 0, items: [] };
+                data.currentList = name;
+                saveData();
+            }
+        }
+
+        function deleteCurrentList() {
+            if (Object.keys(data.lists).length <= 1) return alert("You must have at least one list.");
+            if (confirm(`Delete list "${data.currentList}"?`)) {
+                delete data.lists[data.currentList];
+                data.currentList = Object.keys(data.lists)[0];
+                saveData();
+            }
+        }
+
+        function switchList() {
+            data.currentList = document.getElementById('listSelector').value;
+            saveData();
+        }
+
+        function updateBudget() {
+            data.lists[data.currentList].budget = parseFloat(document.getElementById('budgetInput').value) || 0;
+            saveData();
+        }
+
+        function addItem() {
+            const name = document.getElementById('itemName').value;
+            const qty = parseInt(document.getElementById('itemQty').value) || 1;
+            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+
+            if (name) {
+                data.lists[data.currentList].items.push({ name, qty, price, completed: false });
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemPrice').value = '';
+                saveData();
+            }
+        }
+
+        function toggleItem(index) {
+            data.lists[data.currentList].items[index].completed = !data.lists[data.currentList].items[index].completed;
+            saveData();
+        }
+
+        function removeItem(index) {
+            data.lists[data.currentList].items.splice(index, 1);
+            saveData();
+        }
+
+        function render() {
+            const current = data.lists[data.currentList];
+            
+            // Render Select Options
+            const selector = document.getElementById('listSelector');
+            selector.innerHTML = Object.keys(data.lists).map(name => 
+                `<option value="${name}" ${name === data.currentList ? 'selected' : ''}>${name}</option>`
+            ).join('');
+
+            // Update Budget UI
+            document.getElementById('budgetInput').value = current.budget;
+            
+            // Calculate Total
+            const totalSpent = current.items.reduce((sum, item) => sum + (item.qty * item.price), 0);
+            const remaining = current.budget - totalSpent;
+            const remainingEl = document.getElementById('remainingBudget');
+            remainingEl.innerText = `$${remaining.toFixed(2)}`;
+            remainingEl.className = `text-xl font-bold ${remaining < 0 ? 'text-red-600' : 'text-green-600'}`;
+
+            // Render Items
+            const listEl = document.getElementById('shoppingList');
+            listEl.innerHTML = current.items.map((item, index) => `
+                <li class="flex items-center justify-between p-3 border rounded hover:bg-gray-50 ${item.completed ? 'bg-gray-100 opacity-60' : ''}">
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleItem(${index})" class="w-5 h-5 cursor-pointer">
+                        <span class="${item.completed ? 'line-through' : ''} font-medium">
+                            ${item.name} <span class="text-gray-400 text-sm">x${item.qty}</span>
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="font-mono">$${(item.qty * item.price).toFixed(2)}</span>
+                        <button onclick="removeItem(${index})" class="text-red-400 hover:text-red-600">✕</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // Initial Load
+        render();
+    </script>
+</body>
+</html>
