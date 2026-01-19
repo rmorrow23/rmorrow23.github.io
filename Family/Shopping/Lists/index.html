@@ -3,145 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Shopping Manager</title>
+    <title>Cloud Shopping Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+<body class="bg-slate-100 min-h-screen p-4">
 
-    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Shopping Manager</h1>
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <div id="migrationAlert" class="hidden mb-6 p-4 bg-amber-100 border-l-4 border-amber-500 text-amber-700 flex justify-between items-center">
+            <span>Found local lists! Sync them to the cloud?</span>
+            <button onclick="uploadToCloud()" class="bg-amber-600 text-white px-3 py-1 rounded text-sm font-bold">Upload Once</button>
+        </div>
 
-        <div class="mb-8 p-4 bg-blue-50 rounded-lg">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">My Lists</label>
-            <div class="flex gap-2">
-                <select id="listSelector" onchange="switchList()" class="flex-1 p-2 border rounded shadow-sm"></select>
-                <button onclick="createNewList()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ New</button>
-                <button onclick="deleteCurrentList()" class="bg-red-100 text-red-600 px-3 py-2 rounded hover:bg-red-200">Delete</button>
+        <h1 class="text-2xl font-bold text-slate-800 mb-6">Cloud Shopping List</h1>
+
+        <div class="flex gap-2 mb-6">
+            <select id="listSelector" onchange="switchList()" class="flex-1 p-2 border rounded bg-white"></select>
+            <button onclick="createNewList()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">New List</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6 text-center">
+            <div class="bg-slate-50 p-3 rounded border">
+                <span class="text-xs uppercase text-slate-500 font-bold block">Budget</span>
+                <input type="number" id="budgetInput" onchange="updateBudget()" class="text-lg font-bold w-full text-center bg-transparent outline-none">
+            </div>
+            <div class="bg-slate-50 p-3 rounded border">
+                <span class="text-xs uppercase text-slate-500 font-bold block">Remaining</span>
+                <span id="remainingBudget" class="text-lg font-bold">$0.00</span>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="p-4 bg-green-50 rounded-lg">
-                <label class="block text-xs font-bold text-green-700 uppercase">Total Budget</label>
-                <input type="number" id="budgetInput" oninput="updateBudget()" placeholder="0.00" class="w-full bg-transparent text-xl font-bold outline-none">
-            </div>
-            <div class="p-4 bg-gray-50 rounded-lg">
-                <label class="block text-xs font-bold text-gray-700 uppercase">Remaining</label>
-                <div id="remainingBudget" class="text-xl font-bold">$0.00</div>
-            </div>
+        <div class="flex flex-wrap gap-2 mb-6 bg-slate-50 p-3 rounded-lg">
+            <input type="text" id="itemName" placeholder="Item Name" class="flex-1 p-2 border rounded">
+            <input type="number" id="itemQty" placeholder="Qty" value="1" class="w-16 p-2 border rounded">
+            <input type="number" id="itemPrice" placeholder="Price" class="w-20 p-2 border rounded">
+            <button onclick="addItem()" class="bg-emerald-600 text-white px-4 py-2 rounded font-bold">Add</button>
         </div>
 
-        <div class="flex flex-wrap gap-2 mb-6 border-b pb-6">
-            <input type="text" id="itemName" placeholder="Item name" class="flex-1 min-w-[150px] p-2 border rounded">
-            <input type="number" id="itemQty" placeholder="Qty" value="1" class="w-20 p-2 border rounded">
-            <input type="number" id="itemPrice" placeholder="Price" class="w-24 p-2 border rounded">
-            <button onclick="addItem()" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-bold">Add</button>
-        </div>
-
-        <ul id="shoppingList" class="space-y-3"></ul>
+        <ul id="shoppingList" class="space-y-2"></ul>
     </div>
 
     <script>
-        let data = JSON.parse(localStorage.getItem('shoppingAppData')) || {
-            currentList: 'Default',
-            lists: { 'Default': { budget: 0, items: [] } }
+        // TODO: Replace with YOUR Firebase Config
+        const firebaseConfig = {
+  apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
+  authDomain: "morrow-industries.firebaseapp.com",
+  databaseURL: "https://morrow-industries-default-rtdb.firebaseio.com",
+  projectId: "morrow-industries",
+  storageBucket: "morrow-industries.appspot.com",
+  messagingSenderId: "75190213345",
+  appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
+};
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        let state = {
+            currentListId: 'Default',
+            lists: {}
         };
 
-        function saveData() {
-            localStorage.setItem('shoppingAppData', JSON.stringify(data));
-            render();
-        }
+        // 1. Check for local data and Migration Flag
+        window.onload = () => {
+            const hasMigrated = localStorage.getItem('hasMigratedToCloud');
+            const localData = localStorage.getItem('shoppingAppData');
 
-        function createNewList() {
-            const name = prompt("Enter list name:");
-            if (name && !data.lists[name]) {
-                data.lists[name] = { budget: 0, items: [] };
-                data.currentList = name;
-                saveData();
+            if (!hasMigrated && localData) {
+                document.getElementById('migrationAlert').classList.remove('hidden');
+            }
+            
+            fetchFromCloud();
+        };
+
+        // 2. The One-Time Upload Function
+        async function uploadToCloud() {
+            const localData = JSON.parse(localStorage.getItem('shoppingAppData'));
+            if (localData && localData.lists) {
+                for (let listName in localData.lists) {
+                    await db.collection("shoppingLists").doc(listName).set(localData.lists[listName]);
+                }
+                // Set the flag so we don't ask again
+                localStorage.setItem('hasMigratedToCloud', 'true');
+                document.getElementById('migrationAlert').classList.add('hidden');
+                alert("Data synced successfully!");
+                fetchFromCloud();
             }
         }
 
-        function deleteCurrentList() {
-            if (Object.keys(data.lists).length <= 1) return alert("You must have at least one list.");
-            if (confirm(`Delete list "${data.currentList}"?`)) {
-                delete data.lists[data.currentList];
-                data.currentList = Object.keys(data.lists)[0];
-                saveData();
-            }
+        // 3. Firestore Syncing
+        function fetchFromCloud() {
+            db.collection("shoppingLists").onSnapshot((snapshot) => {
+                state.lists = {};
+                snapshot.forEach(doc => {
+                    state.lists[doc.id] = doc.data();
+                });
+                
+                if (!state.lists[state.currentListId]) {
+                    state.currentListId = Object.keys(state.lists)[0] || 'Default';
+                }
+                render();
+            });
         }
 
-        function switchList() {
-            data.currentList = document.getElementById('listSelector').value;
-            saveData();
-        }
-
-        function updateBudget() {
-            data.lists[data.currentList].budget = parseFloat(document.getElementById('budgetInput').value) || 0;
-            saveData();
-        }
-
-        function addItem() {
+        async function addItem() {
             const name = document.getElementById('itemName').value;
             const qty = parseInt(document.getElementById('itemQty').value) || 1;
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
 
             if (name) {
-                data.lists[data.currentList].items.push({ name, qty, price, completed: false });
+                const current = state.lists[state.currentListId] || { budget: 0, items: [] };
+                current.items.push({ name, qty, price, completed: false });
+                await db.collection("shoppingLists").doc(state.currentListId).set(current);
                 document.getElementById('itemName').value = '';
-                document.getElementById('itemPrice').value = '';
-                saveData();
             }
         }
 
-        function toggleItem(index) {
-            data.lists[data.currentList].items[index].completed = !data.lists[data.currentList].items[index].completed;
-            saveData();
+        async function toggleItem(index) {
+            const current = state.lists[state.currentListId];
+            current.items[index].completed = !current.items[index].completed;
+            await db.collection("shoppingLists").doc(state.currentListId).set(current);
         }
 
-        function removeItem(index) {
-            data.lists[data.currentList].items.splice(index, 1);
-            saveData();
+        async function updateBudget() {
+            const newBudget = parseFloat(document.getElementById('budgetInput').value) || 0;
+            const current = state.lists[state.currentListId];
+            current.budget = newBudget;
+            await db.collection("shoppingLists").doc(state.currentListId).set(current);
         }
 
+        function switchList() {
+            state.currentListId = document.getElementById('listSelector').value;
+            render();
+        }
+
+        async function createNewList() {
+            const name = prompt("New list name:");
+            if (name) {
+                await db.collection("shoppingLists").doc(name).set({ budget: 0, items: [] });
+                state.currentListId = name;
+            }
+        }
+
+        // 4. UI Rendering
         function render() {
-            const current = data.lists[data.currentList];
+            const current = state.lists[state.currentListId] || { budget: 0, items: [] };
             
-            // Render Select Options
+            // Update Select
             const selector = document.getElementById('listSelector');
-            selector.innerHTML = Object.keys(data.lists).map(name => 
-                `<option value="${name}" ${name === data.currentList ? 'selected' : ''}>${name}</option>`
+            selector.innerHTML = Object.keys(state.lists).map(id => 
+                `<option value="${id}" ${id === state.currentListId ? 'selected' : ''}>${id}</option>`
             ).join('');
 
-            // Update Budget UI
             document.getElementById('budgetInput').value = current.budget;
             
-            // Calculate Total
-            const totalSpent = current.items.reduce((sum, item) => sum + (item.qty * item.price), 0);
-            const remaining = current.budget - totalSpent;
-            const remainingEl = document.getElementById('remainingBudget');
-            remainingEl.innerText = `$${remaining.toFixed(2)}`;
-            remainingEl.className = `text-xl font-bold ${remaining < 0 ? 'text-red-600' : 'text-green-600'}`;
+            const total = current.items.reduce((sum, i) => sum + (i.qty * i.price), 0);
+            const remaining = current.budget - total;
+            const remEl = document.getElementById('remainingBudget');
+            remEl.innerText = `$${remaining.toFixed(2)}`;
+            remEl.className = remaining < 0 ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold';
 
-            // Render Items
             const listEl = document.getElementById('shoppingList');
-            listEl.innerHTML = current.items.map((item, index) => `
-                <li class="flex items-center justify-between p-3 border rounded hover:bg-gray-50 ${item.completed ? 'bg-gray-100 opacity-60' : ''}">
+            listEl.innerHTML = current.items.map((item, idx) => `
+                <li class="flex items-center justify-between p-3 border rounded ${item.completed ? 'bg-slate-50 opacity-50' : 'bg-white'}">
                     <div class="flex items-center gap-3">
-                        <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleItem(${index})" class="w-5 h-5 cursor-pointer">
-                        <span class="${item.completed ? 'line-through' : ''} font-medium">
-                            ${item.name} <span class="text-gray-400 text-sm">x${item.qty}</span>
-                        </span>
+                        <input type="checkbox" ${item.completed ? 'checked' : ''} onclick="toggleItem(${idx})" class="h-5 w-5">
+                        <span class="${item.completed ? 'line-through' : ''}">${item.name} (x${item.qty})</span>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <span class="font-mono">$${(item.qty * item.price).toFixed(2)}</span>
-                        <button onclick="removeItem(${index})" class="text-red-400 hover:text-red-600">✕</button>
-                    </div>
+                    <span class="font-mono">$${(item.qty * item.price).toFixed(2)}</span>
                 </li>
             `).join('');
         }
-
-        // Initial Load
-        render();
     </script>
 </body>
 </html>
