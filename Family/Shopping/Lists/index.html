@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Pro Shopping Manager</title>
+    <title>Shopping List Manager</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -38,7 +38,7 @@
         <header class="px-6 pt-8 pb-4 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-20">
             <div class="flex justify-between items-start mb-2">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-widest text-[#4c9a59]">Cloud Manager</p>
+                    <p class="text-xs font-bold uppercase tracking-widest text-[#4c9a59]">Shopping List Manager</p>
                     <div class="flex items-center gap-2">
                         <select id="listSelector" onchange="switchList()" class="bg-transparent border-none p-0 text-2xl font-bold focus:ring-0 cursor-pointer dark:text-white"></select>
                         <button onclick="shareList()" class="text-gray-400 hover:text-primary transition-colors">
@@ -50,9 +50,9 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto px-4 pb-52">
-            <div id="tab-list" class="tab-content active space-y-3">
-                <div id="shoppingItemsContainer" class="space-y-3"></div>
+        <main class="flex-1 overflow-y-auto px-4 pb-64">
+            <div id="tab-list" class="tab-content active space-y-6">
+                <div id="shoppingItemsContainer" class="space-y-6"></div>
             </div>
 
             <div id="tab-recipes" class="tab-content space-y-4">
@@ -60,7 +60,7 @@
                 <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
                     <div class="flex justify-between items-center mb-2">
                         <span class="font-bold text-lg">Pesto Pasta</span>
-                        <button onclick="addRecipeToList(['Fusilli', 'Basil Pesto', 'Parmesan', 'Cherry Tomatoes'])" class="bg-primary text-black text-[10px] font-black uppercase px-3 py-1 rounded-full">Add All</button>
+                        <button onclick="addRecipeToList(['Fusilli', 'Basil Pesto', 'Parmesan', 'Cherry Tomatoes'], 'Pantry')" class="bg-primary text-black text-[10px] font-black uppercase px-3 py-1 rounded-full">Add All</button>
                     </div>
                     <p class="text-xs text-gray-500">Fusilli, Pesto, Parmesan, Tomatoes</p>
                 </div>
@@ -73,11 +73,11 @@
                     <div class="mt-4 grid grid-cols-2 gap-4">
                         <div class="text-left p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
                             <span class="text-gray-400 text-[10px] uppercase font-bold">Items</span>
-                            <b id="statsCount" class="block text-lg text-black dark:text-white">0</b>
+                            <b id="statsCount" class="block text-lg dark:text-white">0</b>
                         </div>
                         <div class="text-left p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
                             <span class="text-gray-400 text-[10px] uppercase font-bold">Done</span>
-                            <b id="statsDone" class="block text-lg text-black dark:text-white">0</b>
+                            <b id="statsDone" class="block text-lg dark:text-white">0</b>
                         </div>
                     </div>
                 </div>
@@ -89,10 +89,22 @@
             <div id="inputBar" class="flex flex-col gap-2 bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700">
                 <div class="flex gap-1">
                     <input id="itemName" class="flex-1 bg-transparent border-none text-sm focus:ring-0 dark:text-white" placeholder="Item Name"/>
-                    <input id="itemQty" type="number" value="1" class="w-12 bg-transparent border-none text-sm text-center focus:ring-0 dark:text-white"/>
-                    <input id="itemPrice" type="number" class="w-16 bg-transparent border-none text-sm text-center focus:ring-0 dark:text-white" placeholder="$0"/>
+                    <select id="itemCategory" class="w-24 bg-transparent border-none text-[10px] font-bold uppercase text-gray-400 focus:ring-0">
+                        <option value="General">General</option>
+                        <option value="Produce">Produce</option>
+                        <option value="Dairy">Dairy</option>
+                        <option value="Meat">Meat</option>
+                        <option value="Frozen">Frozen</option>
+                        <option value="Pantry">Pantry</option>
+                    </select>
                 </div>
-                <button onclick="addItem()" class="w-full bg-primary text-black font-black uppercase text-xs tracking-widest py-3 rounded-xl">Add to Cloud</button>
+                <div class="flex gap-1">
+                    <input id="itemQty" type="number" value="1" class="flex-1 bg-gray-50 dark:bg-gray-900 border-none rounded-lg text-sm text-center focus:ring-0 dark:text-white" placeholder="Qty"/>
+                    <input id="itemPrice" type="number" class="flex-1 bg-gray-50 dark:bg-gray-900 border-none rounded-lg text-sm text-center focus:ring-0 dark:text-white" placeholder="$ Price"/>
+                    <button onclick="addItem()" class="flex-[2] bg-primary text-black font-black uppercase text-xs tracking-widest py-3 rounded-xl hover:brightness-105 active:scale-95 transition-all">
+                        Add to List
+                    </button>
+                </div>
             </div>
 
             <nav class="flex justify-around items-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg rounded-full h-16 border border-gray-200 dark:border-gray-800 px-2 shadow-xl">
@@ -130,15 +142,13 @@
         const db = firebase.firestore();
         let state = { currentListId: 'Groceries', lists: {} };
 
-        // --- Sharing Feature ---
         function shareList() {
             const shareUrl = `${window.location.origin}${window.location.pathname}?list=${encodeURIComponent(state.currentListId)}`;
             navigator.clipboard.writeText(shareUrl).then(() => {
-                alert(`Link copied! Anyone with this link can view the "${state.currentListId}" list.`);
+                alert(`Link copied for "${state.currentListId}"!`);
             });
         }
 
-        // --- Theme ---
         function applyTheme() {
             const savedTheme = localStorage.getItem('appTheme') || 'light';
             document.documentElement.classList.toggle('dark', savedTheme === 'dark');
@@ -151,7 +161,6 @@
             document.getElementById('themeIcon').innerText = isDark ? 'light_mode' : 'dark_mode';
         }
 
-        // --- Navigation ---
         function showTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${tabId}`).classList.add('active');
@@ -160,42 +169,43 @@
             document.getElementById('inputBar').style.display = (tabId === 'list') ? 'flex' : 'none';
         }
 
-        // --- Data Logic ---
         async function addItem() {
             const name = document.getElementById('itemName').value;
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
             const qty = parseInt(document.getElementById('itemQty').value) || 1;
+            const category = document.getElementById('itemCategory').value;
+            
             if (name) {
-                const current = state.lists[state.currentListId] || { budget: 0, items: [] };
-                current.items.push({ name, qty, price, completed: false, id: Date.now() });
+                const current = state.lists[state.currentListId] || { items: [] };
+                current.items.push({ name, qty, price, category, completed: false, id: Date.now() });
                 await db.collection("shoppingLists").doc(state.currentListId).set(current);
                 document.getElementById('itemName').value = '';
                 document.getElementById('itemPrice').value = '';
+                document.getElementById('itemQty').value = '1';
             }
         }
 
-        async function addRecipeToList(items) {
-            const current = state.lists[state.currentListId] || { budget: 0, items: [] };
-            items.forEach(name => current.items.push({ name, qty: 1, price: 0, completed: false, id: Date.now() }));
+        async function addRecipeToList(items, category) {
+            const current = state.lists[state.currentListId] || { items: [] };
+            items.forEach(name => current.items.push({ name, qty: 1, price: 0, category, completed: false, id: Date.now() }));
             await db.collection("shoppingLists").doc(state.currentListId).set(current);
             showTab('list');
         }
 
-        async function toggleItem(idx) {
+        async function toggleItem(id) {
             const current = state.lists[state.currentListId];
-            current.items[idx].completed = !current.items[idx].completed;
+            const item = current.items.find(i => i.id === id);
+            if (item) item.completed = !item.completed;
             await db.collection("shoppingLists").doc(state.currentListId).set(current);
         }
 
-        async function deleteItem(idx) {
-            if(!confirm("Delete?")) return;
+        async function deleteItem(id) {
             const current = state.lists[state.currentListId];
-            current.items.splice(idx, 1);
+            current.items = current.items.filter(i => i.id !== id);
             await db.collection("shoppingLists").doc(state.currentListId).set(current);
         }
 
         function fetchFromCloud() {
-            // Check for list in URL
             const urlParams = new URLSearchParams(window.location.search);
             const sharedList = urlParams.get('list');
             if (sharedList) state.currentListId = sharedList;
@@ -209,25 +219,45 @@
         }
 
         function render() {
-            const current = state.lists[state.currentListId] || { budget: 0, items: [] };
+            const current = state.lists[state.currentListId] || { items: [] };
             const selector = document.getElementById('listSelector');
             selector.innerHTML = Object.keys(state.lists).map(id => `<option value="${id}" ${id === state.currentListId ? 'selected' : ''}>${id}</option>`).join('');
 
             const container = document.getElementById('shoppingItemsContainer');
-            container.innerHTML = (current.items || []).map((item, idx) => `
-                <div class="bg-white dark:bg-gray-900/50 p-4 border border-gray-100 dark:border-gray-800 rounded-2xl ${item.completed ? 'opacity-40' : ''}">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <input type="checkbox" ${item.completed ? 'checked' : ''} onclick="toggleItem(${idx})" class="h-6 w-6 rounded border-2 border-primary/30 text-primary focus:ring-0 transition-all">
-                            <div>
-                                <p class="font-bold text-sm ${item.completed ? 'line-through decoration-primary' : ''}">${item.name}</p>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase">QTY: ${item.qty} • $${(item.price * item.qty).toFixed(2)}</p>
-                            </div>
+            container.innerHTML = '';
+
+            // Grouping logic
+            const groups = (current.items || []).reduce((acc, item) => {
+                const cat = item.category || 'General';
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push(item);
+                return acc;
+            }, {});
+
+            Object.keys(groups).sort().forEach(category => {
+                const categoryHeader = `
+                    <div class="pt-2">
+                        <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 mb-3 ml-1">${category}</h4>
+                        <div class="space-y-3">
+                            ${groups[category].map(item => `
+                                <div class="bg-white dark:bg-gray-900/50 p-4 border border-gray-100 dark:border-gray-800 rounded-2xl ${item.completed ? 'opacity-40' : ''}">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <input type="checkbox" ${item.completed ? 'checked' : ''} onclick="toggleItem(${item.id})" class="h-6 w-6 rounded border-2 border-primary/30 text-primary focus:ring-0 transition-all">
+                                            <div>
+                                                <p class="font-bold text-sm ${item.completed ? 'line-through decoration-primary' : ''}">${item.name}</p>
+                                                <p class="text-[10px] text-gray-400 font-bold uppercase">QTY: ${item.qty} • $${(item.price * item.qty).toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                        <button onclick="deleteItem(${item.id})" class="text-gray-300 hover:text-red-500"><span class="material-symbols-outlined">delete</span></button>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
-                        <button onclick="deleteItem(${idx})" class="text-gray-300 hover:text-red-500"><span class="material-symbols-outlined">delete</span></button>
                     </div>
-                </div>
-            `).join('');
+                `;
+                container.innerHTML += categoryHeader;
+            });
 
             const total = (current.items || []).reduce((sum, i) => sum + (i.qty * i.price), 0);
             document.getElementById('statsTotal').innerText = `$${total.toFixed(2)}`;
@@ -243,7 +273,7 @@
         async function createNewList() {
             const name = prompt("List Name:");
             if(name) {
-                await db.collection("shoppingLists").doc(name).set({ budget: 0, items: [] });
+                await db.collection("shoppingLists").doc(name).set({ items: [] });
                 state.currentListId = name;
             }
         }
