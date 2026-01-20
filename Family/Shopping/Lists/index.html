@@ -142,11 +142,10 @@
         const db = firebase.firestore();
         let state = { currentListId: 'Groceries', lists: {} };
 
+        // --- Core Helpers ---
         function shareList() {
             const shareUrl = `${window.location.origin}${window.location.pathname}?list=${encodeURIComponent(state.currentListId)}`;
-            navigator.clipboard.writeText(shareUrl).then(() => {
-                alert(`Link copied for "${state.currentListId}"!`);
-            });
+            navigator.clipboard.writeText(shareUrl).then(() => alert(`Link copied for "${state.currentListId}"!`));
         }
 
         function applyTheme() {
@@ -169,6 +168,7 @@
             document.getElementById('inputBar').style.display = (tabId === 'list') ? 'flex' : 'none';
         }
 
+        // --- Item Logic & Edits ---
         async function addItem() {
             const name = document.getElementById('itemName').value;
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
@@ -185,11 +185,25 @@
             }
         }
 
-        async function addRecipeToList(items, category) {
-            const current = state.lists[state.currentListId] || { items: [] };
-            items.forEach(name => current.items.push({ name, qty: 1, price: 0, category, completed: false, id: Date.now() }));
+        async function editItemValue(id) {
+            const current = state.lists[state.currentListId];
+            const item = current.items.find(i => i.id === id);
+            if (!item) return;
+
+            const newName = prompt("Edit Item Name:", item.name);
+            if (newName === null) return; // User cancelled
+
+            const newPrice = prompt("Edit Item Price ($):", item.price);
+            if (newPrice === null) return;
+
+            const newQty = prompt("Edit Quantity:", item.qty);
+            if (newQty === null) return;
+
+            item.name = newName || item.name;
+            item.price = parseFloat(newPrice) || 0;
+            item.qty = parseInt(newQty) || 1;
+
             await db.collection("shoppingLists").doc(state.currentListId).set(current);
-            showTab('list');
         }
 
         async function toggleItem(id) {
@@ -200,9 +214,17 @@
         }
 
         async function deleteItem(id) {
+            if(!confirm("Remove this item?")) return;
             const current = state.lists[state.currentListId];
             current.items = current.items.filter(i => i.id !== id);
             await db.collection("shoppingLists").doc(state.currentListId).set(current);
+        }
+
+        async function addRecipeToList(items, category) {
+            const current = state.lists[state.currentListId] || { items: [] };
+            items.forEach(name => current.items.push({ name, qty: 1, price: 0, category, completed: false, id: Date.now() }));
+            await db.collection("shoppingLists").doc(state.currentListId).set(current);
+            showTab('list');
         }
 
         function fetchFromCloud() {
@@ -226,7 +248,6 @@
             const container = document.getElementById('shoppingItemsContainer');
             container.innerHTML = '';
 
-            // Grouping logic
             const groups = (current.items || []).reduce((acc, item) => {
                 const cat = item.category || 'General';
                 if (!acc[cat]) acc[cat] = [];
@@ -244,9 +265,11 @@
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-3">
                                             <input type="checkbox" ${item.completed ? 'checked' : ''} onclick="toggleItem(${item.id})" class="h-6 w-6 rounded border-2 border-primary/30 text-primary focus:ring-0 transition-all">
-                                            <div>
+                                            <div onclick="editItemValue(${item.id})" class="cursor-pointer">
                                                 <p class="font-bold text-sm ${item.completed ? 'line-through decoration-primary' : ''}">${item.name}</p>
-                                                <p class="text-[10px] text-gray-400 font-bold uppercase">QTY: ${item.qty} • $${(item.price * item.qty).toFixed(2)}</p>
+                                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                    QTY: ${item.qty} • $${(item.price).toFixed(2)} ea • <span class="text-primary/70">$${(item.price * item.qty).toFixed(2)} total</span>
+                                                </p>
                                             </div>
                                         </div>
                                         <button onclick="deleteItem(${item.id})" class="text-gray-300 hover:text-red-500"><span class="material-symbols-outlined">delete</span></button>
