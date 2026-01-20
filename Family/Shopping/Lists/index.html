@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Gourmet Shopping & Recipes</title>
+    <title>Shopping List Manager</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -17,8 +17,8 @@
                 extend: {
                     colors: {
                         "primary": "#13ec37",
-                        "background-light": "#f6f8f6",
-                        "background-dark": "#102213",
+                        "background-light": "#f8faf8",
+                        "background-dark": "#0a120b",
                     },
                     fontFamily: { "display": ["Work Sans", "sans-serif"] }
                 },
@@ -26,130 +26,145 @@
         }
     </script>
     <style>
-        body { min-height: 100dvh; overflow: hidden; }
         ::-webkit-scrollbar { display: none; }
+        body { -webkit-tap-highlight-color: transparent; }
         .tab-content { display: none; }
-        .tab-content.active { display: flex; flex-direction: column; height: 100%; }
+        .tab-content.active { display: block; }
+        @media (min-width: 1024px) {
+            .desktop-grid { display: grid; grid-template-columns: 280px 1fr; }
+        }
     </style>
 </head>
-<body class="bg-background-light dark:bg-background-dark font-display text-[#0d1b10] dark:text-white transition-colors duration-300">
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 transition-colors duration-300">
     
-    <div class="relative flex h-screen w-full flex-col max-w-md mx-auto border-x border-gray-100 dark:border-gray-800 bg-white dark:bg-background-dark shadow-2xl">
+    <div class="desktop-grid min-h-screen">
         
-        <header class="px-6 pt-8 pb-4 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-20">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p id="headerContext" class="text-xs font-bold uppercase tracking-widest text-[#4c9a59]">Shopping List Manager</p>
-                    <div class="flex items-center gap-2">
-                        <select id="listSelector" onchange="switchList()" class="bg-transparent border-none p-0 text-2xl font-bold focus:ring-0 cursor-pointer dark:text-white"></select>
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="shareList()" class="text-gray-400 p-2"><span class="material-symbols-outlined">share</span></button>
-                    <button onclick="createNewList()" class="text-primary p-2 bg-green-900/10 rounded-full"><span class="material-symbols-outlined">add</span></button>
-                </div>
-            </div>
-        </header>
-
-        <main class="flex-1 overflow-y-auto px-4 pb-80">
+        <aside class="hidden lg:flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 sticky top-0 h-screen">
+            <h1 class="text-xl font-black text-primary mb-10 tracking-tighter italic">GOURMET MANAGER</h1>
             
-            <div id="tab-list" class="tab-content active space-y-6">
-                <div id="shoppingItemsContainer" class="space-y-6"></div>
-            </div>
+            <nav class="space-y-2 flex-1">
+                <button onclick="showTab('list')" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-primary bg-primary/10 font-bold" data-tab="list">
+                    <span class="material-symbols-outlined">format_list_bulleted</span> Shopping List
+                </button>
+                <button onclick="showTab('recipes')" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 font-bold" data-tab="recipes">
+                    <span class="material-symbols-outlined">restaurant</span> Recipes
+                </button>
+                <button onclick="showTab('stats')" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 font-bold" data-tab="stats">
+                    <span class="material-symbols-outlined">analytics</span> Statistics
+                </button>
+            </nav>
 
-            <div id="tab-recipes" class="tab-content space-y-4">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-xl font-bold">My Cookbook</h3>
-                    <button onclick="openRecipeModal()" class="text-primary text-xs font-bold uppercase border border-primary/30 px-3 py-1 rounded-full">Manual Add</button>
-                </div>
-                
-                <div class="relative">
-                    <input id="recipeSearch" type="text" placeholder="Search web for new recipes..." class="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl text-sm p-4 pr-12 focus:ring-primary/20">
-                    <button onclick="discoverRecipes()" class="absolute right-4 top-4 text-primary"><span class="material-symbols-outlined">search</span></button>
-                </div>
+            <button onclick="toggleTheme()" class="mt-auto flex items-center gap-3 p-3 text-slate-400 font-bold">
+                <span id="themeIconDesktop" class="material-symbols-outlined">dark_mode</span> Appearance
+            </button>
+        </aside>
 
-                <div id="recipeContainer" class="grid gap-4">
+        <div class="relative flex flex-col h-screen overflow-hidden">
+            
+            <header class="p-6 lg:px-10 flex justify-between items-center bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md z-20">
+                <div>
+                    <span class="text-[10px] font-black uppercase text-[#4c9a59] tracking-[0.2em]">Shopping List Manager</span>
+                    <div class="flex items-center gap-3">
+                        <select id="listSelector" onchange="switchList()" class="bg-transparent border-none p-0 text-2xl font-bold focus:ring-0 dark:text-white cursor-pointer"></select>
+                        <button onclick="shareList()" class="text-slate-400 hover:text-primary"><span class="material-symbols-outlined">share</span></button>
                     </div>
-            </div>
-
-            <div id="tab-stats" class="tab-content">
-                <div class="p-6 bg-primary/10 rounded-2xl border border-primary/20 text-center">
-                    <h3 class="text-gray-500 text-xs font-bold uppercase mb-2">Estimated Total</h3>
-                    <p id="statsTotal" class="text-4xl font-black text-primary">$0.00</p>
                 </div>
-            </div>
-        </main>
+                <button onclick="createNewList()" class="px-5 py-2 bg-primary text-black font-black text-[10px] uppercase rounded-full shadow-lg hover:scale-105 transition-transform">
+                    + New List
+                </button>
+            </header>
 
-        <div id="recipeModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-                <h4 class="font-bold text-lg">Add Recipe</h4>
-                <input id="recTitle" type="text" placeholder="Recipe Title" class="w-full rounded-xl border-gray-100 dark:bg-gray-800">
-                <div class="flex gap-2">
-                    <input id="recTime" type="text" placeholder="Time (e.g. 30m)" class="w-1/2 rounded-xl border-gray-100 dark:bg-gray-800">
-                    <input id="recServes" type="number" placeholder="Serves" class="w-1/2 rounded-xl border-gray-100 dark:bg-gray-800">
-                </div>
-                <textarea id="recIngreds" placeholder="Ingredients (one per line: 2x Eggs)" class="w-full rounded-xl border-gray-100 dark:bg-gray-800 h-24"></textarea>
+            <main class="flex-1 overflow-y-auto px-6 lg:px-10 pb-64">
                 
-                <div class="flex items-center gap-2">
-                    <label class="flex-1 bg-gray-100 dark:bg-gray-800 p-3 rounded-xl cursor-pointer text-center text-xs font-bold">
-                        <span>Upload Photo</span>
-                        <input type="file" id="recImage" class="hidden" accept="image/*">
-                    </label>
+                <div id="tab-list" class="tab-content active space-y-6 max-w-4xl">
+                    <div id="shoppingItemsContainer" class="space-y-6"></div>
                 </div>
 
-                <div class="flex gap-2 pt-4">
-                    <button onclick="closeRecipeModal()" class="flex-1 py-3 text-gray-500 font-bold">Cancel</button>
-                    <button onclick="saveManualRecipe()" class="flex-1 py-3 bg-primary text-black font-black rounded-xl">Save</button>
+                <div id="tab-recipes" class="tab-content space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <h2 class="text-2xl font-bold">Cookbook</h2>
+                        <div class="flex gap-2 w-full md:w-auto">
+                             <input id="recipeSearch" type="text" placeholder="Search web..." class="flex-1 md:w-64 rounded-full border-none bg-slate-100 dark:bg-slate-800 text-sm px-4 focus:ring-primary">
+                             <button onclick="discoverRecipes()" class="bg-primary text-black p-2 rounded-full flex items-center"><span class="material-symbols-outlined">search</span></button>
+                             <button onclick="openRecipeModal()" class="bg-slate-100 dark:bg-slate-800 text-slate-500 p-2 rounded-full flex items-center"><span class="material-symbols-outlined">add</span></button>
+                        </div>
+                    </div>
+                    <div id="recipeContainer" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+                </div>
+
+                <div id="tab-stats" class="tab-content pt-10">
+                    <div class="max-w-xl mx-auto bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] text-center shadow-xl border border-slate-100 dark:border-slate-800">
+                        <h3 class="text-slate-400 text-xs font-black uppercase tracking-widest mb-4">Current Subtotal</h3>
+                        <p id="statsTotal" class="text-6xl font-black text-primary">$0.00</p>
+                        <div class="grid grid-cols-2 gap-4 mt-8">
+                            <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                                <span class="text-[10px] uppercase font-bold text-slate-400">Total Items</span>
+                                <p id="statsCount" class="text-xl font-bold">0</p>
+                            </div>
+                            <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                                <span class="text-[10px] uppercase font-bold text-slate-400">Checked Off</span>
+                                <p id="statsDone" class="text-xl font-bold">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <div id="floatingInput" class="absolute bottom-24 lg:bottom-10 left-0 right-0 px-6 z-30">
+                <div class="max-w-3xl mx-auto bg-white dark:bg-slate-900 p-4 rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800">
+                    <div class="flex flex-col gap-3">
+                        <div class="flex gap-2">
+                            <input id="itemName" class="flex-1 bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 text-sm focus:ring-primary/20" placeholder="Item Name..."/>
+                            <select id="itemCategory" class="w-28 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-[10px] font-bold uppercase text-slate-500">
+                                <option value="General">General</option>
+                                <option value="Produce">Produce</option>
+                                <option value="Dairy">Dairy</option>
+                                <option value="Meat">Meat</option>
+                                <option value="Frozen">Frozen</option>
+                                <option value="Pantry">Pantry</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <input id="itemQty" type="number" value="1" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm text-center p-3" placeholder="Qty"/>
+                            <input id="itemPrice" type="number" step="0.01" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm text-center p-3" placeholder="$ Price"/>
+                            <button onclick="addItem()" class="w-full bg-primary text-black font-black uppercase text-xs tracking-widest py-3 rounded-xl hover:scale-[1.02] transition-transform">
+                                Add to List
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="absolute bottom-0 left-0 right-0 z-30 px-4 pb-8 space-y-4 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/95 to-transparent">
-            <div id="inputBar" class="flex flex-col gap-3 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700">
-                <div class="flex gap-2">
-                    <input id="itemName" class="flex-1 bg-gray-50 dark:bg-gray-900 border-none rounded-lg text-sm dark:text-white p-3" placeholder="What do you need?"/>
-                    <select id="itemCategory" class="w-28 bg-gray-50 dark:bg-gray-900 border-none rounded-lg text-[10px] font-bold uppercase text-gray-500">
-                        <option value="General">General</option>
-                        <option value="Produce">Produce</option>
-                        <option value="Dairy">Dairy</option>
-                        <option value="Meat">Meat</option>
-                        <option value="Pantry">Pantry</option>
-                    </select>
-                </div>
-                <div class="flex gap-2 items-center">
-                    <input id="itemQty" type="number" value="1" class="w-16 bg-gray-50 dark:bg-gray-900 border-none rounded-lg text-sm text-center dark:text-white p-3"/>
-                    <input id="itemPrice" type="number" step="0.01" class="w-20 bg-gray-50 dark:bg-gray-900 border-none rounded-lg text-sm text-center dark:text-white p-3" placeholder="$"/>
-                    <button onclick="addItem()" class="flex-1 bg-primary text-black font-black uppercase text-xs tracking-widest py-3 rounded-xl shadow-lg shadow-primary/20">Add</button>
-                </div>
-            </div>
-
-            <nav class="flex justify-around items-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg rounded-full h-16 border border-gray-200 dark:border-gray-800 px-2 shadow-xl">
-                <button onclick="showTab('list')" class="nav-btn flex flex-col items-center justify-center gap-1 w-16 text-primary" data-tab="list">
-                    <span class="material-symbols-outlined">format_list_bulleted</span>
-                    <span class="text-[10px] font-bold uppercase">List</span>
-                </button>
-                <button onclick="showTab('recipes')" class="nav-btn flex flex-col items-center justify-center gap-1 w-16 text-gray-400" data-tab="recipes">
-                    <span class="material-symbols-outlined">restaurant</span>
-                    <span class="text-[10px] font-bold uppercase">Recipes</span>
-                </button>
-                <button onclick="showTab('stats')" class="nav-btn flex flex-col items-center justify-center gap-1 w-16 text-gray-400" data-tab="stats">
-                    <span class="material-symbols-outlined">analytics</span>
-                    <span class="text-[10px] font-bold uppercase">Stats</span>
-                </button>
-                <button onclick="toggleTheme()" class="flex flex-col items-center justify-center gap-1 w-16 text-gray-400">
-                    <span id="themeIcon" class="material-symbols-outlined">dark_mode</span>
-                    <span class="text-[10px] font-bold uppercase">Theme</span>
-                </button>
+            <nav class="lg:hidden flex justify-around items-center bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl h-20 border-t border-slate-100 dark:border-slate-800 fixed bottom-0 left-0 right-0 z-40">
+                <button onclick="showTab('list')" class="nav-btn-mobile text-primary" data-tab="list"><span class="material-symbols-outlined">format_list_bulleted</span></button>
+                <button onclick="showTab('recipes')" class="nav-btn-mobile text-slate-400" data-tab="recipes"><span class="material-symbols-outlined">restaurant</span></button>
+                <button onclick="showTab('stats')" class="nav-btn-mobile text-slate-400" data-tab="stats"><span class="material-symbols-outlined">analytics</span></button>
+                <button onclick="toggleTheme()" class="text-slate-400"><span class="material-symbols-outlined">dark_mode</span></button>
             </nav>
         </div>
     </div>
 
+    <div id="recipeModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8 space-y-4">
+            <h4 class="font-bold text-xl">New Recipe</h4>
+            <input id="recTitle" type="text" placeholder="Title" class="w-full rounded-xl border-none bg-slate-100 dark:bg-slate-800">
+            <input id="recTime" type="text" placeholder="Cook Time (e.g. 20m)" class="w-full rounded-xl border-none bg-slate-100 dark:bg-slate-800">
+            <textarea id="recIngreds" placeholder="Ingredients (One per line)" class="w-full rounded-xl border-none bg-slate-100 dark:bg-slate-800 h-32"></textarea>
+            <input type="file" id="recImage" class="text-xs text-slate-400">
+            <div class="flex gap-2 pt-4">
+                <button onclick="closeRecipeModal()" class="flex-1 py-3 text-slate-400 font-bold uppercase text-[10px]">Cancel</button>
+                <button onclick="saveManualRecipe()" class="flex-1 py-3 bg-primary text-black font-black rounded-xl uppercase text-[10px]">Save Recipe</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
             authDomain: "morrow-industries.firebaseapp.com",
             projectId: "morrow-industries",
-            storageBucket: "morrow-industries.appspot.com", // Ensure this matches your Firebase Storage
+            storageBucket: "morrow-industries.appspot.com",
             messagingSenderId: "75190213345",
             appId: "1:75190213345:web:a521b54a1c8e00b68d75a0"
         };
@@ -159,197 +174,187 @@
         const storage = firebase.storage();
         let state = { currentListId: 'Groceries', lists: {}, recipes: [] };
 
-        // --- Recipe Management ---
+        // THEME
+        function applyTheme() {
+            const saved = localStorage.getItem('appTheme') || 'light';
+            document.documentElement.classList.toggle('dark', saved === 'dark');
+        }
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('appTheme', isDark ? 'dark' : 'light');
+        }
+
+        // TABS
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            
+            // Sidebar UI
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-primary', 'bg-primary/10');
+                btn.classList.add('text-slate-400');
+            });
+            const activeSidebar = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
+            if(activeSidebar) activeSidebar.classList.add('text-primary', 'bg-primary/10');
+
+            // Mobile UI
+            document.querySelectorAll('.nav-btn-mobile').forEach(btn => btn.classList.replace('text-primary', 'text-slate-400'));
+            const activeMobile = document.querySelector(`.nav-btn-mobile[data-tab="${tabId}"]`);
+            if(activeMobile) activeMobile.classList.replace('text-slate-400', 'text-primary');
+
+            document.getElementById('floatingInput').style.display = (tabId === 'list') ? 'block' : 'none';
+        }
+
+        // SHOPPING LOGIC
+        async function addItem() {
+            const name = document.getElementById('itemName').value;
+            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+            const qty = parseInt(document.getElementById('itemQty').value) || 1;
+            const cat = document.getElementById('itemCategory').value;
+            if (name) {
+                const current = state.lists[state.currentListId] || { items: [] };
+                current.items.push({ name, qty, price, category: cat, completed: false, id: Date.now() });
+                await db.collection("shoppingLists").doc(state.currentListId).set(current);
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemPrice').value = '';
+                document.getElementById('itemName').focus();
+            }
+        }
+
+        async function editItemValue(id) {
+            const current = state.lists[state.currentListId];
+            const item = current.items.find(i => i.id === id);
+            if (!item) return;
+            const nName = prompt("Edit Name:", item.name);
+            if (nName === null) return;
+            const nPrice = prompt("Edit Price:", item.price);
+            const nQty = prompt("Edit Qty:", item.qty);
+            item.name = nName || item.name;
+            item.price = parseFloat(nPrice) || 0;
+            item.qty = parseInt(nQty) || 1;
+            await db.collection("shoppingLists").doc(state.currentListId).set(current);
+        }
+
+        async function toggleItem(id) {
+            const current = state.lists[state.currentListId];
+            const item = current.items.find(i => i.id === id);
+            item.completed = !item.completed;
+            await db.collection("shoppingLists").doc(state.currentListId).set(current);
+        }
+
+        async function deleteItem(id) {
+            if(!confirm("Delete?")) return;
+            const current = state.lists[state.currentListId];
+            current.items = current.items.filter(i => i.id !== id);
+            await db.collection("shoppingLists").doc(state.currentListId).set(current);
+        }
+
+        // RECIPE LOGIC
         function openRecipeModal() { document.getElementById('recipeModal').classList.remove('hidden'); }
         function closeRecipeModal() { document.getElementById('recipeModal').classList.add('hidden'); }
 
         async function saveManualRecipe() {
             const title = document.getElementById('recTitle').value;
-            const time = document.getElementById('recTime').value;
-            const ingredsRaw = document.getElementById('recIngreds').value.split('\n');
             const file = document.getElementById('recImage').files[0];
+            let url = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500";
             
-            let imageUrl = "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=400";
-            
-            if (file) {
-                const storageRef = storage.ref(`recipes/${Date.now()}_${file.name}`);
-                await storageRef.put(file);
-                imageUrl = await storageRef.getDownloadURL();
+            if(file) {
+                const ref = storage.ref(`recipes/${Date.now()}_${file.name}`);
+                await ref.put(file);
+                url = await ref.getDownloadURL();
             }
 
-            const newRecipe = {
+            await db.collection("recipes").add({
                 id: Date.now(),
                 title,
-                time,
-                ingredients: ingredsRaw.filter(i => i.trim() !== ""),
-                image: imageUrl
-            };
-
-            await db.collection("recipes").add(newRecipe);
+                time: document.getElementById('recTime').value || "15m",
+                image: url,
+                ingredients: document.getElementById('recIngreds').value.split('\n').filter(i => i.trim())
+            });
             closeRecipeModal();
         }
 
-        // DISCOVERY: Uses TheMealDB (Open Source Recipe API)
         async function discoverRecipes() {
-            const query = document.getElementById('recipeSearch').value;
-            if(!query) return;
-            
-            const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${query}`);
+            const q = document.getElementById('recipeSearch').value;
+            const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${q}`);
             const data = await res.json();
-            
             if(data.meals) {
-                const meal = data.meals[0]; // Take first result
-                // Map API format to our app format
-                const ingredients = [];
-                for(let i=1; i<=20; i++) {
-                    if(meal[`strIngredient${i}`]) {
-                        ingredients.push(`${meal[`strMeasure${i}`]} ${meal[`strIngredient${i}`]}`);
-                    }
-                }
-                
-                const newRecipe = {
-                    id: Date.now(),
-                    title: meal.strMeal,
-                    time: "N/A",
-                    ingredients,
-                    image: meal.strMealThumb
-                };
-                
-                if(confirm(`Found ${meal.strMeal}! Save to your cookbook?`)) {
-                    await db.collection("recipes").add(newRecipe);
-                }
-            } else {
-                alert("No recipes found on the web for that.");
+                const m = data.meals[0];
+                const ingreds = [];
+                for(let i=1; i<=20; i++) if(m[`strIngredient${i}`]) ingreds.push(`${m[`strMeasure${i}`]} ${m[`strIngredient${i}`]}`);
+                await db.collection("recipes").add({ id: Date.now(), title: m.strMeal, time: "Web", image: m.strMealThumb, ingredients: ingreds });
             }
         }
 
-        async function addRecipeIngredientsToShopping(recipeId) {
-            const recipe = state.recipes.find(r => r.id === recipeId);
+        async function recipeToShop(id) {
+            const rec = state.recipes.find(r => r.id === id);
             const current = state.lists[state.currentListId] || { items: [] };
-            
-            recipe.ingredients.forEach(line => {
-                // Basic parsing: split "2x Eggs" or "1 cup milk"
-                current.items.push({
-                    id: Date.now() + Math.random(),
-                    name: line,
-                    qty: 1,
-                    price: 0,
-                    category: 'General',
-                    completed: false
-                });
-            });
-            
+            rec.ingredients.forEach(ing => current.items.push({ name: ing, qty: 1, price: 0, category: 'Pantry', completed: false, id: Date.now() + Math.random() }));
             await db.collection("shoppingLists").doc(state.currentListId).set(current);
             showTab('list');
         }
 
-        // --- Core UI & Sync ---
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.replace('text-primary', 'text-gray-400'));
-            document.querySelector(`[data-tab="${tabId}"]`).classList.replace('text-gray-400', 'text-primary');
-            document.getElementById('headerContext').innerText = tabId.charAt(0).toUpperCase() + tabId.slice(1);
-        }
+        // RENDERERS
+        function render() {
+            const current = state.lists[state.currentListId] || { items: [] };
+            
+            // List Selector
+            const sel = document.getElementById('listSelector');
+            sel.innerHTML = Object.keys(state.lists).map(id => `<option value="${id}" ${id === state.currentListId ? 'selected' : ''}>${id}</option>`).join('');
 
-        function fetchFromCloud() {
-            // Sync Shopping Lists
-            db.collection("shoppingLists").onSnapshot((snapshot) => {
-                state.lists = {};
-                snapshot.forEach(doc => state.lists[doc.id] = doc.data());
-                renderShopping();
-            });
-
-            // Sync Recipes
-            db.collection("recipes").onSnapshot((snapshot) => {
-                state.recipes = [];
-                snapshot.forEach(doc => state.recipes.push(doc.data()));
-                renderRecipes();
-            });
-        }
-
-        function renderRecipes() {
-            const container = document.getElementById('recipeContainer');
-            container.innerHTML = state.recipes.map(r => `
-                <div class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm">
-                    <img src="${r.image}" class="w-full h-32 object-cover">
-                    <div class="p-4">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <h4 class="font-bold leading-tight">${r.title}</h4>
-                                <span class="text-[10px] text-gray-400 font-black uppercase">⏱ ${r.time}</span>
+            // Shopping List (Grouped)
+            const cont = document.getElementById('shoppingItemsContainer');
+            cont.innerHTML = '';
+            const groups = current.items.reduce((acc, i) => { (acc[i.category] = acc[i.category] || []).push(i); return acc; }, {});
+            
+            Object.keys(groups).sort().forEach(cat => {
+                cont.innerHTML += `<div class="pt-2"><h4 class="text-[10px] font-black text-primary uppercase tracking-widest mb-4">${cat}</h4><div class="space-y-3">${groups[cat].map(i => `
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border dark:border-slate-800 flex justify-between items-center shadow-sm ${i.completed ? 'opacity-30' : ''}">
+                        <div class="flex items-center gap-4">
+                            <input type="checkbox" ${i.completed ? 'checked' : ''} onclick="toggleItem(${i.id})" class="h-5 w-5 rounded border-primary text-primary focus:ring-0">
+                            <div onclick="editItemValue(${i.id})" class="cursor-pointer">
+                                <p class="font-bold text-sm ${i.completed ? 'line-through' : ''}">${i.name}</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">QTY: ${i.qty} • $${(i.price * i.qty).toFixed(2)}</p>
                             </div>
-                            <button onclick="addRecipeIngredientsToShopping(${r.id})" class="text-primary border border-primary/20 p-2 rounded-xl">
-                                <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
-                            </button>
                         </div>
-                        <div class="text-[10px] text-gray-500 line-clamp-2">${r.ingredients.join(', ')}</div>
+                        <button onclick="deleteItem(${i.id})" class="text-slate-300 hover:text-red-500"><span class="material-symbols-outlined text-lg">delete</span></button>
                     </div>
-                </div>
-            `).join('');
-        }
-
-        // (Previous Shopping List logic integrated here)
-        async function addItem() {
-            const name = document.getElementById('itemName').value;
-            if (!name) return;
-            const current = state.lists[state.currentListId] || { items: [] };
-            current.items.push({
-                id: Date.now(),
-                name: name,
-                qty: parseInt(document.getElementById('itemQty').value) || 1,
-                price: parseFloat(document.getElementById('itemPrice').value) || 0,
-                category: document.getElementById('itemCategory').value,
-                completed: false
+                `).join('')}</div></div>`;
             });
-            await db.collection("shoppingLists").doc(state.currentListId).set(current);
-            document.getElementById('itemName').value = '';
-        }
 
-        function renderShopping() {
-            const current = state.lists[state.currentListId] || { items: [] };
-            const container = document.getElementById('shoppingItemsContainer');
-            const groups = current.items.reduce((acc, i) => {
-                (acc[i.category] = acc[i.category] || []).push(i);
-                return acc;
-            }, {});
-
-            container.innerHTML = Object.keys(groups).sort().map(cat => `
-                <div>
-                    <h5 class="text-[10px] font-black text-primary uppercase mb-3 tracking-widest">${cat}</h5>
-                    <div class="space-y-2">
-                        ${groups[cat].map(i => `
-                            <div class="bg-white dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-800 flex justify-between items-center ${i.completed ? 'opacity-30' : ''}">
-                                <div class="flex gap-3">
-                                    <input type="checkbox" ${i.completed ? 'checked' : ''} onclick="toggleItem(${i.id})" class="rounded border-primary text-primary">
-                                    <span class="text-sm font-bold">${i.name} (x${i.qty})</span>
-                                </div>
-                                <span class="text-xs font-mono">$${(i.qty * i.price).toFixed(2)}</span>
-                            </div>
-                        `).join('')}
+            // Recipes
+            document.getElementById('recipeContainer').innerHTML = state.recipes.map(r => `
+                <div class="bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden border dark:border-slate-800 group shadow-sm">
+                    <img src="${r.image}" class="h-40 w-full object-cover group-hover:scale-110 transition-transform">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-sm">${r.title}</h4>
+                            <button onclick="recipeToShop(${r.id})" class="text-primary"><span class="material-symbols-outlined">add_shopping_cart</span></button>
+                        </div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">⏱ ${r.time} • ${r.ingredients.length} items</p>
                     </div>
                 </div>
             `).join('');
-            
-            const total = current.items.reduce((s, i) => s + (i.price * i.qty), 0);
+
+            // Stats
+            const total = current.items.reduce((s, i) => s + (i.qty * i.price), 0);
             document.getElementById('statsTotal').innerText = `$${total.toFixed(2)}`;
-            
-            const selector = document.getElementById('listSelector');
-            selector.innerHTML = Object.keys(state.lists).map(id => `<option value="${id}" ${id === state.currentListId ? 'selected' : ''}>${id}</option>`).join('');
+            document.getElementById('statsCount').innerText = current.items.length;
+            document.getElementById('statsDone').innerText = current.items.filter(i => i.completed).length;
         }
 
-        async function toggleItem(id) {
-            const current = state.lists[state.currentListId];
-            const i = current.items.find(x => x.id === id);
-            i.completed = !i.completed;
-            await db.collection("shoppingLists").doc(state.currentListId).set(current);
-        }
-
-        function switchList() { state.currentListId = document.getElementById('listSelector').value; renderShopping(); }
-        window.onload = () => { applyTheme(); fetchFromCloud(); };
-        function applyTheme() { if(localStorage.getItem('appTheme') === 'dark') document.documentElement.classList.add('dark'); }
-        function toggleTheme() { document.documentElement.classList.toggle('dark'); localStorage.setItem('appTheme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); }
+        function switchList() { state.currentListId = document.getElementById('listSelector').value; render(); }
+        async function createNewList() { const n = prompt("Name:"); if(n) { await db.collection("shoppingLists").doc(n).set({ items: [] }); state.currentListId = n; } }
         function shareList() { navigator.clipboard.writeText(window.location.href + "?list=" + state.currentListId); alert("Link Copied!"); }
+
+        window.onload = () => {
+            applyTheme();
+            const urlParams = new URLSearchParams(window.location.search);
+            if(urlParams.get('list')) state.currentListId = urlParams.get('list');
+            
+            db.collection("shoppingLists").onSnapshot(s => { s.forEach(doc => state.lists[doc.id] = doc.data()); render(); });
+            db.collection("recipes").onSnapshot(s => { state.recipes = []; s.forEach(doc => state.recipes.push(doc.data())); render(); });
+        };
     </script>
 </body>
 </html>
