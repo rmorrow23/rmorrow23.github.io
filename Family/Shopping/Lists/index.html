@@ -27,7 +27,6 @@
     </script>
     <style>
         ::-webkit-scrollbar { display: none; }
-        body { -webkit-tap-highlight-color: transparent; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         @media (min-width: 1024px) {
@@ -38,10 +37,8 @@
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 transition-colors duration-300">
     
     <div class="desktop-grid min-h-screen">
-        
         <aside class="hidden lg:flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 sticky top-0 h-screen">
             <h1 class="text-xl font-black text-primary mb-10 tracking-tighter italic">GOURMET MANAGER</h1>
-            
             <nav class="space-y-2 flex-1">
                 <button onclick="showTab('list')" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-primary bg-primary/10 font-bold" data-tab="list">
                     <span class="material-symbols-outlined">format_list_bulleted</span> Shopping List
@@ -53,14 +50,12 @@
                     <span class="material-symbols-outlined">analytics</span> Statistics
                 </button>
             </nav>
-
             <button onclick="toggleTheme()" class="mt-auto flex items-center gap-3 p-3 text-slate-400 font-bold">
                 <span id="themeIconDesktop" class="material-symbols-outlined">dark_mode</span> Appearance
             </button>
         </aside>
 
         <div class="relative flex flex-col h-screen overflow-hidden">
-            
             <header class="p-6 lg:px-10 flex justify-between items-center bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md z-20">
                 <div>
                     <span class="text-[10px] font-black uppercase text-[#4c9a59] tracking-[0.2em]">Shopping List Manager</span>
@@ -69,17 +64,15 @@
                         <button onclick="shareList()" class="text-slate-400 hover:text-primary"><span class="material-symbols-outlined">share</span></button>
                     </div>
                 </div>
-                <button onclick="createNewList()" class="px-5 py-2 bg-primary text-black font-black text-[10px] uppercase rounded-full shadow-lg hover:scale-105 transition-transform">
+                <button onclick="createNewList()" class="px-5 py-2 bg-primary text-black font-black text-[10px] uppercase rounded-full shadow-lg">
                     + New List
                 </button>
             </header>
 
             <main class="flex-1 overflow-y-auto px-6 lg:px-10 pb-64">
-                
                 <div id="tab-list" class="tab-content active space-y-6 max-w-4xl">
                     <div id="shoppingItemsContainer" class="space-y-6"></div>
                 </div>
-
                 <div id="tab-recipes" class="tab-content space-y-6">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <h2 class="text-2xl font-bold">Cookbook</h2>
@@ -91,21 +84,10 @@
                     </div>
                     <div id="recipeContainer" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"></div>
                 </div>
-
                 <div id="tab-stats" class="tab-content pt-10">
                     <div class="max-w-xl mx-auto bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] text-center shadow-xl border border-slate-100 dark:border-slate-800">
                         <h3 class="text-slate-400 text-xs font-black uppercase tracking-widest mb-4">Current Subtotal</h3>
                         <p id="statsTotal" class="text-6xl font-black text-primary">$0.00</p>
-                        <div class="grid grid-cols-2 gap-4 mt-8">
-                            <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                                <span class="text-[10px] uppercase font-bold text-slate-400">Total Items</span>
-                                <p id="statsCount" class="text-xl font-bold">0</p>
-                            </div>
-                            <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                                <span class="text-[10px] uppercase font-bold text-slate-400">Checked Off</span>
-                                <p id="statsDone" class="text-xl font-bold">0</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </main>
@@ -114,7 +96,7 @@
                 <div class="max-w-3xl mx-auto bg-white dark:bg-slate-900 p-4 rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800">
                     <div class="flex flex-col gap-3">
                         <div class="flex gap-2">
-                            <input id="itemName" class="flex-1 bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 text-sm focus:ring-primary/20" placeholder="Item Name..."/>
+                            <input id="itemName" class="flex-1 bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 text-sm" placeholder="Item Name..."/>
                             <select id="itemCategory" class="w-28 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-[10px] font-bold uppercase text-slate-500">
                                 <option value="General">General</option>
                                 <option value="Produce">Produce</option>
@@ -125,11 +107,9 @@
                             </select>
                         </div>
                         <div class="flex gap-2 items-center">
-                            <input id="itemQty" type="number" value="1" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm text-center p-3" placeholder="Qty"/>
+                            <input id="itemQty" type="number" value="1" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm text-center p-3"/>
                             <input id="itemPrice" type="number" step="0.01" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm text-center p-3" placeholder="$ Price"/>
-                            <button onclick="addItem()" class="w-full bg-primary text-black font-black uppercase text-xs tracking-widest py-3 rounded-xl hover:scale-[1.02] transition-transform">
-                                Add to List
-                            </button>
+                            <button onclick="addItem()" class="w-full bg-primary text-black font-black uppercase text-xs tracking-widest py-3 rounded-xl">Add to List</button>
                         </div>
                     </div>
                 </div>
@@ -147,10 +127,8 @@
     <div id="recipeModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8 space-y-4">
             <h4 class="font-bold text-xl">New Recipe</h4>
-            <input id="recTitle" type="text" placeholder="Title" class="w-full rounded-xl border-none bg-slate-100 dark:bg-slate-800">
-            <input id="recTime" type="text" placeholder="Cook Time (e.g. 20m)" class="w-full rounded-xl border-none bg-slate-100 dark:bg-slate-800">
-            <textarea id="recIngreds" placeholder="Ingredients (One per line)" class="w-full rounded-xl border-none bg-slate-100 dark:bg-slate-800 h-32"></textarea>
-            <input type="file" id="recImage" class="text-xs text-slate-400">
+            <input id="recTitle" type="text" placeholder="Title" class="w-full rounded-xl border-none bg-slate-100 dark:bg-slate-800 p-3">
+            <textarea id="recIngreds" placeholder="Ingredients (One per line)" class="w-full rounded-xl border-none bg-slate-100 dark:bg-slate-800 h-32 p-3"></textarea>
             <div class="flex gap-2 pt-4">
                 <button onclick="closeRecipeModal()" class="flex-1 py-3 text-slate-400 font-bold uppercase text-[10px]">Cancel</button>
                 <button onclick="saveManualRecipe()" class="flex-1 py-3 bg-primary text-black font-black rounded-xl uppercase text-[10px]">Save Recipe</button>
@@ -159,7 +137,6 @@
     </div>
 
     <script>
-        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyAyWD_KLFAVDOFW7FyHPHYGG1gge2go2AY",
             authDomain: "morrow-industries.firebaseapp.com",
@@ -171,189 +148,110 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const storage = firebase.storage();
         let state = { currentListId: 'Groceries', lists: {}, recipes: [] };
 
-        // THEME
-        function applyTheme() {
-            const saved = localStorage.getItem('appTheme') || 'light';
-            document.documentElement.classList.toggle('dark', saved === 'dark');
-        }
-        function toggleTheme() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('appTheme', isDark ? 'dark' : 'light');
+        // --- Core Fix: Deep Clone Helper ---
+        function getCleanList() {
+            return JSON.parse(JSON.stringify(state.lists[state.currentListId] || { items: [] }));
         }
 
-        // TABS
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-            
-            // Sidebar UI
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('text-primary', 'bg-primary/10');
-                btn.classList.add('text-slate-400');
-            });
-            const activeSidebar = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
-            if(activeSidebar) activeSidebar.classList.add('text-primary', 'bg-primary/10');
-
-            // Mobile UI
-            document.querySelectorAll('.nav-btn-mobile').forEach(btn => btn.classList.replace('text-primary', 'text-slate-400'));
-            const activeMobile = document.querySelector(`.nav-btn-mobile[data-tab="${tabId}"]`);
-            if(activeMobile) activeMobile.classList.replace('text-slate-400', 'text-primary');
-
-            document.getElementById('floatingInput').style.display = (tabId === 'list') ? 'block' : 'none';
+        async function toggleItem(id) {
+            const current = getCleanList();
+            const item = current.items.find(i => i.id === id);
+            if (item) {
+                item.completed = !item.completed;
+                await db.collection("shoppingLists").doc(state.currentListId).set(current);
+            }
         }
 
-        // SHOPPING LOGIC
+        async function editItemValue(id) {
+            const current = getCleanList();
+            const item = current.items.find(i => i.id === id);
+            if (!item) return;
+
+            const nName = prompt("Edit Name:", item.name);
+            if (nName === null) return;
+            const nPrice = prompt("Edit Price:", item.price);
+            const nQty = prompt("Edit Qty:", item.qty);
+
+            item.name = nName || item.name;
+            item.price = parseFloat(nPrice) || 0;
+            item.qty = parseInt(nQty) || 1;
+
+            await db.collection("shoppingLists").doc(state.currentListId).set(current);
+        }
+
         async function addItem() {
             const name = document.getElementById('itemName').value;
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
             const qty = parseInt(document.getElementById('itemQty').value) || 1;
             const cat = document.getElementById('itemCategory').value;
             if (name) {
-                const current = state.lists[state.currentListId] || { items: [] };
+                const current = getCleanList();
                 current.items.push({ name, qty, price, category: cat, completed: false, id: Date.now() });
                 await db.collection("shoppingLists").doc(state.currentListId).set(current);
                 document.getElementById('itemName').value = '';
                 document.getElementById('itemPrice').value = '';
-                document.getElementById('itemName').focus();
             }
-        }
-
-        async function editItemValue(id) {
-            const current = state.lists[state.currentListId];
-            const item = current.items.find(i => i.id === id);
-            if (!item) return;
-            const nName = prompt("Edit Name:", item.name);
-            if (nName === null) return;
-            const nPrice = prompt("Edit Price:", item.price);
-            const nQty = prompt("Edit Qty:", item.qty);
-            item.name = nName || item.name;
-            item.price = parseFloat(nPrice) || 0;
-            item.qty = parseInt(nQty) || 1;
-            await db.collection("shoppingLists").doc(state.currentListId).set(current);
-        }
-
-        async function toggleItem(id) {
-            const current = state.lists[state.currentListId];
-            const item = current.items.find(i => i.id === id);
-            item.completed = !item.completed;
-            await db.collection("shoppingLists").doc(state.currentListId).set(current);
         }
 
         async function deleteItem(id) {
             if(!confirm("Delete?")) return;
-            const current = state.lists[state.currentListId];
+            const current = getCleanList();
             current.items = current.items.filter(i => i.id !== id);
             await db.collection("shoppingLists").doc(state.currentListId).set(current);
         }
 
-        // RECIPE LOGIC
-        function openRecipeModal() { document.getElementById('recipeModal').classList.remove('hidden'); }
-        function closeRecipeModal() { document.getElementById('recipeModal').classList.add('hidden'); }
-
-        async function saveManualRecipe() {
-            const title = document.getElementById('recTitle').value;
-            const file = document.getElementById('recImage').files[0];
-            let url = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500";
-            
-            if(file) {
-                const ref = storage.ref(`recipes/${Date.now()}_${file.name}`);
-                await ref.put(file);
-                url = await ref.getDownloadURL();
-            }
-
-            await db.collection("recipes").add({
-                id: Date.now(),
-                title,
-                time: document.getElementById('recTime').value || "15m",
-                image: url,
-                ingredients: document.getElementById('recIngreds').value.split('\n').filter(i => i.trim())
-            });
-            closeRecipeModal();
-        }
-
-        async function discoverRecipes() {
-            const q = document.getElementById('recipeSearch').value;
-            const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${q}`);
-            const data = await res.json();
-            if(data.meals) {
-                const m = data.meals[0];
-                const ingreds = [];
-                for(let i=1; i<=20; i++) if(m[`strIngredient${i}`]) ingreds.push(`${m[`strMeasure${i}`]} ${m[`strIngredient${i}`]}`);
-                await db.collection("recipes").add({ id: Date.now(), title: m.strMeal, time: "Web", image: m.strMealThumb, ingredients: ingreds });
-            }
-        }
-
-        async function recipeToShop(id) {
-            const rec = state.recipes.find(r => r.id === id);
-            const current = state.lists[state.currentListId] || { items: [] };
-            rec.ingredients.forEach(ing => current.items.push({ name: ing, qty: 1, price: 0, category: 'Pantry', completed: false, id: Date.now() + Math.random() }));
-            await db.collection("shoppingLists").doc(state.currentListId).set(current);
-            showTab('list');
-        }
-
-        // RENDERERS
+        // --- Render Logic ---
         function render() {
             const current = state.lists[state.currentListId] || { items: [] };
-            
-            // List Selector
             const sel = document.getElementById('listSelector');
             sel.innerHTML = Object.keys(state.lists).map(id => `<option value="${id}" ${id === state.currentListId ? 'selected' : ''}>${id}</option>`).join('');
 
-            // Shopping List (Grouped)
             const cont = document.getElementById('shoppingItemsContainer');
             cont.innerHTML = '';
-            const groups = current.items.reduce((acc, i) => { (acc[i.category] = acc[i.category] || []).push(i); return acc; }, {});
+            const groups = (current.items || []).reduce((acc, i) => { (acc[i.category] = acc[i.category] || []).push(i); return acc; }, {});
             
             Object.keys(groups).sort().forEach(cat => {
-                cont.innerHTML += `<div class="pt-2"><h4 class="text-[10px] font-black text-primary uppercase tracking-widest mb-4">${cat}</h4><div class="space-y-3">${groups[cat].map(i => `
+                let itemsHtml = groups[cat].map(i => `
                     <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border dark:border-slate-800 flex justify-between items-center shadow-sm ${i.completed ? 'opacity-30' : ''}">
-                        <div class="flex items-center gap-4">
-                            <input type="checkbox" ${i.completed ? 'checked' : ''} onclick="toggleItem(${i.id})" class="h-5 w-5 rounded border-primary text-primary focus:ring-0">
-                            <div onclick="editItemValue(${i.id})" class="cursor-pointer">
-                                <p class="font-bold text-sm ${i.completed ? 'line-through' : ''}">${i.name}</p>
+                        <div class="flex items-center gap-4 flex-1">
+                            <input type="checkbox" ${i.completed ? 'checked' : ''} onchange="toggleItem(${i.id})" class="h-5 w-5 rounded border-primary text-primary focus:ring-0 cursor-pointer">
+                            <div onclick="editItemValue(${i.id})" class="cursor-pointer flex-1">
+                                <p class="font-bold text-sm ${i.completed ? 'line-through decoration-primary' : ''}">${i.name}</p>
                                 <p class="text-[10px] text-slate-400 font-bold uppercase">QTY: ${i.qty} • $${(i.price * i.qty).toFixed(2)}</p>
                             </div>
                         </div>
-                        <button onclick="deleteItem(${i.id})" class="text-slate-300 hover:text-red-500"><span class="material-symbols-outlined text-lg">delete</span></button>
+                        <button onclick="deleteItem(${i.id})" class="text-slate-300 hover:text-red-500 ml-4"><span class="material-symbols-outlined text-lg">delete</span></button>
                     </div>
-                `).join('')}</div></div>`;
+                `).join('');
+
+                cont.innerHTML += `<div class="pt-2"><h4 class="text-[10px] font-black text-primary uppercase tracking-widest mb-4 ml-2">${cat}</h4><div class="space-y-3">${itemsHtml}</div></div>`;
             });
 
-            // Recipes
-            document.getElementById('recipeContainer').innerHTML = state.recipes.map(r => `
-                <div class="bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden border dark:border-slate-800 group shadow-sm">
-                    <img src="${r.image}" class="h-40 w-full object-cover group-hover:scale-110 transition-transform">
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-bold text-sm">${r.title}</h4>
-                            <button onclick="recipeToShop(${r.id})" class="text-primary"><span class="material-symbols-outlined">add_shopping_cart</span></button>
-                        </div>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">⏱ ${r.time} • ${r.ingredients.length} items</p>
-                    </div>
-                </div>
-            `).join('');
-
-            // Stats
-            const total = current.items.reduce((s, i) => s + (i.qty * i.price), 0);
+            const total = (current.items || []).reduce((s, i) => s + (i.qty * i.price), 0);
             document.getElementById('statsTotal').innerText = `$${total.toFixed(2)}`;
-            document.getElementById('statsCount').innerText = current.items.length;
-            document.getElementById('statsDone').innerText = current.items.filter(i => i.completed).length;
+        }
+
+        // --- Theme/Tabs/Init (Standard) ---
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('text-primary', 'bg-primary/10'));
+            const activeSidebar = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
+            if(activeSidebar) activeSidebar.classList.add('text-primary', 'bg-primary/10');
+            document.getElementById('floatingInput').style.display = (tabId === 'list') ? 'block' : 'none';
         }
 
         function switchList() { state.currentListId = document.getElementById('listSelector').value; render(); }
         async function createNewList() { const n = prompt("Name:"); if(n) { await db.collection("shoppingLists").doc(n).set({ items: [] }); state.currentListId = n; } }
+        function toggleTheme() { document.documentElement.classList.toggle('dark'); }
         function shareList() { navigator.clipboard.writeText(window.location.href + "?list=" + state.currentListId); alert("Link Copied!"); }
 
         window.onload = () => {
-            applyTheme();
             const urlParams = new URLSearchParams(window.location.search);
             if(urlParams.get('list')) state.currentListId = urlParams.get('list');
-            
             db.collection("shoppingLists").onSnapshot(s => { s.forEach(doc => state.lists[doc.id] = doc.data()); render(); });
-            db.collection("recipes").onSnapshot(s => { state.recipes = []; s.forEach(doc => state.recipes.push(doc.data())); render(); });
         };
     </script>
 </body>
