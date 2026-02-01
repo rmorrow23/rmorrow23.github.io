@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Family Shopping — Morrow Industries</title>
+
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300,1&display=swap" rel="stylesheet"/>
+
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        primary: "#d4af35",
+        bg: "#121212",
+        card: "rgba(40,37,26,.6)"
+      },
+      fontFamily: { display: ["Manrope", "sans-serif"] }
+    }
+  }
+}
+</script>
+
+<style>
+.glass {
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(212,175,53,.15);
+}
+</style>
+</head>
+
+<body class="bg-bg text-white font-display">
+
+<header class="sticky top-0 z-30 p-6 bg-bg/80 backdrop-blur">
+  <h1 class="text-2xl font-extrabold">Family Shopping</h1>
+  <p class="text-xs uppercase tracking-widest text-primary">Morrow Industries</p>
+</header>
+
+<main id="list" class="px-6 pb-40 space-y-3"></main>
+
+<!-- FAB -->
+<button id="fab"
+  class="fixed bottom-24 right-6 size-16 bg-primary rounded-full text-bg shadow-xl flex items-center justify-center">
+  <span class="material-symbols-outlined text-3xl">add</span>
+</button>
+
+<!-- Bottom Sheet -->
+<div id="sheet" class="fixed inset-0 bg-black/60 hidden z-50 flex items-end">
+  <div class="bg-bg w-full rounded-t-3xl p-6 glass">
+    <div class="w-12 h-1 bg-white/20 rounded-full mx-auto mb-6"></div>
+
+    <input id="itemName" placeholder="Item name"
+      class="w-full rounded-xl bg-card p-4 mb-4"/>
+
+    <div class="flex gap-2 mb-4">
+      <button class="cat active" data-cat="Groceries">Groceries</button>
+      <button class="cat" data-cat="Household">Household</button>
+      <button class="cat" data-cat="Pantry">Pantry</button>
+      <button class="cat" data-cat="Bakery">Bakery</button>
+    </div>
+
+    <div class="flex items-center justify-between bg-card p-4 rounded-xl mb-4">
+      <span class="uppercase text-xs tracking-widest">Quantity</span>
+      <div class="flex items-center gap-4">
+        <button id="qtyMinus">−</button>
+        <span id="qty">1</span>
+        <button id="qtyPlus">+</button>
+      </div>
+    </div>
+
+    <button id="addItem"
+      class="w-full bg-primary text-bg py-4 rounded-xl font-extrabold tracking-widest">
+      Add to List
+    </button>
+  </div>
+</div>
+
+<script type="module">
+import {
+  db,
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp
+} from "../../assets/js/firebase-init.js";
+
+/* ---------- STATE ---------- */
+let qty = 1;
+let category = "Groceries";
+
+/* ---------- ELEMENTS ---------- */
+const list = document.getElementById("list");
+const fab = document.getElementById("fab");
+const sheet = document.getElementById("sheet");
+const nameInput = document.getElementById("itemName");
+const qtyEl = document.getElementById("qty");
+
+/* ---------- OPEN / CLOSE ---------- */
+fab.onclick = () => sheet.classList.remove("hidden");
+sheet.onclick = e => e.target === sheet && sheet.classList.add("hidden");
+
+/* ---------- QUANTITY ---------- */
+document.getElementById("qtyMinus").onclick = () => {
+  qty = Math.max(1, qty - 1);
+  qtyEl.textContent = qty;
+};
+document.getElementById("qtyPlus").onclick = () => {
+  qty++;
+  qtyEl.textContent = qty;
+};
+
+/* ---------- CATEGORY ---------- */
+document.querySelectorAll(".cat").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".cat").forEach(b => b.classList.remove("bg-primary","text-bg"));
+    btn.classList.add("bg-primary","text-bg");
+    category = btn.dataset.cat;
+  };
+});
+
+/* ---------- ADD ITEM ---------- */
+document.getElementById("addItem").onclick = async () => {
+  if (!nameInput.value.trim()) return;
+
+  await addDoc(collection(db,"shoppingList"),{
+    name: nameInput.value,
+    quantity: qty,
+    category,
+    status: "active",
+    addedAt: serverTimestamp(),
+    boughtAt: null
+  });
+
+  nameInput.value = "";
+  qty = 1;
+  qtyEl.textContent = 1;
+  sheet.classList.add("hidden");
+};
+
+/* ---------- LIVE LIST ---------- */
+const q = query(collection(db,"shoppingList"), orderBy("addedAt"));
+
+onSnapshot(q, snap => {
+  list.innerHTML = "";
+  snap.forEach(d => {
+    const item = d.data();
+    const el = document.createElement("div");
+
+    el.className = `glass p-4 rounded-xl flex justify-between items-center ${item.status==="bought"?"opacity-50":""}`;
+    el.innerHTML = `
+      <div>
+        <p class="font-semibold ${item.status==="bought"?"line-through":""}">
+          ${item.name}
+        </p>
+        <p class="text-xs uppercase opacity-70">
+          ${item.quantity} • ${item.category}
+        </p>
+      </div>
+      <button class="text-primary text-xs font-bold uppercase">
+        ${item.status==="bought"?"Undo":"Bought"}
+      </button>
+    `;
+
+    el.querySelector("button").onclick = () =>
+      updateDoc(doc(db,"shoppingList",d.id),{
+        status: item.status==="active"?"bought":"active",
+        boughtAt: item.status==="active"?serverTimestamp():null
+      });
+
+    list.appendChild(el);
+  });
+});
+</script>
+
+</body>
+</html>
