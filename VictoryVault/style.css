@@ -74,7 +74,9 @@ body {
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     box-sizing: border-box; /* Ensures padding doesn't push width over 90% */
 }
-
+.logo-area{
+    border-radius: 50%
+}
 .logo {
     aspect-ratio: 1/1;
     width: 15rem;
