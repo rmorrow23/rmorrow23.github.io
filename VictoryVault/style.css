@@ -140,3 +140,7 @@ footer {
 .cta-section{
     display:none;
 }
+.logo{
+    aspect-ratio: 1/1;
+    width: 25%;
+}
