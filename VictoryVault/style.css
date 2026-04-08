@@ -5,23 +5,31 @@
     --text-dim: #9aa0a6;
 }
 
+/* 1. LOCK THE VIEWPORT & CENTER THE CONTENT */
 body {
     margin: 0;
     padding: 0;
     background-color: var(--bg-dark);
     font-family: 'Inter', sans-serif;
     color: white;
-    min-height: 100vh; /* Changed to min-height for better scrolling if needed */
+    
+    /* Perfect Centering Logic */
+    height: 100vh;
+    width: 100vw;
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
-    position: relative;
+    
+    /* Disable Zoom/Scroll/Bouncing */
+    overflow: hidden; 
+    touch-action: none; 
+    overscroll-behavior: none;
+    position: fixed; 
 }
 
-/* Breathing Glow Animations */
+/* 2. BREATHING GLOW BACKGROUNDS */
 .glow-container {
-    position: fixed; /* Fixed to keep them in background while centering */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
@@ -57,7 +65,7 @@ body {
     to { opacity: 0.4; transform: scale(1.2); }
 }
 
-/* The Card */
+/* 3. THE MAIN GLASS CARD */
 .card {
     background: var(--glass);
     backdrop-filter: blur(20px);
@@ -66,27 +74,41 @@ body {
     border-radius: 24px;
     padding: 40px;
     
-    /* Responsive Width Logic */
+    /* Responsive Width */
     width: 90%; 
-    max-width: 800px; /* Increased max-width so it feels large but doesn't hit screen edges on desktop */
+    max-width: 800px; 
     
     text-align: center;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    box-sizing: border-box; /* Ensures padding doesn't push width over 90% */
-}
-.logo-area{
-    border-radius: 50%
-}
-.logo {
-    aspect-ratio: 1/1;
-    width: 15rem;
-    max-width: 100%; /* Prevents logo from overflowing on small phones */
-    height: auto;
-    margin-bottom: 20px;
+    box-sizing: border-box;
 }
 
+/* 4. CIRCULAR LOGO AREA */
+.logo-area {
+    /* Adjust size as needed, using clamp for fluid scaling */
+    width: clamp(150px, 40vw, 240px); 
+    aspect-ratio: 1 / 1;
+    
+    margin: 0 auto 30px auto;
+    border-radius: 50%; /* Makes it a circle */
+    overflow: hidden;    /* Clips the square image/background inside */
+    
+    background-color: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the logo fills the circle */
+    display: block;
+}
+
+/* 5. TYPOGRAPHY & COMPONENTS */
 h1 {
-    font-size: 2.5rem;
+    font-size: clamp(1.8rem, 5vw, 3rem);
     letter-spacing: 2px;
     margin: 10px 0;
     color: white;
@@ -101,7 +123,7 @@ h1 {
 .status-badge {
     display: inline-flex;
     align-items: center;
-    background: rgba(0, 255, 0, 0.1);
+    background: rgba(74, 222, 128, 0.1);
     color: #4ade80;
     padding: 6px 16px;
     border-radius: 50px;
@@ -124,8 +146,10 @@ h1 {
     color: var(--text-dim);
     line-height: 1.6;
     margin-bottom: 20px;
+    font-size: 1.1rem;
 }
 
+/* HIDDEN FOR NOW PER YOUR LOGIC */
 .cta-section {
     display: none;
 }
@@ -134,4 +158,5 @@ footer {
     margin-top: 40px;
     font-size: 0.75rem;
     color: var(--text-dim);
+    letter-spacing: 1px;
 }
