@@ -1,0 +1,581 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EchoVault Rewards System</title>
+  <style>
+    :root {
+      --bg: #07090d;
+      --bg-2: #0c1118;
+      --panel: rgba(18, 24, 34, 0.78);
+      --panel-strong: rgba(14, 19, 27, 0.92);
+      --text: #eef4ff;
+      --muted: #9fb0c7;
+      --gold: #d4af37;
+      --gold-soft: rgba(212, 175, 55, 0.18);
+      --blue: #72cfff;
+      --blue-soft: rgba(114, 207, 255, 0.16);
+      --border: rgba(255,255,255,0.08);
+      --success: #76e0b1;
+      --shadow: 0 18px 50px rgba(0,0,0,0.38);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+    }* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top center, rgba(35, 95, 155, 0.28), transparent 32%),
+    linear-gradient(180deg, #07090d 0%, #0b1017 45%, #06080b 100%);
+  min-height: 100vh;
+}
+
+.wrap {
+  width: min(1120px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 26px 0 44px;
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  background:
+    linear-gradient(180deg, rgba(16, 21, 29, 0.96), rgba(10, 14, 20, 0.92));
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: var(--shadow);
+  padding: 28px 22px 24px;
+  margin-bottom: 18px;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -30% auto auto 50%;
+  width: 420px;
+  height: 420px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(114,207,255,0.16), transparent 62%);
+  pointer-events: none;
+}
+
+.topline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+h1 {
+  margin: 16px 0 10px;
+  font-size: clamp(2rem, 4vw, 3.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+
+.lead {
+  margin: 0;
+  max-width: 780px;
+  color: var(--muted);
+  font-size: clamp(1rem, 2vw, 1.08rem);
+  line-height: 1.6;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.glass {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+}
+
+.hero-card {
+  padding: 18px;
+}
+
+.hero-card h2,
+.section h2 {
+  margin: 0 0 10px;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.hero-card p,
+.section p,
+.card p,
+li {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.metric {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.metric .label {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.metric .value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.metric .accent { color: var(--gold); }
+.metric .accent-blue { color: var(--blue); }
+.metric .accent-green { color: var(--success); }
+
+.section {
+  margin-top: 18px;
+  padding: 20px;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--gold-soft);
+  border: 1px solid rgba(212, 175, 55, 0.24);
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.card {
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.tier-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.tier {
+  position: relative;
+  overflow: hidden;
+  padding: 18px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(17,22,31,0.95), rgba(10,14,20,0.92));
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.tier::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.95;
+}
+
+.tier .name {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  font-weight: 800;
+}
+
+.tier .big {
+  margin-top: 10px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.tier ul {
+  padding-left: 18px;
+  margin: 14px 0 0;
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.step {
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  position: relative;
+}
+
+.step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  background: var(--gold-soft);
+  border: 1px solid rgba(212, 175, 55, 0.24);
+  color: var(--gold);
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.step h3 { margin: 0 0 8px; }
+
+.note {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(114,207,255,0.08);
+  border: 1px solid rgba(114,207,255,0.16);
+  color: #d9f2ff;
+}
+
+.fineprint {
+  margin-top: 14px;
+  font-size: 0.95rem;
+  color: #a8b5c7;
+}
+
+@media (max-width: 960px) {
+  .hero-grid,
+  .grid-3,
+  .tier-grid,
+  .flow {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero glass">
+      <div class="topline">EchoVault Rewards</div>
+      <h1>Built to reward loyalty, growth, and long-term players.</h1>
+      <p class="lead">
+        EchoVault rewards are designed to improve over time. Your player tier can reduce ad frequency, and as the community grows, the reward system can become more valuable too — including stronger withdrawal potential, fewer ads, and a higher coin-to-cash value.
+      </p><div class="hero-grid">
+    <div class="hero-card glass">
+      <h2>How the system is meant to grow</h2>
+      <p>
+        This is not a flat reward model. The goal is to create a system where committed players benefit more over time, while a larger user base helps unlock stronger rewards for everyone.
+      </p>
+
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="label">Ad Frequency</div>
+          <div class="value accent">Can decrease</div>
+        </div>
+        <div class="metric">
+          <div class="label">Coin Value</div>
+          <div class="value accent-blue">Can increase</div>
+        </div>
+        <div class="metric">
+          <div class="label">Withdrawals</div>
+          <div class="value accent-green">Can expand</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-card glass">
+      <h2>Simple idea</h2>
+      <p>
+        The better the ecosystem becomes, the better the player experience can become too. That includes more favorable ad pacing, stronger earning value, and more flexible reward opportunities.
+      </p>
+      <div class="note">
+        Rewards may be adjusted over time as the game, economy, and player base evolve.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section glass">
+  <div class="section-title-row">
+    <div>
+      <h2>Player tiers affect your experience</h2>
+      <p>
+        As players move upward, the experience can become more favorable. Higher tiers are intended to feel more rewarding, not more restrictive.
+      </p>
+    </div>
+    <div class="pill">Tier-based benefits</div>
+  </div>
+
+  <div class="tier-grid">
+    <article class="tier">
+      <div class="name">Base Tier</div>
+      <div class="big">Balanced access</div>
+      <ul>
+        <li>Standard reward rates</li>
+        <li>Normal ad frequency</li>
+        <li>Entry-level withdrawal rules</li>
+      </ul>
+    </article>
+
+    <article class="tier">
+      <div class="name">Mid Tier</div>
+      <div class="big">More player-friendly</div>
+      <ul>
+        <li>Less frequent ads</li>
+        <li>Improved reward efficiency</li>
+        <li>Better progression value</li>
+      </ul>
+    </article>
+
+    <article class="tier">
+      <div class="name">High Tier</div>
+      <div class="big">Best overall value</div>
+      <ul>
+        <li>Lowest ad frequency</li>
+        <li>Highest reward potential</li>
+        <li>Strongest withdrawal flexibility</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<section class="section glass">
+  <div class="section-title-row">
+    <div>
+      <h2>As the player base grows, the reward system can grow too</h2>
+      <p>
+        EchoVault is designed around the idea that scale can improve the economy. As the community gets larger and healthier, the system can become more generous and efficient.
+      </p>
+    </div>
+    <div class="pill">Growth-based rewards</div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3>Less ad pressure</h3>
+      <p>
+        A stronger ecosystem can support lower ad frequency, especially for loyal and higher-tier users.
+      </p>
+    </div>
+    <div class="card">
+      <h3>Higher withdrawal limits</h3>
+      <p>
+        As the system matures, withdrawal opportunities can expand to better reflect a healthier and more established reward pool.
+      </p>
+    </div>
+    <div class="card">
+      <h3>Improved coin value</h3>
+      <p>
+        The long-term goal is for coin-to-money value to become more favorable as the platform grows and strengthens.
+      </p>
+    </div>
+  </div>
+
+  <div class="fineprint">
+    This means rewards are not only tied to what you do individually, but also to how strong the overall EchoVault ecosystem becomes.
+  </div>
+</section>
+
+<section class="section glass">
+  <div class="section-title-row">
+    <div>
+      <h2>Tier breakdown and current economy</h2>
+      <p>
+        Players can see exactly how each tier changes coin earnings, ad frequency, and what future milestones may unlock as EchoVault grows.
+      </p>
+    </div>
+    <div class="pill">Live system view</div>
+  </div>
+
+  <div class="hero-grid" style="margin-top: 8px;">
+    <div class="hero-card glass">
+      <h2>Current platform snapshot</h2>
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="label">Active Users</div>
+          <div class="value accent-blue" id="activeUsers">2,500</div>
+        </div>
+        <div class="metric">
+          <div class="label">Current Coin Value</div>
+          <div class="value accent" id="coinValue">1,000 Coins = $1.00</div>
+        </div>
+        <div class="metric">
+          <div class="label">Next Milestone</div>
+          <div class="value accent-green" id="nextMilestone">5,000 Users</div>
+        </div>
+      </div>
+      <div class="note" style="margin-top:16px;">
+        These values can be updated over time so players can always see the current reward environment and what milestone is coming next.
+      </div>
+    </div>
+
+    <div class="hero-card glass">
+      <h2>Upcoming user milestones</h2>
+      <div class="flow" style="grid-template-columns: 1fr; margin-top: 6px;">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>5,000 Users</h3>
+          <p>Potential reduction in ad frequency and small reward value boost.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>10,000 Users</h3>
+          <p>Improved withdrawal flexibility and stronger tier benefits.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>25,000 Users</h3>
+          <p>Higher long-term economy strength, better conversion potential, and a more player-friendly experience.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title-row" style="margin-top: 18px;">
+    <div>
+      <h2>Tier reward details</h2>
+      <p>
+        Example structure showing how coin multipliers and ad frequency can scale by player tier.
+      </p>
+    </div>
+    <div class="pill">Transparent progression</div>
+  </div>
+
+  <div class="tier-grid">
+    <article class="tier">
+      <div class="name">Base Tier</div>
+      <div class="big">1.0x coins</div>
+      <ul>
+        <li>Coin multiplier: <strong>1.0x</strong></li>
+        <li>Ad frequency: every <strong>5</strong> successful games</li>
+        <li>Standard withdrawal access</li>
+      </ul>
+    </article>
+
+    <article class="tier">
+      <div class="name">Mid Tier</div>
+      <div class="big">1.25x coins</div>
+      <ul>
+        <li>Coin multiplier: <strong>1.25x</strong></li>
+        <li>Ad frequency: every <strong>7</strong> successful games</li>
+        <li>Improved earning efficiency</li>
+      </ul>
+    </article>
+
+    <article class="tier">
+      <div class="name">High Tier</div>
+      <div class="big">1.5x coins</div>
+      <ul>
+        <li>Coin multiplier: <strong>1.5x</strong></li>
+        <li>Ad frequency: every <strong>10</strong> successful games</li>
+        <li>Best withdrawal flexibility</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<section class="section glass">
+  <div class="section-title-row">
+    <div>
+      <h2>How it works in practice</h2>
+      <p>
+        The player experience is meant to improve through both personal progression and platform growth.
+      </p>
+    </div>
+    <div class="pill">Simple reward flow</div>
+  </div>
+
+  <div class="flow">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Play</h3>
+      <p>Complete games, improve consistency, and earn coins through normal gameplay.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Progress</h3>
+      <p>As your tier improves, your ad frequency and reward efficiency can improve too.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Grow</h3>
+      <p>As the user base expands, the overall reward system can become more valuable and flexible.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h3>Benefit</h3>
+      <p>Players may see fewer ads, better conversion value, and stronger withdrawal opportunities over time.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    EchoVault is designed to reward both active players and long-term growth. The goal is a system that becomes more favorable as the platform becomes stronger.
+  </div>
+</section>
+
+  </div>
+</body>
+</html>
