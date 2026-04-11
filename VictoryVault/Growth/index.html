@@ -7,7 +7,6 @@
   <style>
     :root {
       --bg: #07090d;
-      --bg2: #0c1118;
       --panel: rgba(15, 20, 28, 0.94);
       --panel-soft: rgba(18, 24, 34, 0.78);
       --text: #edf4ff;
@@ -60,104 +59,6 @@
       overflow: hidden;
     }
 
-    .hero {
-      flex: 0 0 auto;
-      position: relative;
-      overflow: hidden;
-      background: linear-gradient(180deg, rgba(15, 20, 28, 0.96), rgba(10, 14, 20, 0.94));
-      border: 1px solid var(--border);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow);
-      padding: 12px;
-    }
-
-    .hero::before {
-      content: "";
-      position: absolute;
-      right: -140px;
-      top: -180px;
-      width: 360px;
-      height: 360px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(127, 214, 255, 0.16), transparent 64%);
-      pointer-events: none;
-    }
-
-    .topline {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: var(--gold-soft);
-      border: 1px solid rgba(212, 175, 55, 0.2);
-      color: var(--gold);
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      margin: 8px 0 4px;
-      font-size: clamp(1.2rem, 3.4vw, 2rem);
-      line-height: 1.05;
-      letter-spacing: -0.05em;
-      max-width: 700px;
-    }
-
-    .lead {
-      margin: 0;
-      max-width: 760px;
-      color: var(--muted);
-      line-height: 1.35;
-      font-size: 0.82rem;
-    }
-
-    .hero-stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-top: 10px;
-    }
-
-    .hero-stat {
-      padding: 8px;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      min-width: 0;
-    }
-
-    .hero-stat .label {
-      font-size: 8px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-
-    .hero-stat .value {
-      font-size: 0.88rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .gold {
-      color: var(--gold);
-    }
-
-    .blue {
-      color: var(--blue);
-    }
-
-    .green {
-      color: var(--green);
-    }
-
     .carousel-wrap {
       flex: 1 1 auto;
       min-height: 0;
@@ -193,6 +94,103 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      position: relative;
+    }
+
+    .hero-page::before {
+      content: "";
+      position: absolute;
+      right: -120px;
+      top: -150px;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(127, 214, 255, 0.16), transparent 64%);
+      pointer-events: none;
+    }
+
+    .topline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--gold-soft);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      color: var(--gold);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      width: fit-content;
+    }
+
+    h1 {
+      margin: 6px 0 2px;
+      font-size: clamp(1.3rem, 3.8vw, 2rem);
+      line-height: 1.05;
+      letter-spacing: -0.05em;
+      max-width: 680px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.34;
+      font-size: 0.84rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-stat {
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      min-width: 0;
+    }
+
+    .hero-stat .label {
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .hero-stat .value {
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .gold { color: var(--gold); }
+    .blue { color: var(--blue); }
+    .green { color: var(--green); }
+
+    .swipe-hint {
+      margin-top: auto;
+      padding-top: 6px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-align: center;
+      opacity: 0.9;
+      position: relative;
+      z-index: 1;
     }
 
     .section-head {
@@ -244,8 +242,7 @@
 
     .grid-2,
     .grid-3,
-    .stack,
-    .tier-grid {
+    .stack {
       min-height: 0;
     }
 
@@ -275,19 +272,11 @@
     .progress,
     .milestone,
     .info,
-    .tier,
-    .mini-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .card,
-    .progress,
-    .milestone,
-    .info,
     .mini-card {
       padding: 10px;
       border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .card h3,
@@ -401,60 +390,54 @@
       letter-spacing: -0.03em;
     }
 
-    .bronze {
-      color: var(--bronze);
-    }
-
-    .silver {
-      color: var(--silver);
-    }
-
-    .diamond {
-      color: var(--diamond);
-    }
+    .bronze { color: var(--bronze); }
+    .silver { color: var(--silver); }
+    .diamond { color: var(--diamond); }
 
     .controls {
       flex: 0 0 auto;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 12px;
       padding-bottom: 2px;
     }
 
     .nav-btn {
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       border: 1px solid rgba(255, 255, 255, 0.08);
       background: rgba(255, 255, 255, 0.04);
       color: var(--text);
       font-size: 18px;
       cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
     }
 
     .dots {
       display: flex;
       justify-content: center;
-      gap: 6px;
+      gap: 7px;
+      align-items: center;
     }
 
     .dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: #555;
+      transition: transform 0.2s ease, background 0.2s ease;
     }
 
     .dot.active {
       background: var(--gold);
+      transform: scale(1.15);
     }
 
     @media (max-width: 900px) {
-      .hero-stats {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
       .grid-2,
       .grid-3 {
         grid-template-columns: 1fr;
@@ -467,10 +450,6 @@
         gap: 6px;
       }
 
-      .hero {
-        padding: 10px;
-      }
-
       .page {
         padding: 10px;
       }
@@ -481,7 +460,7 @@
       }
 
       h1 {
-        font-size: clamp(1.08rem, 3vw, 1.6rem);
+        font-size: clamp(1.08rem, 3vw, 1.55rem);
       }
 
       .lead,
@@ -491,7 +470,7 @@
       }
 
       .hero-stat .value {
-        font-size: 0.8rem;
+        font-size: 0.84rem;
       }
 
       .section-head h2 {
@@ -504,24 +483,18 @@
       }
 
       .nav-btn {
-        width: 34px;
-        height: 34px;
+        width: 36px;
+        height: 36px;
       }
     }
 
     @media (max-height: 700px) {
-      .hero-stats {
-        gap: 4px;
-        margin-top: 8px;
-      }
-
       .hero-stat {
-        padding: 6px;
+        padding: 8px;
       }
 
       .hero-stat .label {
         font-size: 7px;
-        margin-bottom: 2px;
       }
 
       .hero-stat .value {
@@ -545,42 +518,47 @@
       }
 
       .tier-big {
-        font-size: 0.98rem;
+        font-size: 0.96rem;
       }
     }
   </style>
 </head>
 <body>
   <div class="app">
-    <section class="hero">
-      <div class="topline">VictoryVault Platform Status</div>
-      <h1>Live platform progress, rewards, and growth — explained simply.</h1>
-      <p class="lead">
-        VictoryVault is built around transparency. Swipe through each section to quickly see the current status, reward system, tiers, and platform health without digging through a long page.
-      </p>
-
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <div class="label">Active Users</div>
-          <div class="value blue" id="activeUsers">2,500</div>
-        </div>
-        <div class="hero-stat">
-          <div class="label">Coin Value</div>
-          <div class="value gold" id="coinValue">1,000 = $1.00</div>
-        </div>
-        <div class="hero-stat">
-          <div class="label">Withdrawals</div>
-          <div class="value" id="withdrawalStatus">Soft Launch</div>
-        </div>
-        <div class="hero-stat">
-          <div class="label">Paid Out</div>
-          <div class="value green" id="totalPaidOut">$0.00</div>
-        </div>
-      </div>
-    </section>
-
     <div class="carousel-wrap">
       <div class="carousel" id="mainCarousel">
+
+        <!-- PAGE 1 -->
+        <section class="page hero-page">
+          <div class="topline">VictoryVault Platform Status</div>
+          <h1>Live platform progress, rewards, and growth — explained simply.</h1>
+          <p class="lead">
+            VictoryVault is built around transparency. Swipe through each section to quickly see the current status, reward system, tiers, and platform health without digging through a long page.
+          </p>
+
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <div class="label">Active Users</div>
+              <div class="value blue" id="activeUsers">2,500</div>
+            </div>
+            <div class="hero-stat">
+              <div class="label">Coin Value</div>
+              <div class="value gold" id="coinValue">1,000 = $1.00</div>
+            </div>
+            <div class="hero-stat">
+              <div class="label">Withdrawals</div>
+              <div class="value" id="withdrawalStatus">Soft Launch</div>
+            </div>
+            <div class="hero-stat">
+              <div class="label">Paid Out</div>
+              <div class="value green" id="totalPaidOut">$0.00</div>
+            </div>
+          </div>
+
+          <div class="swipe-hint">Swipe to continue</div>
+        </section>
+
+        <!-- PAGE 2 -->
         <section class="page">
           <div class="section-head">
             <h2>Current Status</h2>
@@ -616,6 +594,7 @@
           </div>
         </section>
 
+        <!-- PAGE 3 -->
         <section class="page">
           <div class="section-head">
             <h2>Upcoming Milestones</h2>
@@ -649,6 +628,7 @@
           </div>
         </section>
 
+        <!-- PAGE 4 -->
         <section class="page">
           <div class="section-head">
             <h2>How Rewards Work</h2>
@@ -682,6 +662,7 @@
           </div>
         </section>
 
+        <!-- PAGE 5 -->
         <section class="page">
           <div class="section-head">
             <h2>Tier Benefits</h2>
@@ -742,6 +723,7 @@
           </div>
         </section>
 
+        <!-- PAGE 6 -->
         <section class="page">
           <div class="section-head">
             <h2>Platform Health</h2>
@@ -770,6 +752,7 @@
             </div>
           </div>
         </section>
+
       </div>
     </div>
 
