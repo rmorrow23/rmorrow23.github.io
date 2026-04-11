@@ -5,103 +5,144 @@
 <title>VictoryVault Platform Status</title>
 <style>
 :root{
-  --bg:#07090d;--panel:rgba(15,20,28,.9);--text:#edf4ff;--muted:#9dacbf;
-  --gold:#d4af37;--blue:#7fd6ff;--green:#7be1ad;--border:rgba(255,255,255,.08);
+  --bg:#07090d;
+  --bg2:#0c1118;
+  --panel:rgba(15,20,28,.92);
+  --panel-soft:rgba(18,24,34,.75);
+  --text:#edf4ff;
+  --muted:#9dacbf;
+  --gold:#d4af37;
+  --gold-soft:rgba(212,175,55,.14);
+  --blue:#7fd6ff;
+  --blue-soft:rgba(127,214,255,.14);
+  --green:#7be1ad;
+  --green-soft:rgba(123,225,173,.14);
+  --bronze:#c58a4b;
+  --silver:#cfd6dc;
+  --diamond:#7fd6ff;
+  --border:rgba(255,255,255,.08);
+  --shadow:0 18px 50px rgba(0,0,0,.34);
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--text)}
-.wrap{padding:14px}/* CAROUSEL */ .carousel{ display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;padding-bottom:10px; } .carousel::-webkit-scrollbar{display:none}
-
-.card{ min-width:90%;scroll-snap-align:center; background:var(--panel);border:1px solid var(--border); border-radius:22px;padding:18px; }
-
-h2{margin:0 0 10px;font-size:1.2rem} h3{margin:0 0 8px} p,li{color:var(--muted);font-size:.95rem}
-
-.stat{font-size:1.5rem;font-weight:800} .gold{color:var(--gold)} .blue{color:var(--blue)} .green{color:var(--green)}
-
-.bar{height:10px;background:#222;border-radius:999px;overflow:hidden;margin:8px 0} .fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--blue))}
-
-/* TIER CARDS */ .tier-card{ border-radius:18px;padding:16px;margin-top:10px; border:1px solid var(--border);background:rgba(255,255,255,.03) } .tier-title{font-weight:800} .tier-bronze{color:#c58a4b} .tier-silver{color:#cfd6dc} .tier-gold{color:#d4af37} .tier-diamond{color:#7fd6ff}
-
-.progress-wrap{margin-top:10px}
-
-.indicators{ display:flex;justify-content:center;gap:6px;margin-top:8px } .dot{ width:6px;height:6px;border-radius:50%;background:#555 } .dot.active{background:var(--gold)} </style>
-
+html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:radial-gradient(circle at top center, rgba(50,100,165,.2), transparent 32%),linear-gradient(180deg,#07090d 0%,#0b1017 46%,#06080b 100%)}
+body{overflow:hidden}
+.app{min-height:100vh;display:flex;flex-direction:column;padding:12px;gap:12px}
+.hero{background:linear-gradient(180deg, rgba(15,20,28,.96), rgba(10,14,20,.94));border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow);padding:18px 16px;position:relative;overflow:hidden;flex:0 0 auto}
+.hero::before{content:"";position:absolute;right:-140px;top:-170px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle, rgba(127,214,255,.16), transparent 64%);pointer-events:none}
+.topline{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;background:var(--gold-soft);border:1px solid rgba(212,175,55,.2);color:var(--gold);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+h1{margin:12px 0 8px;font-size:clamp(1.8rem,5vw,3rem);line-height:1.03;letter-spacing:-.05em;max-width:700px}.lead{margin:0;color:var(--muted);line-height:1.55;font-size:.96rem;max-width:760px}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}.hero-stat{padding:12px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.hero-stat .label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.hero-stat .value{font-size:1.18rem;font-weight:800;letter-spacing:-.03em}.gold{color:var(--gold)}.blue{color:var(--blue)}.green{color:var(--green)}
+.carousel-wrap{position:relative;flex:1 1 auto;min-height:0}
+.carousel{height:100%;display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;padding-bottom:8px}.carousel::-webkit-scrollbar{display:none}
+.page{min-width:100%;height:100%;scroll-snap-align:center;background:var(--panel);border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow);padding:18px 16px;overflow-y:auto}.page::-webkit-scrollbar{width:0;height:0}
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}.section-head h2{margin:0;font-size:1.16rem;letter-spacing:-.02em}.pill{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:8px 12px;border-radius:999px;background:var(--blue-soft);border:1px solid rgba(127,214,255,.18);color:var(--blue);font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+p,li{color:var(--muted);line-height:1.58}.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{padding:16px;border-radius:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.card h3{margin:0 0 8px;font-size:1rem}.progress{padding:16px;border-radius:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.progress-row{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.progress-title{font-weight:700}.progress-value{font-weight:800;color:var(--gold)}.bar{height:12px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.08);margin-bottom:10px}.fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--gold),var(--blue))}
+.milestone,.info{padding:14px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}.stack{display:grid;gap:10px}.milestone-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.tag{padding:7px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;background:var(--green-soft);border:1px solid rgba(123,225,173,.18);color:var(--green)}.tag.muted{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--muted)}
+.tier-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.tier{padding:16px;border-radius:22px;background:linear-gradient(180deg, rgba(17,22,31,.96), rgba(10,14,20,.92));border:1px solid rgba(255,255,255,.08)}.tier-name{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800}.tier-big{margin:10px 0 12px;font-size:1.3rem;font-weight:800;letter-spacing:-.03em}.bronze{color:var(--bronze)}.silver{color:var(--silver)}.diamond{color:var(--diamond)}
+.mini-carousel{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.mini-carousel::-webkit-scrollbar{display:none}.mini-card{min-width:82%;scroll-snap-align:start;padding:16px;border-radius:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.controls{display:flex;align-items:center;justify-content:center;gap:12px;flex:0 0 auto}.nav-btn{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--text);font-size:18px;cursor:pointer}.dots{display:flex;justify-content:center;gap:6px}.dot{width:7px;height:7px;border-radius:50%;background:#555}.dot.active{background:var(--gold)}
+@media (max-width:900px){.hero-stats,.grid-2,.grid-3,.tier-grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-<div class="wrap"><div class="carousel" id="carousel"><!-- STATUS CARD --><div class="card">
-  <h2>Status</h2>
-  <div class="stat blue" id="users">2,500 Users</div>
-  <div class="stat gold">1,000 = $1</div>
-  <div class="stat green">Soft Launch</div>
-  <div class="bar"><div class="fill" style="width:50%"></div></div>
-  <p>Progress toward next milestone</p>
-</div><!-- MILESTONES --><div class="card">
-  <h2>Milestones</h2>
-  <ul>
-    <li>5K → Early improvements</li>
-    <li>10K → Better withdrawals</li>
-    <li>25K → Stronger rewards</li>
-  </ul>
-</div><!-- REWARDS --><div class="card">
-  <h2>Rewards</h2>
-  <ul>
-    <li>Earn instantly</li>
-    <li>Clear value</li>
-    <li>Safe withdrawals</li>
-  </ul>
-</div><!-- TIERS --><div class="card">
-  <h2>Your Tier Progress</h2>  <div class="tier-card">
-    <div class="tier-title tier-bronze">Bronze (1.0x)</div>
-    <ul>
-      <li>Ad every 5 sessions</li>
-      <li>Standard speed</li>
-    </ul>
-  </div>  <div class="tier-card">
-    <div class="tier-title tier-silver">Silver (1.25x)</div>
-    <ul>
-      <li>Ad every 7 sessions</li>
-      <li>Faster processing</li>
-    </ul>
-  </div>  <div class="tier-card">
-    <div class="tier-title tier-gold">Gold (1.5x)</div>
-    <ul>
-      <li>Ad every 10 sessions</li>
-      <li>Priority payouts</li>
-    </ul>
-  </div>  <div class="tier-card">
-    <div class="tier-title tier-diamond">Diamond (1.75x)</div>
-    <ul>
-      <li>Lowest ads</li>
-      <li>Fastest payouts</li>
-    </ul>
-  </div>  <div class="progress-wrap">
-    <p>Progress to next tier</p>
-    <div class="bar"><div class="fill" style="width:40%"></div></div>
+<div class="app">
+  <section class="hero">
+    <div class="topline">VictoryVault Platform Status</div>
+    <h1>Live platform progress, rewards, and growth — explained simply.</h1>
+    <p class="lead">VictoryVault is built around transparency. Swipe through each section to quickly see the current status, reward system, tiers, and platform health without digging through a long page.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="label">Active Users</div><div class="value blue" id="activeUsers">2,500</div></div>
+      <div class="hero-stat"><div class="label">Coin Value</div><div class="value gold" id="coinValue">1,000 = $1.00</div></div>
+      <div class="hero-stat"><div class="label">Withdrawals</div><div class="value" id="withdrawalStatus">Soft Launch</div></div>
+      <div class="hero-stat"><div class="label">Paid Out</div><div class="value green" id="totalPaidOut">$0.00</div></div>
+    </div>
+  </section>  <div class="carousel-wrap">
+    <div class="carousel" id="mainCarousel"><section class="page">
+    <div class="section-head"><h2>Current Status</h2><div class="pill">Live Now</div></div>
+    <div class="grid-2">
+      <div class="progress">
+        <div class="progress-row"><div class="progress-title">Next milestone progress</div><div class="progress-value" id="milestoneProgressText">2,500 / 5,000 users</div></div>
+        <div class="bar"><div class="fill" id="milestoneProgressBar" style="width:50%"></div></div>
+        <p>Reaching the next milestone helps strengthen the reward economy and support better platform conditions over time.</p>
+      </div>
+      <div class="stack">
+        <div class="info"><strong>Current phase</strong><p>Soft launch — users can start earning while the system continues to be tested and strengthened.</p></div>
+        <div class="info"><strong>Withdrawal plan</strong><p>Withdrawals unlock on launch, then use a flexible 3–10 day processing window based on reserve health, volume, and tier.</p></div>
+        <div class="info"><strong>Next goal</strong><p>Enable first withdrawals after the initial payout cycle and reserve build-up.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="section-head"><h2>Upcoming Milestones</h2><div class="pill">Growth Roadmap</div></div>
+    <div class="stack">
+      <div class="milestone"><div class="milestone-top"><strong>5,000 Users</strong><span class="tag">Next</span></div><p>Early improvements, stronger trust signals, and the first visible growth-stage reward benefits.</p></div>
+      <div class="milestone"><div class="milestone-top"><strong>10,000 Users</strong><span class="tag muted">Upcoming</span></div><p>Better reserve strength, more withdrawal flexibility, and stronger overall platform stability.</p></div>
+      <div class="milestone"><div class="milestone-top"><strong>25,000 Users</strong><span class="tag muted">Future</span></div><p>Higher long-term reward value potential and a more favorable experience across the platform.</p></div>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="section-head"><h2>How Rewards Work</h2><div class="pill">Simple Overview</div></div>
+    <div class="grid-3">
+      <div class="card"><h3>Earn Instantly</h3><p>Users earn coins immediately through supported activity across VictoryVault.</p></div>
+      <div class="card"><h3>Clear Value</h3><p>Coin value is shown in a simple, transparent way so balances feel understandable.</p></div>
+      <div class="card"><h3>Safe Withdrawals</h3><p>Withdrawals are processed through a controlled system designed for speed and long-term sustainability.</p></div>
+    </div>
+    <div class="stack" style="margin-top:12px">
+      <div class="info"><strong>Why withdrawals are not always instant</strong><p>Processing windows help manage reserve strength, payout timing, and platform-wide demand without overpromising.</p></div>
+      <div class="info"><strong>How growth improves the system</strong><p>As the platform gains more users and revenue, the goal is to improve ad frequency, withdrawal flexibility, reserve strength, and long-term coin value.</p></div>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="section-head"><h2>Tier Benefits</h2><div class="pill">Progression</div></div>
+    <div class="progress" style="margin-bottom:12px">
+      <div class="progress-row"><div class="progress-title">Progress to next tier</div><div class="progress-value">40%</div></div>
+      <div class="bar"><div class="fill" style="width:40%"></div></div>
+      <p>Tier progression is meant to make the platform experience more favorable over time.</p>
+    </div>
+    <div class="mini-carousel">
+      <article class="mini-card"><div class="tier-name bronze">Bronze</div><div class="tier-big bronze">1.0x Coins</div><ul><li>Ad every 5 sessions</li><li>Standard withdrawal priority</li><li>Balanced access</li></ul></article>
+      <article class="mini-card"><div class="tier-name silver">Silver</div><div class="tier-big silver">1.25x Coins</div><ul><li>Ad every 7 sessions</li><li>Faster processing when supported</li><li>Improved efficiency</li></ul></article>
+      <article class="mini-card"><div class="tier-name gold">Gold</div><div class="tier-big gold">1.5x Coins</div><ul><li>Ad every 10 sessions</li><li>Priority payouts</li><li>Best regular value</li></ul></article>
+      <article class="mini-card"><div class="tier-name diamond">Diamond</div><div class="tier-big diamond">1.75x Coins</div><ul><li>Lowest ad frequency</li><li>Fastest payout priority</li><li>Highest overall value</li></ul></article>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="section-head"><h2>Platform Health</h2><div class="pill">Live Health</div></div>
+    <div class="grid-3">
+      <div class="card"><h3>Reserve Strength</h3><p id="reserveStrength">Building</p></div>
+      <div class="card"><h3>Estimated Withdrawal Window</h3><p id="withdrawalWindow">3–10 days</p></div>
+      <div class="card"><h3>Reward Phase</h3><p id="rewardPhase">Soft launch accumulation</p></div>
+    </div>
+    <div class="stack" style="margin-top:12px">
+      <div class="info"><strong>Transparency first</strong><p>This page is designed to stay simple and update live so users always know where the platform stands and what improvements are coming next.</p></div>
+    </div>
+  </section>
+
+</div>
+
+  </div>  <div class="controls">
+    <button class="nav-btn" id="prevBtn">‹</button>
+    <div class="dots" id="dots"></div>
+    <button class="nav-btn" id="nextBtn">›</button>
   </div>
-</div><!-- HEALTH --><div class="card">
-  <h2>Platform Health</h2>
-  <ul>
-    <li>Reserve: Building</li>
-    <li>Withdrawals: 3–10 days</li>
-    <li>Phase: Soft launch</li>
-  </ul>
-</div></div><!-- DOT INDICATORS --><div class="indicators" id="dots"></div></div><script>
-const carousel=document.getElementById('carousel');
-const dots=document.getElementById('dots');
-const cards=document.querySelectorAll('.card');
-
-cards.forEach((_,i)=>{
-  const d=document.createElement('div');
-  d.className='dot';
-  if(i===0)d.classList.add('active');
-  dots.appendChild(d);
-});
-
-carousel.addEventListener('scroll',()=>{
-  const index=Math.round(carousel.scrollLeft/carousel.offsetWidth);
-  document.querySelectorAll('.dot').forEach((d,i)=>{
-    d.classList.toggle('active',i===index);
-  });
-});
+</div><script>
+const growthData={activeUsers:2500,nextMilestone:5000,totalPaidOut:'$0.00',coinValue:'1,000 = $1.00',withdrawalStatus:'Soft Launch'};
+const progress=Math.max(0,Math.min(100,(growthData.activeUsers/growthData.nextMilestone)*100));
+document.getElementById('activeUsers').textContent=growthData.activeUsers.toLocaleString();
+document.getElementById('totalPaidOut').textContent=growthData.totalPaidOut;document.getElementById('coinValue').textContent=growthData.coinValue;document.getElementById('withdrawalStatus').textContent=growthData.withdrawalStatus;document.getElementById('milestoneProgressText').textContent=`${growthData.activeUsers.toLocaleString()} / ${growthData.nextMilestone.toLocaleString()} users`;document.getElementById('milestoneProgressBar').style.width=`${progress}%`;
+const carousel=document.getElementById('mainCarousel');
+const pages=[...document.querySelectorAll('.page')];
+const dotsWrap=document.getElementById('dots');
+let activeIndex=0;
+pages.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(i===0?' active':'');dotsWrap.appendChild(d);});
+function updateDots(){[...dotsWrap.children].forEach((d,i)=>d.classList.toggle('active',i===activeIndex));}
+function goToPage(index){activeIndex=Math.max(0,Math.min(index,pages.length-1));carousel.scrollTo({left:carousel.clientWidth*activeIndex,behavior:'smooth'});updateDots();}
+document.getElementById('prevBtn').addEventListener('click',()=>goToPage(activeIndex-1));
+document.getElementById('nextBtn').addEventListener('click',()=>goToPage(activeIndex+1));
+carousel.addEventListener('scroll',()=>{const index=Math.round(carousel.scrollLeft/carousel.clientWidth);if(index!==activeIndex){activeIndex=index;updateDots();}});
 </script></body>
 </html>
