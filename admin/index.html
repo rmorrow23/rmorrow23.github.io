@@ -198,10 +198,22 @@
       box-shadow: 0 8px 28px rgba(0, 0, 0, .55)
     }
 
-    #productModal {
-      position: absolute;
-      top: 0px;
-      left: 0px;
+    #productModal,
+    #projectModal {
+      position: fixed;
+      inset: 0;
+      overflow-y: auto;
+      padding: 1rem;
+      background: rgba(0, 0, 0, .58);
+      backdrop-filter: blur(10px);
+      z-index: 120;
+    }
+
+    .section-editor-card,
+    .version-editor-card {
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, .03);
     }
   </style>
 </head>
@@ -380,18 +392,22 @@
 
   <!-- Add / Edit Project Modal -->
   <div id="projectModal" class="modal-overlay" style="display:none;">
-    <div class="mx-auto modal glass card p-6 rounded-2xl mt-20 max-w-xl">
-      <div class="flex items-center justify-between">
-        <h2 id="projectModalTitle" class="text-2xl font-serif text-[var(--gold)]">
-          Add Project
-        </h2>
-        <button id="closeProjectModal" class="btn">Close</button>
+    <div class="mx-auto modal glass card p-6 rounded-2xl mt-8 mb-10 max-w-5xl">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <h2 id="projectModalTitle" class="text-2xl font-serif text-[var(--gold)]">Add Project</h2>
+          <p class="mt-1 text-sm text-[var(--muted)]">Create the public project card, project link, sections, and version history.</p>
+        </div>
+        <button id="closeProjectModal" class="btn" type="button">Close</button>
       </div>
 
-      <form id="projectForm" class="grid gap-4 mt-5">
-
+      <form id="projectForm" class="grid md:grid-cols-2 gap-4 mt-5">
         <label>Title
-          <input id="proj_title" required />
+          <input id="proj_title" required placeholder="SIP: Robotics + 3D Printing Automation" />
+        </label>
+
+        <label>Project Page Link
+          <input id="proj_link" placeholder="/projects/SIP/" />
         </label>
 
         <label>Type
@@ -404,8 +420,23 @@
           </select>
         </label>
 
-        <label>Summary
-          <textarea id="proj_summary" rows="3"></textarea>
+        <label>Status
+          <select id="proj_status">
+            <option value="Active">Active</option>
+            <option value="Planning">Planning</option>
+            <option value="Prototype">Prototype</option>
+            <option value="Paused">Paused</option>
+            <option value="Complete">Complete</option>
+            <option value="Archived">Archived</option>
+          </select>
+        </label>
+
+        <label class="md:col-span-2">Summary
+          <textarea id="proj_summary" rows="3" placeholder="Short card description shown on the projects index."></textarea>
+        </label>
+
+        <label class="md:col-span-2">Final Product Goal
+          <textarea id="proj_goal" rows="3" placeholder="Clear final product goal / mission for this project."></textarea>
         </label>
 
         <label>Tags
@@ -416,8 +447,31 @@
           <input id="proj_progress" type="number" min="0" max="100" />
         </label>
 
-        <div class="flex gap-3 items-center">
-          <button class="btn btn-primary" type="submit">Save</button>
+        <label>Source Link
+          <input id="proj_sourceLink" placeholder="GitHub, ZIP, or source page" />
+        </label>
+
+        <label>Featured
+          <select id="proj_featured">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </label>
+
+        <div class="md:col-span-2 mt-2">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <h3 class="text-xl font-serif text-[var(--gold)]">Project Sections + Versions</h3>
+              <p class="text-sm text-[var(--muted)]">Each section can have unlimited versions with changed/worked/failed notes.</p>
+            </div>
+            <button id="addProjectSection" class="btn btn-primary" type="button">+ Add Section</button>
+          </div>
+
+          <div id="projectSectionsEditor" class="mt-4 space-y-4"></div>
+        </div>
+
+        <div class="md:col-span-2 flex gap-3 items-center">
+          <button class="btn btn-primary" type="submit">Save Project</button>
           <span id="projectModalStatus" class="text-sm text-[var(--muted)]"></span>
         </div>
       </form>
@@ -430,7 +484,7 @@
     import { signInWithPopup, signOut, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
-      doc, getDoc, collection, addDoc, updateDoc, deleteDoc, where, query, orderBy, onSnapshot
+      doc, getDoc, collection, addDoc, updateDoc, deleteDoc, where, query, orderBy, onSnapshot, setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { ref, uploadBytes, getDownloadURL, deleteObject }
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
@@ -503,10 +557,17 @@
     const projectModalStatus = document.getElementById("projectModalStatus");
 
     const proj_title = document.getElementById("proj_title");
+    const proj_link = document.getElementById("proj_link");
     const proj_type = document.getElementById("proj_type");
+    const proj_status = document.getElementById("proj_status");
     const proj_summary = document.getElementById("proj_summary");
+    const proj_goal = document.getElementById("proj_goal");
     const proj_tags = document.getElementById("proj_tags");
     const proj_progress = document.getElementById("proj_progress");
+    const proj_sourceLink = document.getElementById("proj_sourceLink");
+    const proj_featured = document.getElementById("proj_featured");
+    const projectSectionsEditor = document.getElementById("projectSectionsEditor");
+    const addProjectSectionBtn = document.getElementById("addProjectSection");
 
     let editProjectId = null;
     function openProjectModal() {
@@ -521,6 +582,124 @@
     projectModal.addEventListener("click", e => {
       if (e.target === projectModal) closeProjectModal();
     });
+
+
+    function makeSlug(value = "") {
+      return String(value).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    }
+
+    function sectionTemplate(section = {}) {
+      const sectionEl = document.createElement("div");
+      sectionEl.className = "section-editor-card p-4";
+      sectionEl.innerHTML = `
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <h4 class="font-semibold text-[var(--gold)]">Project Section</h4>
+          <button class="btn text-sm" type="button" data-remove-section>Remove Section</button>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <label>Section Title<input data-section-title value="${escapeAttr(section.title || section.name || "")}" placeholder="Robot Platform" /></label>
+          <label>Section Slug<input data-section-slug value="${escapeAttr(section.slug || makeSlug(section.title || section.name || ""))}" placeholder="robot-platform" /></label>
+          <label>Status
+            <select data-section-status>
+              ${["Active", "Planning", "Prototype", "Paused", "Complete", "Archived"].map(s => `<option value="${s}" ${s === (section.status || "Active") ? "selected" : ""}>${s}</option>`).join("")}
+            </select>
+          </label>
+          <label>Progress (%)<input data-section-progress type="number" min="0" max="100" value="${Number(section.progress || 0)}" /></label>
+          <label class="md:col-span-2">Section Summary<textarea data-section-summary rows="2" placeholder="What this section covers.">${escapeHtml(section.summary || "")}</textarea></label>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between gap-3">
+          <h5 class="font-semibold">Versions</h5>
+          <button class="btn btn-primary text-sm" type="button" data-add-version>+ Add Version</button>
+        </div>
+        <div class="versions-editor mt-3 space-y-3"></div>
+      `;
+
+      sectionEl.querySelector("[data-remove-section]").addEventListener("click", () => sectionEl.remove());
+      sectionEl.querySelector("[data-add-version]").addEventListener("click", () => addVersion(sectionEl));
+      sectionEl.querySelector("[data-section-title]").addEventListener("input", e => {
+        const slugInput = sectionEl.querySelector("[data-section-slug]");
+        if (!slugInput.dataset.touched) slugInput.value = makeSlug(e.target.value);
+      });
+      sectionEl.querySelector("[data-section-slug]").addEventListener("input", e => e.target.dataset.touched = "true");
+
+      projectSectionsEditor.appendChild(sectionEl);
+      const versions = Array.isArray(section.versions) ? section.versions : [];
+      if (versions.length) versions.forEach(v => addVersion(sectionEl, v));
+      else addVersion(sectionEl);
+    }
+
+    function addVersion(sectionEl, version = {}) {
+      const wrap = sectionEl.querySelector(".versions-editor");
+      const v = document.createElement("div");
+      v.className = "version-editor-card p-4";
+      v.innerHTML = `
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <h5 class="font-semibold text-[var(--gold)]">Version Entry</h5>
+          <button class="btn text-sm" type="button" data-remove-version>Remove Version</button>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <label>Version<input data-version-number value="${escapeAttr(version.version || "")}" placeholder="v0.1" /></label>
+          <label>Version Title<input data-version-title value="${escapeAttr(version.title || "")}" placeholder="Initial frame test" /></label>
+          <label>Date<input data-version-date type="date" value="${escapeAttr(version.date || "")}" /></label>
+          <label>Status
+            <select data-version-status>
+              ${["Worked", "Partial", "Failed", "Testing", "Archived"].map(s => `<option value="${s}" ${s === (version.status || "Testing") ? "selected" : ""}>${s}</option>`).join("")}
+            </select>
+          </label>
+          <label class="md:col-span-2">What Changed<textarea data-version-changed rows="2">${escapeHtml(version.changed || version.changes || "")}</textarea></label>
+          <label>What Worked<textarea data-version-worked rows="3">${escapeHtml(version.worked || "")}</textarea></label>
+          <label>What Didn't Work<textarea data-version-failed rows="3">${escapeHtml(version.failed || version.didntWork || "")}</textarea></label>
+          <label>Media/Demo Link<input data-version-media value="${escapeAttr(version.mediaLink || version.demoLink || "")}" /></label>
+          <label>Source Link<input data-version-source value="${escapeAttr(version.sourceLink || "")}" /></label>
+        </div>
+      `;
+      v.querySelector("[data-remove-version]").addEventListener("click", () => v.remove());
+      wrap.appendChild(v);
+    }
+
+    function escapeHtml(value = "") {
+      return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+    }
+
+    function escapeAttr(value = "") {
+      return escapeHtml(value).replace(/`/g, '&#96;');
+    }
+
+    function resetProjectSections(sections = []) {
+      projectSectionsEditor.innerHTML = "";
+      if (Array.isArray(sections) && sections.length) sections.forEach(sectionTemplate);
+      else {
+        sectionTemplate({ title: "Robot Platform", slug: "robot-platform", status: "Active", progress: 0, versions: [] });
+        sectionTemplate({ title: "Print Bed Clearing System", slug: "print-bed-system", status: "Planning", progress: 0, versions: [] });
+        sectionTemplate({ title: "Cura Plugin / Software", slug: "cura-plugin", status: "Planning", progress: 0, versions: [] });
+        sectionTemplate({ title: "Electronics + Control", slug: "electronics", status: "Active", progress: 0, versions: [] });
+      }
+    }
+
+    function collectProjectSections() {
+      return [...projectSectionsEditor.querySelectorAll(".section-editor-card")].map(sectionEl => ({
+        title: sectionEl.querySelector("[data-section-title]").value.trim(),
+        slug: sectionEl.querySelector("[data-section-slug]").value.trim(),
+        status: sectionEl.querySelector("[data-section-status]").value,
+        progress: Number(sectionEl.querySelector("[data-section-progress]").value || 0),
+        summary: sectionEl.querySelector("[data-section-summary]").value.trim(),
+        versions: [...sectionEl.querySelectorAll(".version-editor-card")].map(v => ({
+          version: v.querySelector("[data-version-number]").value.trim(),
+          title: v.querySelector("[data-version-title]").value.trim(),
+          date: v.querySelector("[data-version-date]").value,
+          status: v.querySelector("[data-version-status]").value,
+          changed: v.querySelector("[data-version-changed]").value.trim(),
+          worked: v.querySelector("[data-version-worked]").value.trim(),
+          failed: v.querySelector("[data-version-failed]").value.trim(),
+          mediaLink: v.querySelector("[data-version-media]").value.trim(),
+          sourceLink: v.querySelector("[data-version-source]").value.trim()
+        })).filter(v => v.version || v.title || v.changed || v.worked || v.failed)
+      })).filter(section => section.title || section.summary || section.versions.length);
+    }
+
+    addProjectSectionBtn.addEventListener("click", () => sectionTemplate({ title: "New Section", slug: "new-section", status: "Planning", progress: 0 }));
 
 
 
@@ -570,7 +749,11 @@
         editProjectId = null;
         projectModalTitle.textContent = "Add Project";
         projectForm.reset();
+        proj_link.value = "/projects/SIP/";
+        proj_status.value = "Active";
+        proj_featured.value = "false";
         projectModalStatus.textContent = "";
+        resetProjectSections();
         openProjectModal();
       }
 
@@ -612,12 +795,17 @@
       }
 
       const p = snap.data();
-
       proj_title.value = p.title || "";
+      proj_link.value = p.link || p.url || "";
       proj_type.value = p.type || "web";
+      proj_status.value = p.status || "Active";
       proj_summary.value = p.summary || "";
+      proj_goal.value = p.goal || "";
       proj_tags.value = (p.tags || []).join(", ");
       proj_progress.value = p.progress ?? 0;
+      proj_sourceLink.value = p.sourceLink || "";
+      proj_featured.value = String(Boolean(p.featured));
+      resetProjectSections(p.sections || []);
     }
 
     function productCard(id, p) {
