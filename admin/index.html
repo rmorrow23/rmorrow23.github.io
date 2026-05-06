@@ -198,22 +198,10 @@
       box-shadow: 0 8px 28px rgba(0, 0, 0, .55)
     }
 
-    #productModal,
-    #projectModal {
-      position: fixed;
-      inset: 0;
-      overflow-y: auto;
-      padding: 1rem;
-      background: rgba(0, 0, 0, .58);
-      backdrop-filter: blur(10px);
-      z-index: 120;
-    }
-
-    .section-editor-card,
-    .version-editor-card {
-      border: 1px solid var(--border);
-      border-radius: 1rem;
-      background: rgba(255, 255, 255, .03);
+    #productModal {
+      position: absolute;
+      top: 0px;
+      left: 0px;
     }
   </style>
 </head>
@@ -392,86 +380,105 @@
 
   <!-- Add / Edit Project Modal -->
   <div id="projectModal" class="modal-overlay" style="display:none;">
-    <div class="mx-auto modal glass card p-6 rounded-2xl mt-8 mb-10 max-w-5xl">
-      <div class="flex items-center justify-between gap-4">
+    <div class="mx-auto modal glass card p-6 rounded-2xl mt-8 max-w-6xl">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h2 id="projectModalTitle" class="text-2xl font-serif text-[var(--gold)]">Add Project</h2>
-          <p class="mt-1 text-sm text-[var(--muted)]">Create the public project card, project link, sections, and version history.</p>
+          <p class="text-sm text-[var(--muted)] mt-1">
+            Build a full structured project page: sections, versions, changes, wins, issues, media, and source links.
+          </p>
         </div>
-        <button id="closeProjectModal" class="btn" type="button">Close</button>
+        <div class="flex flex-wrap gap-2">
+          <button id="importProjectJson" type="button" class="btn">Import JSON</button>
+          <button id="exportProjectJson" type="button" class="btn">Export JSON</button>
+          <button id="closeProjectModal" type="button" class="btn">Close</button>
+        </div>
       </div>
 
-      <form id="projectForm" class="grid md:grid-cols-2 gap-4 mt-5">
-        <label>Title
-          <input id="proj_title" required placeholder="SIP: Robotics + 3D Printing Automation" />
-        </label>
+      <form id="projectForm" class="grid gap-6 mt-5">
+        <section class="glass rounded-xl p-5">
+          <h3 class="text-xl font-serif text-[var(--gold)] mb-4">Project Basics</h3>
 
-        <label>Project Page Link
-          <input id="proj_link" placeholder="/projects/SIP/" />
-        </label>
+          <div class="grid md:grid-cols-2 gap-4">
+            <label>Title
+              <input id="proj_title" required placeholder="SIP: Robotics + 3D Printing Automation" />
+            </label>
 
-        <label>Type
-          <select id="proj_type">
-            <option value="web">Web</option>
-            <option value="android">Android</option>
-            <option value="hardware">Hardware</option>
-            <option value="school">School</option>
-            <option value="personal">Personal</option>
-          </select>
-        </label>
+            <label>Project URL
+              <input id="proj_url" placeholder="/projects/SIP/" />
+            </label>
 
-        <label>Status
-          <select id="proj_status">
-            <option value="Active">Active</option>
-            <option value="Planning">Planning</option>
-            <option value="Prototype">Prototype</option>
-            <option value="Paused">Paused</option>
-            <option value="Complete">Complete</option>
-            <option value="Archived">Archived</option>
-          </select>
-        </label>
+            <label>Type
+              <select id="proj_type">
+                <option value="web">Web</option>
+                <option value="android">Android</option>
+                <option value="hardware">Hardware</option>
+                <option value="school">School</option>
+                <option value="personal">Personal</option>
+              </select>
+            </label>
 
-        <label class="md:col-span-2">Summary
-          <textarea id="proj_summary" rows="3" placeholder="Short card description shown on the projects index."></textarea>
-        </label>
+            <label>Status
+              <select id="proj_status">
+                <option value="active">Active</option>
+                <option value="planning">Planning</option>
+                <option value="paused">Paused</option>
+                <option value="complete">Complete</option>
+                <option value="archived">Archived</option>
+              </select>
+            </label>
 
-        <label class="md:col-span-2">Final Product Goal
-          <textarea id="proj_goal" rows="3" placeholder="Clear final product goal / mission for this project."></textarea>
-        </label>
+            <label>Progress (%)
+              <input id="proj_progress" type="number" min="0" max="100" placeholder="0" />
+            </label>
 
-        <label>Tags
-          <input id="proj_tags" placeholder="comma separated" />
-        </label>
+            <label>Tags
+              <input id="proj_tags" placeholder="school, hardware, robotics, 3d printing" />
+            </label>
 
-        <label>Progress (%)
-          <input id="proj_progress" type="number" min="0" max="100" />
-        </label>
+            <label class="md:col-span-2">Summary
+              <textarea id="proj_summary" rows="3" placeholder="Short card description shown on the Projects index."></textarea>
+            </label>
 
-        <label>Source Link
-          <input id="proj_sourceLink" placeholder="GitHub, ZIP, or source page" />
-        </label>
+            <label class="md:col-span-2">Final Product Goal
+              <textarea id="proj_goal" rows="4" placeholder="Describe the final version of the project and what it should accomplish."></textarea>
+            </label>
 
-        <label>Featured
-          <select id="proj_featured">
-            <option value="false">No</option>
-            <option value="true">Yes</option>
-          </select>
-        </label>
+            <label>Cover Image URL
+              <input id="proj_cover" placeholder="/projects/SIP/assets/cover.jpg" />
+            </label>
 
-        <div class="md:col-span-2 mt-2">
+            <label>Featured Sort Order
+              <input id="proj_sort" type="number" placeholder="0" />
+            </label>
+          </div>
+        </section>
+
+        <section class="glass rounded-xl p-5">
           <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
-              <h3 class="text-xl font-serif text-[var(--gold)]">Project Sections + Versions</h3>
-              <p class="text-sm text-[var(--muted)]">Each section can have unlimited versions with changed/worked/failed notes.</p>
+              <h3 class="text-xl font-serif text-[var(--gold)]">Project Sections</h3>
+              <p class="text-sm text-[var(--muted)] mt-1">
+                Each section represents a major part of the build. Each section can contain unlimited versions.
+              </p>
             </div>
-            <button id="addProjectSection" class="btn btn-primary" type="button">+ Add Section</button>
+            <button id="addProjectSection" type="button" class="btn btn-primary">+ Add Section</button>
           </div>
 
-          <div id="projectSectionsEditor" class="mt-4 space-y-4"></div>
-        </div>
+          <div id="projectSectionsEditor" class="mt-5 space-y-5"></div>
+        </section>
 
-        <div class="md:col-span-2 flex gap-3 items-center">
+        <section class="glass rounded-xl p-5">
+          <h3 class="text-xl font-serif text-[var(--gold)] mb-3">Raw Structure JSON</h3>
+          <p class="text-sm text-[var(--muted)] mb-3">
+            Optional power-user field. This mirrors the section/version structure and can be exported or imported.
+          </p>
+          <textarea id="proj_structure_json" rows="10" spellcheck="false" placeholder='{"sections":[]}'></textarea>
+        </section>
+
+        <div class="flex flex-wrap gap-3 items-center">
           <button class="btn btn-primary" type="submit">Save Project</button>
+          <button id="syncProjectJson" class="btn" type="button">Sync JSON From Editor</button>
           <span id="projectModalStatus" class="text-sm text-[var(--muted)]"></span>
         </div>
       </form>
@@ -557,19 +564,74 @@
     const projectModalStatus = document.getElementById("projectModalStatus");
 
     const proj_title = document.getElementById("proj_title");
-    const proj_link = document.getElementById("proj_link");
+    const proj_url = document.getElementById("proj_url");
     const proj_type = document.getElementById("proj_type");
     const proj_status = document.getElementById("proj_status");
     const proj_summary = document.getElementById("proj_summary");
     const proj_goal = document.getElementById("proj_goal");
     const proj_tags = document.getElementById("proj_tags");
     const proj_progress = document.getElementById("proj_progress");
-    const proj_sourceLink = document.getElementById("proj_sourceLink");
-    const proj_featured = document.getElementById("proj_featured");
+    const proj_cover = document.getElementById("proj_cover");
+    const proj_sort = document.getElementById("proj_sort");
+    const proj_structure_json = document.getElementById("proj_structure_json");
+
     const projectSectionsEditor = document.getElementById("projectSectionsEditor");
     const addProjectSectionBtn = document.getElementById("addProjectSection");
+    const syncProjectJsonBtn = document.getElementById("syncProjectJson");
+    const importProjectJsonBtn = document.getElementById("importProjectJson");
+    const exportProjectJsonBtn = document.getElementById("exportProjectJson");
 
     let editProjectId = null;
+    let projectSectionsState = [];
+
+    function slugifyProject(value) {
+      return String(value || "")
+        .toLowerCase()
+        .trim()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    function newSection(seed = {}) {
+      return {
+        id: seed.id || slugifyProject(seed.title || "new-section") || crypto.randomUUID(),
+        title: seed.title || "New Section",
+        status: seed.status || "planning",
+        summary: seed.summary || "",
+        goal: seed.goal || "",
+        sortOrder: Number(seed.sortOrder || projectSectionsState.length),
+        versions: Array.isArray(seed.versions) ? seed.versions : []
+      };
+    }
+
+    function newVersion(seed = {}) {
+      return {
+        id: seed.id || crypto.randomUUID(),
+        version: seed.version || "v1.0",
+        title: seed.title || "New Version",
+        status: seed.status || "testing",
+        date: seed.date || new Date().toISOString().slice(0, 10),
+        changes: seed.changes || "",
+        worked: seed.worked || "",
+        failed: seed.failed || "",
+        nextSteps: seed.nextSteps || "",
+        media: Array.isArray(seed.media) ? seed.media : [],
+        sourceLinks: Array.isArray(seed.sourceLinks) ? seed.sourceLinks : []
+      };
+    }
+
+    function normalizeProjectStructure(input) {
+      const source = input && typeof input === "object" ? input : {};
+      const sections = Array.isArray(source.sections)
+        ? source.sections.map(sec => newSection({
+          ...sec,
+          versions: Array.isArray(sec.versions) ? sec.versions.map(v => newVersion(v)) : []
+        }))
+        : [];
+      return { sections };
+    }
+
     function openProjectModal() {
       projectModal.style.display = "block";
     }
@@ -582,126 +644,6 @@
     projectModal.addEventListener("click", e => {
       if (e.target === projectModal) closeProjectModal();
     });
-
-
-    function makeSlug(value = "") {
-      return String(value).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    }
-
-    function sectionTemplate(section = {}) {
-      const sectionEl = document.createElement("div");
-      sectionEl.className = "section-editor-card p-4";
-      sectionEl.innerHTML = `
-        <div class="flex items-center justify-between gap-3 mb-4">
-          <h4 class="font-semibold text-[var(--gold)]">Project Section</h4>
-          <button class="btn text-sm" type="button" data-remove-section>Remove Section</button>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-4">
-          <label>Section Title<input data-section-title value="${escapeAttr(section.title || section.name || "")}" placeholder="Robot Platform" /></label>
-          <label>Section Slug<input data-section-slug value="${escapeAttr(section.slug || makeSlug(section.title || section.name || ""))}" placeholder="robot-platform" /></label>
-          <label>Status
-            <select data-section-status>
-              ${["Active", "Planning", "Prototype", "Paused", "Complete", "Archived"].map(s => `<option value="${s}" ${s === (section.status || "Active") ? "selected" : ""}>${s}</option>`).join("")}
-            </select>
-          </label>
-          <label>Progress (%)<input data-section-progress type="number" min="0" max="100" value="${Number(section.progress || 0)}" /></label>
-          <label class="md:col-span-2">Section Summary<textarea data-section-summary rows="2" placeholder="What this section covers.">${escapeHtml(section.summary || "")}</textarea></label>
-        </div>
-
-        <div class="mt-4 flex items-center justify-between gap-3">
-          <h5 class="font-semibold">Versions</h5>
-          <button class="btn btn-primary text-sm" type="button" data-add-version>+ Add Version</button>
-        </div>
-        <div class="versions-editor mt-3 space-y-3"></div>
-      `;
-
-      sectionEl.querySelector("[data-remove-section]").addEventListener("click", () => sectionEl.remove());
-      sectionEl.querySelector("[data-add-version]").addEventListener("click", () => addVersion(sectionEl));
-      sectionEl.querySelector("[data-section-title]").addEventListener("input", e => {
-        const slugInput = sectionEl.querySelector("[data-section-slug]");
-        if (!slugInput.dataset.touched) slugInput.value = makeSlug(e.target.value);
-      });
-      sectionEl.querySelector("[data-section-slug]").addEventListener("input", e => e.target.dataset.touched = "true");
-
-      projectSectionsEditor.appendChild(sectionEl);
-      const versions = Array.isArray(section.versions) ? section.versions : [];
-      if (versions.length) versions.forEach(v => addVersion(sectionEl, v));
-      else addVersion(sectionEl);
-    }
-
-    function addVersion(sectionEl, version = {}) {
-      const wrap = sectionEl.querySelector(".versions-editor");
-      const v = document.createElement("div");
-      v.className = "version-editor-card p-4";
-      v.innerHTML = `
-        <div class="flex items-center justify-between gap-3 mb-4">
-          <h5 class="font-semibold text-[var(--gold)]">Version Entry</h5>
-          <button class="btn text-sm" type="button" data-remove-version>Remove Version</button>
-        </div>
-        <div class="grid md:grid-cols-2 gap-4">
-          <label>Version<input data-version-number value="${escapeAttr(version.version || "")}" placeholder="v0.1" /></label>
-          <label>Version Title<input data-version-title value="${escapeAttr(version.title || "")}" placeholder="Initial frame test" /></label>
-          <label>Date<input data-version-date type="date" value="${escapeAttr(version.date || "")}" /></label>
-          <label>Status
-            <select data-version-status>
-              ${["Worked", "Partial", "Failed", "Testing", "Archived"].map(s => `<option value="${s}" ${s === (version.status || "Testing") ? "selected" : ""}>${s}</option>`).join("")}
-            </select>
-          </label>
-          <label class="md:col-span-2">What Changed<textarea data-version-changed rows="2">${escapeHtml(version.changed || version.changes || "")}</textarea></label>
-          <label>What Worked<textarea data-version-worked rows="3">${escapeHtml(version.worked || "")}</textarea></label>
-          <label>What Didn't Work<textarea data-version-failed rows="3">${escapeHtml(version.failed || version.didntWork || "")}</textarea></label>
-          <label>Media/Demo Link<input data-version-media value="${escapeAttr(version.mediaLink || version.demoLink || "")}" /></label>
-          <label>Source Link<input data-version-source value="${escapeAttr(version.sourceLink || "")}" /></label>
-        </div>
-      `;
-      v.querySelector("[data-remove-version]").addEventListener("click", () => v.remove());
-      wrap.appendChild(v);
-    }
-
-    function escapeHtml(value = "") {
-      return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
-    }
-
-    function escapeAttr(value = "") {
-      return escapeHtml(value).replace(/`/g, '&#96;');
-    }
-
-    function resetProjectSections(sections = []) {
-      projectSectionsEditor.innerHTML = "";
-      if (Array.isArray(sections) && sections.length) sections.forEach(sectionTemplate);
-      else {
-        sectionTemplate({ title: "Robot Platform", slug: "robot-platform", status: "Active", progress: 0, versions: [] });
-        sectionTemplate({ title: "Print Bed Clearing System", slug: "print-bed-system", status: "Planning", progress: 0, versions: [] });
-        sectionTemplate({ title: "Cura Plugin / Software", slug: "cura-plugin", status: "Planning", progress: 0, versions: [] });
-        sectionTemplate({ title: "Electronics + Control", slug: "electronics", status: "Active", progress: 0, versions: [] });
-      }
-    }
-
-    function collectProjectSections() {
-      return [...projectSectionsEditor.querySelectorAll(".section-editor-card")].map(sectionEl => ({
-        title: sectionEl.querySelector("[data-section-title]").value.trim(),
-        slug: sectionEl.querySelector("[data-section-slug]").value.trim(),
-        status: sectionEl.querySelector("[data-section-status]").value,
-        progress: Number(sectionEl.querySelector("[data-section-progress]").value || 0),
-        summary: sectionEl.querySelector("[data-section-summary]").value.trim(),
-        versions: [...sectionEl.querySelectorAll(".version-editor-card")].map(v => ({
-          version: v.querySelector("[data-version-number]").value.trim(),
-          title: v.querySelector("[data-version-title]").value.trim(),
-          date: v.querySelector("[data-version-date]").value,
-          status: v.querySelector("[data-version-status]").value,
-          changed: v.querySelector("[data-version-changed]").value.trim(),
-          worked: v.querySelector("[data-version-worked]").value.trim(),
-          failed: v.querySelector("[data-version-failed]").value.trim(),
-          mediaLink: v.querySelector("[data-version-media]").value.trim(),
-          sourceLink: v.querySelector("[data-version-source]").value.trim()
-        })).filter(v => v.version || v.title || v.changed || v.worked || v.failed)
-      })).filter(section => section.title || section.summary || section.versions.length);
-    }
-
-    addProjectSectionBtn.addEventListener("click", () => sectionTemplate({ title: "New Section", slug: "new-section", status: "Planning", progress: 0 }));
-
-
 
     let editId = null, unsubProducts = null;
 
@@ -746,14 +688,7 @@
       }
 
       if (activeTab === "projects") {
-        editProjectId = null;
-        projectModalTitle.textContent = "Add Project";
-        projectForm.reset();
-        proj_link.value = "/projects/SIP/";
-        proj_status.value = "Active";
-        proj_featured.value = "false";
-        projectModalStatus.textContent = "";
-        resetProjectSections();
+        resetProjectFormForCreate();
         openProjectModal();
       }
 
@@ -779,33 +714,6 @@
       p_colors.value = (p.colors || []).join(", ");
       p_availability.value = p.availability === "in_stock" ? "in_stock" : "made_to_order";
       p_estimated.value = p.estimatedDelivery || "";
-    }
-    async function openProjectEdit(id) {
-      editProjectId = id;
-      projectModalTitle.textContent = "Edit Project";
-      projectModalStatus.textContent = "Loading…";
-      openProjectModal();
-
-      const snap = await getDoc(doc(db, "projects", id));
-      projectModalStatus.textContent = "";
-
-      if (!snap.exists()) {
-        showToast("Project not found");
-        return closeProjectModal();
-      }
-
-      const p = snap.data();
-      proj_title.value = p.title || "";
-      proj_link.value = p.link || p.url || "";
-      proj_type.value = p.type || "web";
-      proj_status.value = p.status || "Active";
-      proj_summary.value = p.summary || "";
-      proj_goal.value = p.goal || "";
-      proj_tags.value = (p.tags || []).join(", ");
-      proj_progress.value = p.progress ?? 0;
-      proj_sourceLink.value = p.sourceLink || "";
-      proj_featured.value = String(Boolean(p.featured));
-      resetProjectSections(p.sections || []);
     }
 
     function productCard(id, p) {
@@ -1110,44 +1018,344 @@
       finally { setLoading(false); }
     });
     // === Projects (Admin) ===
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replaceAll('"', "&quot;");
+    }
+
+    function renderProjectSectionsEditor() {
+      projectSectionsEditor.innerHTML = projectSectionsState.map((section, sectionIndex) => {
+        const versions = Array.isArray(section.versions) ? section.versions : [];
+        return `
+          <article class="glass card p-5" data-section-index="${sectionIndex}">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <div>
+                <div class="text-xs uppercase tracking-wide text-[var(--muted)]">Section ${sectionIndex + 1}</div>
+                <h4 class="text-lg font-semibold text-[var(--gold)]">${section.title || "Untitled Section"}</h4>
+                <p class="text-sm text-[var(--muted)]">${section.summary || "No summary yet."}</p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" class="btn text-sm" data-section-up="${sectionIndex}">↑</button>
+                <button type="button" class="btn text-sm" data-section-down="${sectionIndex}">↓</button>
+                <button type="button" class="btn btn-primary text-sm" data-add-version="${sectionIndex}">+ Version</button>
+                <button type="button" class="btn text-sm" data-delete-section="${sectionIndex}">Delete</button>
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4 mt-4">
+              <label>Section Title
+                <input data-section-field="title" data-section-index="${sectionIndex}" value="${escapeAttr(section.title)}" />
+              </label>
+              <label>Section ID / Slug
+                <input data-section-field="id" data-section-index="${sectionIndex}" value="${escapeAttr(section.id)}" />
+              </label>
+              <label>Status
+                <select data-section-field="status" data-section-index="${sectionIndex}">
+                  ${["planning","active","testing","complete","paused","archived"].map(s => `<option value="${s}" ${section.status === s ? "selected" : ""}>${s}</option>`).join("")}
+                </select>
+              </label>
+              <label>Sort Order
+                <input type="number" data-section-field="sortOrder" data-section-index="${sectionIndex}" value="${Number(section.sortOrder || sectionIndex)}" />
+              </label>
+              <label class="md:col-span-2">Section Summary
+                <textarea rows="2" data-section-field="summary" data-section-index="${sectionIndex}">${escapeHtml(section.summary)}</textarea>
+              </label>
+              <label class="md:col-span-2">Section Goal
+                <textarea rows="2" data-section-field="goal" data-section-index="${sectionIndex}">${escapeHtml(section.goal)}</textarea>
+              </label>
+            </div>
+
+            <div class="mt-5 space-y-4">
+              <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Versions (${versions.length})</div>
+              ${versions.map((version, versionIndex) => versionEditorHtml(sectionIndex, versionIndex, version)).join("") || `
+                <div class="rounded-xl border border-[var(--border)] p-4 text-sm text-[var(--muted)]">
+                  No versions yet. Click <span class="text-[var(--gold)]">+ Version</span> to document this section's first build.
+                </div>
+              `}
+            </div>
+          </article>
+        `;
+      }).join("") || `
+        <div class="glass card p-6 text-[var(--muted)]">
+          No project sections yet. Click <span class="text-[var(--gold)]">+ Add Section</span>.
+        </div>
+      `;
+
+      bindProjectEditorEvents();
+      syncJsonFromEditor(false);
+    }
+
+    function versionEditorHtml(sectionIndex, versionIndex, version) {
+      return `
+        <details class="glass rounded-xl p-4" open>
+          <summary class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 cursor-pointer">
+            <div>
+              <div class="text-xs uppercase tracking-wide text-[var(--gold)]">${version.version || "Version"}</div>
+              <h5 class="font-semibold">${version.title || "Untitled Version"}</h5>
+              <p class="text-xs text-[var(--muted)]">${version.status || "testing"}${version.date ? " • " + version.date : ""}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="btn text-sm" data-version-up="${sectionIndex}:${versionIndex}">↑</button>
+              <button type="button" class="btn text-sm" data-version-down="${sectionIndex}:${versionIndex}">↓</button>
+              <button type="button" class="btn text-sm" data-delete-version="${sectionIndex}:${versionIndex}">Delete</button>
+            </div>
+          </summary>
+
+          <div class="grid md:grid-cols-2 gap-4 mt-4">
+            <label>Version Label
+              <input data-version-field="version" data-section-index="${sectionIndex}" data-version-index="${versionIndex}" value="${escapeAttr(version.version)}" />
+            </label>
+            <label>Version Title
+              <input data-version-field="title" data-section-index="${sectionIndex}" data-version-index="${versionIndex}" value="${escapeAttr(version.title)}" />
+            </label>
+            <label>Status
+              <select data-version-field="status" data-section-index="${sectionIndex}" data-version-index="${versionIndex}">
+                ${["idea","planning","testing","working","failed","complete","archived"].map(s => `<option value="${s}" ${version.status === s ? "selected" : ""}>${s}</option>`).join("")}
+              </select>
+            </label>
+            <label>Date
+              <input type="date" data-version-field="date" data-section-index="${sectionIndex}" data-version-index="${versionIndex}" value="${escapeAttr(version.date)}" />
+            </label>
+
+            <label class="md:col-span-2">What Changed
+              <textarea rows="3" data-version-field="changes" data-section-index="${sectionIndex}" data-version-index="${versionIndex}">${escapeHtml(version.changes)}</textarea>
+            </label>
+            <label class="md:col-span-2">What Worked
+              <textarea rows="3" data-version-field="worked" data-section-index="${sectionIndex}" data-version-index="${versionIndex}">${escapeHtml(version.worked)}</textarea>
+            </label>
+            <label class="md:col-span-2">What Did Not Work
+              <textarea rows="3" data-version-field="failed" data-section-index="${sectionIndex}" data-version-index="${versionIndex}">${escapeHtml(version.failed)}</textarea>
+            </label>
+            <label class="md:col-span-2">Next Steps
+              <textarea rows="3" data-version-field="nextSteps" data-section-index="${sectionIndex}" data-version-index="${versionIndex}">${escapeHtml(version.nextSteps)}</textarea>
+            </label>
+            <label>Media URLs
+              <textarea rows="3" data-version-field="media" data-section-index="${sectionIndex}" data-version-index="${versionIndex}" placeholder="One URL per line">${escapeHtml((version.media || []).join("\n"))}</textarea>
+            </label>
+            <label>Source Links
+              <textarea rows="3" data-version-field="sourceLinks" data-section-index="${sectionIndex}" data-version-index="${versionIndex}" placeholder="One URL per line">${escapeHtml((version.sourceLinks || []).join("\n"))}</textarea>
+            </label>
+          </div>
+        </details>
+      `;
+    }
+
+    function bindProjectEditorEvents() {
+      projectSectionsEditor.querySelectorAll("[data-section-field]").forEach(el => {
+        el.addEventListener("input", e => {
+          const i = Number(e.target.dataset.sectionIndex);
+          const field = e.target.dataset.sectionField;
+          projectSectionsState[i][field] = field === "sortOrder" ? Number(e.target.value || 0) : e.target.value;
+          syncJsonFromEditor(false);
+        });
+      });
+
+      projectSectionsEditor.querySelectorAll("[data-version-field]").forEach(el => {
+        el.addEventListener("input", e => {
+          const si = Number(e.target.dataset.sectionIndex);
+          const vi = Number(e.target.dataset.versionIndex);
+          const field = e.target.dataset.versionField;
+          let value = e.target.value;
+
+          if (field === "media" || field === "sourceLinks") {
+            value = value.split("\n").map(v => v.trim()).filter(Boolean);
+          }
+
+          projectSectionsState[si].versions[vi][field] = value;
+          syncJsonFromEditor(false);
+        });
+      });
+
+      projectSectionsEditor.querySelectorAll("[data-add-version]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const si = Number(btn.dataset.addVersion);
+          projectSectionsState[si].versions = projectSectionsState[si].versions || [];
+          projectSectionsState[si].versions.push(newVersion({
+            version: `v${projectSectionsState[si].versions.length + 1}.0`,
+            title: "New Version"
+          }));
+          renderProjectSectionsEditor();
+        });
+      });
+
+      projectSectionsEditor.querySelectorAll("[data-delete-section]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const si = Number(btn.dataset.deleteSection);
+          if (!confirm("Delete this entire section and all its versions?")) return;
+          projectSectionsState.splice(si, 1);
+          renderProjectSectionsEditor();
+        });
+      });
+
+      projectSectionsEditor.querySelectorAll("[data-delete-version]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const [si, vi] = btn.dataset.deleteVersion.split(":").map(Number);
+          if (!confirm("Delete this version?")) return;
+          projectSectionsState[si].versions.splice(vi, 1);
+          renderProjectSectionsEditor();
+        });
+      });
+
+      projectSectionsEditor.querySelectorAll("[data-section-up]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const si = Number(btn.dataset.sectionUp);
+          if (si <= 0) return;
+          [projectSectionsState[si - 1], projectSectionsState[si]] = [projectSectionsState[si], projectSectionsState[si - 1]];
+          renderProjectSectionsEditor();
+        });
+      });
+
+      projectSectionsEditor.querySelectorAll("[data-section-down]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const si = Number(btn.dataset.sectionDown);
+          if (si >= projectSectionsState.length - 1) return;
+          [projectSectionsState[si + 1], projectSectionsState[si]] = [projectSectionsState[si], projectSectionsState[si + 1]];
+          renderProjectSectionsEditor();
+        });
+      });
+
+      projectSectionsEditor.querySelectorAll("[data-version-up]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const [si, vi] = btn.dataset.versionUp.split(":").map(Number);
+          if (vi <= 0) return;
+          const versions = projectSectionsState[si].versions;
+          [versions[vi - 1], versions[vi]] = [versions[vi], versions[vi - 1]];
+          renderProjectSectionsEditor();
+        });
+      });
+
+      projectSectionsEditor.querySelectorAll("[data-version-down]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const [si, vi] = btn.dataset.versionDown.split(":").map(Number);
+          const versions = projectSectionsState[si].versions;
+          if (vi >= versions.length - 1) return;
+          [versions[vi + 1], versions[vi]] = [versions[vi], versions[vi + 1]];
+          renderProjectSectionsEditor();
+        });
+      });
+    }
+
+    addProjectSectionBtn.addEventListener("click", () => {
+      projectSectionsState.push(newSection({
+        title: `New Section ${projectSectionsState.length + 1}`,
+        id: `section-${projectSectionsState.length + 1}`,
+        versions: []
+      }));
+      renderProjectSectionsEditor();
+    });
+
+    syncProjectJsonBtn.addEventListener("click", () => {
+      syncJsonFromEditor(true);
+      showToast("Project JSON synced");
+    });
+
+    importProjectJsonBtn.addEventListener("click", () => {
+      try {
+        const parsed = JSON.parse(proj_structure_json.value || '{"sections":[]}');
+        projectSectionsState = normalizeProjectStructure(parsed).sections;
+        renderProjectSectionsEditor();
+        showToast("Project JSON imported");
+      } catch (e) {
+        console.error(e);
+        showToast("Invalid JSON");
+      }
+    });
+
+    exportProjectJsonBtn.addEventListener("click", async () => {
+      syncJsonFromEditor(true);
+      try {
+        await navigator.clipboard.writeText(proj_structure_json.value);
+        showToast("Project JSON copied");
+      } catch {
+        showToast("JSON ready to copy");
+      }
+    });
+
+    function syncJsonFromEditor(pretty = true) {
+      proj_structure_json.value = JSON.stringify({ sections: projectSectionsState }, null, pretty ? 2 : 0);
+    }
+
+    function projectDataFromForm() {
+      let structure;
+      try {
+        structure = normalizeProjectStructure(JSON.parse(proj_structure_json.value || '{"sections":[]}'));
+      } catch {
+        structure = { sections: projectSectionsState };
+      }
+
+      const sections = structure.sections || [];
+      const versionCount = sections.reduce((sum, sec) => sum + (Array.isArray(sec.versions) ? sec.versions.length : 0), 0);
+
+      return {
+        title: proj_title.value.trim(),
+        slug: slugifyProject(proj_title.value.trim()),
+        url: proj_url.value.trim(),
+        type: proj_type.value,
+        status: proj_status.value,
+        summary: proj_summary.value.trim(),
+        goal: proj_goal.value.trim(),
+        tags: proj_tags.value.split(",").map(t => t.trim()).filter(Boolean),
+        progress: Number(proj_progress.value || 0),
+        cover: proj_cover.value.trim(),
+        sortOrder: Number(proj_sort.value || 0),
+        structure,
+        sectionCount: sections.length,
+        versionCount,
+        updatedAt: new Date()
+      };
+    }
+
     function adminProjectCard(id, p) {
       const tags = (p.tags || []).join(" • ");
+      const progress = Math.max(0, Math.min(Number(p.progress || 0), 100));
+      const sections = Number(p.sectionCount || p.structure?.sections?.length || 0);
+      const versions = Number(p.versionCount || (p.structure?.sections || []).reduce((sum, sec) => sum + (sec.versions?.length || 0), 0));
+      const url = p.url || `/projects/${p.slug || id}/`;
       return `
-    <article class="glass card p-5">
-      <div class="text-xs text-[var(--muted)]">
-        ${(p.type || "project")} ${tags ? "• " + tags : ""}
-      </div>
+        <article class="glass card p-5">
+          <div class="text-xs text-[var(--muted)]">${(p.type || "project")} ${tags ? "• " + tags : ""}</div>
+          <h3 class="mt-1 text-lg font-semibold text-[var(--gold)]">${p.title || "Untitled"}</h3>
+          <p class="mt-2 text-sm text-[var(--muted)]">${p.summary || ""}</p>
 
-      <h3 class="mt-1 text-lg font-semibold text-[var(--gold)]">
-        ${p.title || "Untitled"}
-      </h3>
+          <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="rounded border border-[var(--border)] p-2">
+              <div class="text-[var(--gold)] font-semibold">${progress}%</div>
+              <div class="text-[var(--muted)]">Progress</div>
+            </div>
+            <div class="rounded border border-[var(--border)] p-2">
+              <div class="text-[var(--gold)] font-semibold">${sections}</div>
+              <div class="text-[var(--muted)]">Sections</div>
+            </div>
+            <div class="rounded border border-[var(--border)] p-2">
+              <div class="text-[var(--gold)] font-semibold">${versions}</div>
+              <div class="text-[var(--muted)]">Versions</div>
+            </div>
+          </div>
 
-      <p class="mt-2 text-sm text-[var(--muted)]">
-        ${p.summary || ""}
-      </p>
+          <div class="mt-3 h-2 rounded bg-white/5 overflow-hidden">
+            <div class="h-full" style="background:var(--gold);width:${progress}%"></div>
+          </div>
 
-      <div class="mt-3 h-2 rounded bg-white/5 overflow-hidden">
-        <div class="h-full"
-          style="background:var(--gold);width:${Math.max(0, Math.min(Number(p.progress || 0), 100))}%">
-        </div>
-      </div>
-
-      <div class="mt-4 flex gap-2">
-        <button class="btn btn-primary" data-edit="${id}">Edit</button>
-        <button class="btn" data-delete="${id}">Delete</button>
-      </div>
-    </article>
-  `;
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button class="btn btn-primary" data-edit="${id}">Edit</button>
+            <a class="btn" href="${url}" target="_blank">Open</a>
+            <button class="btn" data-delete="${id}">Delete</button>
+          </div>
+        </article>
+      `;
     }
 
     function bindProjects() {
       const q = query(collection(db, "projects"), orderBy("updatedAt", "desc"));
       onSnapshot(q, snap => {
         if (snap.empty) {
-          panelProjects.innerHTML = `
-        <div class="glass card p-6 text-[var(--muted)]">
-          No projects yet.
-        </div>`;
+          panelProjects.innerHTML = `<div class="glass card p-6 text-[var(--muted)]">No projects yet.</div>`;
           return;
         }
 
@@ -1161,21 +1369,76 @@
         panelProjects.querySelectorAll("[data-edit]").forEach(btn =>
           btn.addEventListener("click", () => openProjectEdit(btn.dataset.edit))
         );
-
       });
     }
+
+    function resetProjectFormForCreate() {
+      editProjectId = null;
+      projectModalTitle.textContent = "Add Project";
+      projectForm.reset();
+      projectModalStatus.textContent = "";
+      projectSectionsState = [
+        newSection({
+          id: "robot-platform",
+          title: "Robot Platform",
+          status: "active",
+          summary: "Frame, movement system, body design, and physical structure.",
+          versions: [newVersion({
+            version: "v1.0",
+            title: "Initial Concept",
+            status: "planning",
+            changes: "Describe what changed in this version.",
+            worked: "Describe what worked.",
+            failed: "Describe what did not work.",
+            nextSteps: "Describe what comes next."
+          })]
+        })
+      ];
+      renderProjectSectionsEditor();
+    }
+
+    async function openProjectEdit(id) {
+      editProjectId = id;
+      projectModalTitle.textContent = "Edit Project";
+      projectModalStatus.textContent = "Loading…";
+      openProjectModal();
+
+      const snap = await getDoc(doc(db, "projects", id));
+      projectModalStatus.textContent = "";
+
+      if (!snap.exists()) {
+        showToast("Project not found");
+        return closeProjectModal();
+      }
+
+      const p = snap.data();
+
+      proj_title.value = p.title || "";
+      proj_url.value = p.url || "";
+      proj_type.value = p.type || "web";
+      proj_status.value = p.status || "active";
+      proj_summary.value = p.summary || "";
+      proj_goal.value = p.goal || "";
+      proj_tags.value = (p.tags || []).join(", ");
+      proj_progress.value = p.progress ?? 0;
+      proj_cover.value = p.cover || "";
+      proj_sort.value = p.sortOrder ?? 0;
+
+      projectSectionsState = normalizeProjectStructure(p.structure || { sections: [] }).sections;
+      renderProjectSectionsEditor();
+    }
+
     projectForm.addEventListener("submit", async e => {
       e.preventDefault();
       projectModalStatus.textContent = "Saving…";
+      syncJsonFromEditor(true);
 
-      const data = {
-        title: proj_title.value.trim(),
-        type: proj_type.value,
-        summary: proj_summary.value.trim(),
-        tags: proj_tags.value.split(",").map(t => t.trim()).filter(Boolean),
-        progress: Number(proj_progress.value || 0),
-        updatedAt: new Date()
-      };
+      const data = projectDataFromForm();
+
+      if (!data.title) {
+        projectModalStatus.textContent = "Project title is required";
+        return;
+      }
 
       try {
         if (editProjectId) {
@@ -1184,6 +1447,7 @@
         } else {
           await addDoc(collection(db, "projects"), {
             ...data,
+            visible: true,
             createdAt: new Date()
           });
           showToast("Project added");
@@ -1195,7 +1459,6 @@
         projectModalStatus.textContent = "Error saving project";
       }
     });
-
 
     async function deleteProject(id) {
       if (!confirm("Delete this project?")) return;
@@ -1277,236 +1540,4 @@
   <script src="/assets/js/service-worker-reg.js"></script>
 </body>
 
-</html>      transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
-    }
-
-    .navbar a { opacity: .9 }
-    .navbar a:hover { opacity: 1 }
-
-    .particles {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 1;
-      overflow: hidden
-    }
-
-    .particles span {
-      position: absolute;
-      display: block;
-      width: 5px;
-      height: 5px;
-      border-radius: 9999px;
-      background: var(--gold);
-      opacity: .15;
-      filter: blur(.5px);
-      animation: float var(--dur) linear infinite;
-      left: var(--x);
-      top: var(--y)
-    }
-
-    @keyframes float {
-      to {
-        transform: translateY(-300vh) translateX(var(--drift, 0px));
-        opacity: 0
-      }
-    }
-
-    .fade-in {
-      opacity: 0;
-      transform: translateY(6px);
-      animation: fadeIn .6s ease forwards
-    }
-
-    @keyframes fadeIn {
-      to { opacity: 1; transform: none }
-    }
-
-    .chip {
-      display: inline-flex;
-      width: fit-content;
-      padding: .25rem .55rem;
-      border-radius: 9999px;
-      border: 1px solid var(--border);
-      color: var(--gold);
-      background: rgba(212, 175, 55, .08);
-      font-size: .72rem;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-  </style>
-
-</head>
-
-<body class="min-h-screen text-[var(--text)] bg-[var(--bg)] selection:bg-[var(--gold)]/20">
-  <div class="page-overlay"></div>
-  <div class="particles" id="particles"></div>
-
-  <div id="navbar-container"></div>
-  <script>
-    fetch("/assets/modules/navbar.html")
-      .then(res => res.text())
-      .then(html => {
-        const container = document.getElementById("navbar-container");
-        const temp = document.createElement("div");
-        temp.innerHTML = html;
-
-        temp.querySelectorAll("style").forEach(style => {
-          const newStyle = document.createElement("style");
-          newStyle.textContent = style.textContent;
-          document.head.appendChild(newStyle);
-          style.remove();
-        });
-
-        container.innerHTML = temp.innerHTML;
-
-        container.querySelectorAll("script").forEach(oldScript => {
-          const s = document.createElement("script");
-          s.type = oldScript.type || "text/javascript";
-          if (oldScript.src) s.src = oldScript.src;
-          else s.textContent = oldScript.textContent;
-          document.body.appendChild(s);
-        });
-      })
-      .catch(err => console.error("Navbar load failed:", err));
-  </script>
-
-  <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur"></header>
-
-  <main class="mx-auto max-w-7xl px-4 py-10 my-10 relative z-[2]">
-    <section class="glass rounded-2xl p-6 md:p-8 fade-in">
-      <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Morrow Industries</div>
-      <h1 class="mt-2 font-serif text-4xl sm:text-5xl">Projects</h1>
-      <p class="mt-3 text-[var(--muted)] max-w-3xl">
-        Live project index with structured project sections, version history, progress, source links, and direct project pages.
-      </p>
-    </section>
-
-    <div class="mt-6 flex flex-wrap gap-2 text-sm relative z-[2]">
-      <button class="btn btn-primary" data-filter="all">All</button>
-      <button class="btn" data-filter="school">School</button>
-      <button class="btn" data-filter="personal">Personal</button>
-      <button class="btn" data-filter="hardware">Hardware</button>
-      <button class="btn" data-filter="web">Web</button>
-      <button class="btn" data-filter="android">Android</button>
-    </div>
-
-    <section id="grid" class="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5 relative z-[2]"></section>
-  </main>
-
-  <footer class="mt-10 border-t border-[var(--border)] relative" style="z-index:2">
-    <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-      <div>© <span id="year"></span> Morrow Industries</div>
-      <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
-    </div>
-  </footer>
-
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    (function makeParticles() {
-      const wrap = document.getElementById('particles');
-      const count = 56;
-      for (let i = 0; i < count; i++) {
-        const s = document.createElement('span');
-        s.style.setProperty('--x', Math.random() * 100 + 'vw');
-        s.style.setProperty('--y', (100 + Math.random() * 40) + 'vh');
-        s.style.setProperty('--drift', (Math.random() * 20 - 10) + 'px');
-        s.style.setProperty('--dur', (1 + Math.random() * 14) + 's');
-        s.style.opacity = (0.08 + Math.random() * 0.15).toFixed(2);
-        wrap.appendChild(s);
-      }
-    })();
-  </script>
-
-  <script type="module">
-    import { db } from "/assets/js/firebase-init.js";
-    import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const grid = document.getElementById('grid');
-    let cache = [];
-
-    function escapeHtml(value = "") {
-      return String(value).replace(/[&<>'"]/g, char => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-      }[char]));
-    }
-
-    function projectHref(p) {
-      return p.link || p.url || (p.slug ? `/projects/${p.slug}/` : `/projects/${p.id}/`);
-    }
-
-    async function loadProjects() {
-      const q = query(collection(db, 'projects'), orderBy('updatedAt', 'desc'));
-      const snaps = await getDocs(q);
-      cache = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
-      render('all');
-    }
-
-    function card(p) {
-      const type = escapeHtml(p.type || 'Project');
-      const tags = Array.isArray(p.tags) ? p.tags : [];
-      const progress = Number(p.progress || 0);
-      const sections = Array.isArray(p.sections) ? p.sections : [];
-      const versionCount = sections.reduce((total, section) => total + (Array.isArray(section.versions) ? section.versions.length : 0), 0);
-      const sectionPreview = sections.slice(0, 3).map(section => `
-        <span class="chip">${escapeHtml(section.title || section.name || 'Section')}</span>
-      `).join('');
-      const status = p.status || (progress >= 100 ? 'Complete' : 'Active');
-      const href = projectHref(p);
-
-      return `
-    <article class="glass rounded-xl p-5 border border-[var(--border)] flex flex-col">
-      <div class="flex items-start justify-between gap-3">
-        <div class="text-xs text-[var(--muted)]">${type}${tags.length ? ` • ${tags.map(escapeHtml).join(' • ')}` : ''}</div>
-        <span class="chip">${escapeHtml(status)}</span>
-      </div>
-
-      <h2 class="mt-2 text-xl font-semibold text-[var(--gold)]">${escapeHtml(p.title || 'Untitled')}</h2>
-      <p class="mt-2 text-sm text-[var(--muted)]">${escapeHtml(p.summary || '')}</p>
-
-      ${p.goal ? `<div class="mt-4 glass rounded-lg p-3 text-sm text-[var(--muted)]"><span class="gold font-semibold">Goal:</span> ${escapeHtml(p.goal)}</div>` : ''}
-
-      <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div class="glass rounded-lg p-3">
-          <div class="gold font-semibold">${sections.length}</div>
-          <div class="text-[var(--muted)]">Sections</div>
-        </div>
-        <div class="glass rounded-lg p-3">
-          <div class="gold font-semibold">${versionCount}</div>
-          <div class="text-[var(--muted)]">Versions</div>
-        </div>
-      </div>
-
-      ${sectionPreview ? `<div class="mt-4 flex flex-wrap gap-2">${sectionPreview}</div>` : ''}
-
-      <div class="mt-4 h-2 rounded bg-white/5 overflow-hidden">
-        <div class="h-full" style="background:var(--gold);width:${Math.max(0, Math.min(progress, 100))}%"></div>
-      </div>
-      <div class="mt-1 text-xs text-[var(--muted)]">${Math.max(0, Math.min(progress, 100))}% complete</div>
-
-      <div class="mt-5 flex gap-2 pt-1">
-        <a class="btn btn-primary text-sm text-center grow" href="${escapeHtml(href)}">Open Project</a>
-        ${p.sourceLink ? `<a class="btn text-sm text-center" href="${escapeHtml(p.sourceLink)}">Source</a>` : ''}
-      </div>
-    </article>`;
-    }
-
-    function render(filter) {
-      document.querySelectorAll('button[data-filter]').forEach(btn => {
-        btn.classList.toggle('btn-primary', btn.dataset.filter === filter);
-      });
-      const items = cache.filter(p => filter === 'all' ? true : ((p.type || '').toLowerCase() === filter || (p.tags || []).map(t => String(t).toLowerCase()).includes(filter)));
-      grid.innerHTML = items.map(card).join('') || `<div class='text-[var(--muted)]'>No matching projects.</div>`;
-    }
-
-    document.querySelectorAll('button[data-filter]').forEach(btn => btn.addEventListener('click', () => render(btn.dataset.filter)));
-    loadProjects().catch(e => { console.error(e); grid.innerHTML = "<div class='text-[var(--muted)]'>Failed to load.</div>"; });
-  </script>
-
-  <script src="/assets/js/firebase-auth.js" type="module"></script>
-  <script type="module" src="/assets/js/debug-listener.js"></script>
-</body>
-
-</html>
+  </html>
