@@ -1,1 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0a0b0f">
+  <link rel="icon" type="image/x-icon" href="/icon.ico">
+  <title>Morrow Industries — SIP Project</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="/assets/js/maintenance-listener.js"></script>
+
+  <style>
+    :root {
+      --bg: #000;
+      --surface: #12141b;
+      --muted: #a9b0be;
+      --text: #e9eef8;
+      --gold: #d4af37;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .page-overlay {
+      position: fixed;
+      inset: 0;
+      height: 100vh;
+      width: 100vw;
+      z-index: 0;
+      background:
+        radial-gradient(circle at top left, rgba(212, 175, 55, .08), transparent 38rem),
+        radial-gradient(circle at bottom right, rgba(80, 120, 255, .08), transparent 34rem),
+        rgba(0, 0, 20, 0);
+      backdrop-filter: blur(3px);
+    }
+
+    .glass {
+      background: rgba(18, 20, 27, .6);
+      backdrop-filter: saturate(140%) blur(10px);
+      border: 1px solid var(--border);
+    }
+
+    .gold { color: var(--gold); }
+
+    .btn,
+    .fab {
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: .6rem .9rem;
+      border-radius: .6rem;
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+      position: relative;
+      z-index: 2;
+    }
+
+    .btn-primary { border-color: #d4af37; }
+
+    .btn:hover,
+    .fab:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(6px);
+      animation: fadeIn .6s ease forwards;
+    }
+
+    .delay-1 { animation-delay: .08s; }
+    .delay-2 { animation-delay: .16s; }
+    .delay-3 { animation-delay: .24s; }
+
+    @keyframes fadeIn {
+      to { opacity: 1; transform: none; }
+    }
+
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .particles span {
+      position: absolute;
+      display: block;
+      width: 5px;
+      height: 5px;
+      border-radius: 9999px;
+      background: var(--gold);
+      opacity: .15;
+      filter: blur(.5px);
+      animation: float var(--dur) linear infinite;
+      left: var(--x);
+      top: var(--y);
+    }
+
+    @keyframes float {
+      to {
+        transform: translateY(-300vh) translateX(var(--drift, 0px));
+        opacity: 0;
+      }
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+
+    .progress-line {
+      position: relative;
+    }
+
+    .progress-line::before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 22px;
+      bottom: 22px;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .timeline-dot {
+      width: 23px;
+      height: 23px;
+      border-radius: 9999px;
+      border: 1px solid rgba(212,175,55,.7);
+      background: rgba(212,175,55,.18);
+      box-shadow: 0 0 18px rgba(212,175,55,.2);
+      flex: 0 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .embed-frame {
+      width: 100%;
+      border: 0;
+      background: rgba(0,0,0,.35);
+    }
+
+    .fab {
+      position: fixed;
+      right: 1.25rem;
+      bottom: 1.25rem;
+      background: rgba(18, 20, 27, .85);
+      z-index: 9999;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen text-[var(--text)] selection:bg-[var(--gold)]/20">
+  <div class="page-overlay"></div>
+  <div class="particles" id="particles"></div>
+
+  <div id="navbar-container"></div>
+  <script>
+    fetch("/assets/modules/navbar.html")
+      .then(res => res.text())
+      .then(html => {
+        const container = document.getElementById("navbar-container");
+        const temp = document.createElement("div");
+        temp.innerHTML = html;
+
+        temp.querySelectorAll("style").forEach(style => {
+          const newStyle = document.createElement("style");
+          newStyle.textContent = style.textContent;
+          document.head.appendChild(newStyle);
+          style.remove();
+        });
+
+        container.innerHTML = temp.innerHTML;
+
+        container.querySelectorAll("script").forEach(oldScript => {
+          const s = document.createElement("script");
+          s.type = oldScript.type || "text/javascript";
+          if (oldScript.src) s.src = oldScript.src;
+          else s.textContent = oldScript.textContent;
+          document.body.appendChild(s);
+        });
+      })
+      .catch(err => console.error("Navbar load failed:", err));
+  </script>
+
+  <header class="border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur"></header>
+
+  <main class="mx-auto max-w-7xl px-4 relative z-[2]">
+    <section class="grid lg:grid-cols-[1.2fr_.8fr] gap-10 items-start py-10 sm:py-16 fade-in">
+      <div class="glass rounded-2xl p-6 md:p-8">
+        <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Student Innovation Project</div>
+        <h1 class="mt-3 font-serif text-4xl sm:text-6xl leading-tight">
+          SIP: <span class="gold">robotics</span> + 3D printing automation
+        </h1>
+        <p class="mt-4 text-[var(--muted)] max-w-3xl">
+          A project hub for documenting the full journey of building a robotic system that can work with 3D printing
+          software, track progress, show prototypes, explain the final product goal, and archive source code.
+        </p>
+
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href="#progress" class="btn btn-primary">View Progress</a>
+          <a href="#prototypes" class="btn">Prototype Archive</a>
+          <a href="#source" class="btn">Source Code</a>
+        </div>
+      </div>
+
+      <aside class="glass rounded-2xl p-6 md:p-8 fade-in delay-1">
+        <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Final Product Goal</div>
+        <h2 class="mt-2 font-serif text-3xl">Print automation assistant</h2>
+        <p class="mt-3 text-[var(--muted)]">
+          The end goal is a physical robot and Cura-connected workflow that can reduce manual printer handling by
+          clearing completed prints, managing cooldown timing, and preparing the next queued print.
+        </p>
+
+        <div class="mt-6 grid grid-cols-2 gap-3">
+          <div class="glass rounded-xl p-4">
+            <div class="gold text-2xl font-semibold">01</div>
+            <div class="text-sm text-[var(--muted)]">Robot prototype</div>
+          </div>
+          <div class="glass rounded-xl p-4">
+            <div class="gold text-2xl font-semibold">02</div>
+            <div class="text-sm text-[var(--muted)]">Cura workflow</div>
+          </div>
+          <div class="glass rounded-xl p-4">
+            <div class="gold text-2xl font-semibold">03</div>
+            <div class="text-sm text-[var(--muted)]">Print queue</div>
+          </div>
+          <div class="glass rounded-xl p-4">
+            <div class="gold text-2xl font-semibold">04</div>
+            <div class="text-sm text-[var(--muted)]">Live demos</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="grid lg:grid-cols-[260px_1fr] gap-6 pb-16">
+      <aside class="glass rounded-2xl p-5 h-fit lg:sticky lg:top-24 fade-in delay-1">
+        <div class="text-sm uppercase tracking-wide text-[var(--muted)]">SIP Index</div>
+        <nav class="mt-4 grid gap-2 text-sm">
+          <a class="btn" href="#overview">Overview</a>
+          <a class="btn" href="#progress">Progress</a>
+          <a class="btn" href="#prototypes">Prototypes</a>
+          <a class="btn" href="#docs">Documents + Demos</a>
+          <a class="btn" href="#source">Source Code</a>
+          <a class="btn" href="#roadmap">Roadmap</a>
+        </nav>
+      </aside>
+
+      <div class="space-y-6">
+        <section id="overview" class="glass rounded-2xl p-6 md:p-8 fade-in delay-1">
+          <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Project Overview</div>
+          <h2 class="mt-2 font-serif text-3xl">What this page is for</h2>
+          <p class="mt-3 text-[var(--muted)]">
+            This page should work like a living project case study. Instead of only explaining the idea once, it gives
+            every prototype, build log, visual, source-code update, and milestone a clear place to live.
+          </p>
+
+          <div class="mt-6 grid md:grid-cols-3 gap-5">
+            <article class="glass rounded-xl p-5">
+              <h3 class="font-semibold">Goal Clarity</h3>
+              <p class="mt-2 text-sm text-[var(--muted)]">Explain what the final product should become and why it matters.</p>
+            </article>
+            <article class="glass rounded-xl p-5">
+              <h3 class="font-semibold">Prototype History</h3>
+              <p class="mt-2 text-sm text-[var(--muted)]">Show every hardware, software, and design iteration over time.</p>
+            </article>
+            <article class="glass rounded-xl p-5">
+              <h3 class="font-semibold">Source Archive</h3>
+              <p class="mt-2 text-sm text-[var(--muted)]">Link code, branches, downloads, and documentation in one spot.</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="progress" class="glass rounded-2xl p-6 md:p-8 fade-in delay-2">
+          <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Build Tracker</div>
+          <h2 class="mt-2 font-serif text-3xl">Progress</h2>
+
+          <div class="mt-6 progress-line space-y-6">
+            <div class="flex gap-4">
+              <div class="timeline-dot"></div>
+              <div>
+                <h3 class="font-semibold">Concept and innovation claim</h3>
+                <p class="text-sm text-[var(--muted)]">Defined the SIP as robotics integrated with 3D printing software for a smoother automated workflow.</p>
+              </div>
+            </div>
+
+            <div class="flex gap-4">
+              <div class="timeline-dot"></div>
+              <div>
+                <h3 class="font-semibold">Early sketches and visuals</h3>
+                <p class="text-sm text-[var(--muted)]">Added first visual references, including the robotic arm model and initial sketch.</p>
+              </div>
+            </div>
+
+            <div class="flex gap-4">
+              <div class="timeline-dot"></div>
+              <div>
+                <h3 class="font-semibold">Physical prototype testing</h3>
+                <p class="text-sm text-[var(--muted)]">Current focus: movement, sensors, robot frame ideas, and bed-clearing hardware direction.</p>
+              </div>
+            </div>
+
+            <div class="flex gap-4">
+              <div class="timeline-dot"></div>
+              <div>
+                <h3 class="font-semibold">Cura plugin workflow</h3>
+                <p class="text-sm text-[var(--muted)]">Planned focus: queue handling, cooldown timers, robot communication, and print-ready checks.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="prototypes" class="glass rounded-2xl p-6 md:p-8 fade-in delay-2">
+          <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Prototype Archive</div>
+          <h2 class="mt-2 font-serif text-3xl">Every part gets documented</h2>
+          <p class="mt-3 text-[var(--muted)]">
+            Duplicate these cards whenever you build a new part, test a wiring setup, update the Cura plugin, or record a demo.
+          </p>
+
+          <div class="mt-6 grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+            <article class="glass rounded-xl overflow-hidden">
+              <img src="./assets/3dmodel.jpg" alt="Robotic arm prototype" class="w-full h-48 object-cover border-b border-[var(--border)]">
+              <div class="p-5">
+                <div class="text-xs uppercase tracking-wide gold">Prototype 01</div>
+                <h3 class="mt-1 font-semibold">Robotic Arm Concept</h3>
+                <p class="mt-2 text-sm text-[var(--muted)]">Early visual showing the direction for the physical automation component.</p>
+              </div>
+            </article>
+
+            <article class="glass rounded-xl overflow-hidden">
+              <img src="./assets/sketch.jpg" alt="Initial SIP sketch" class="w-full h-48 object-cover border-b border-[var(--border)]">
+              <div class="p-5">
+                <div class="text-xs uppercase tracking-wide gold">Prototype 02</div>
+                <h3 class="mt-1 font-semibold">Initial Sketch</h3>
+                <p class="mt-2 text-sm text-[var(--muted)]">First planning sketch for the build concept and mechanical approach.</p>
+              </div>
+            </article>
+
+            <article class="glass rounded-xl p-5 border-dashed">
+              <div class="text-xs uppercase tracking-wide gold">Next Prototype</div>
+              <h3 class="mt-1 font-semibold">Add a new build card</h3>
+              <p class="mt-2 text-sm text-[var(--muted)]">
+                Use this for robot frames, sensor mounts, wiring boards, Cura plugin screenshots, or test videos.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="docs" class="glass rounded-2xl p-6 md:p-8 fade-in delay-2">
+          <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Documentation</div>
+          <h2 class="mt-2 font-serif text-3xl">Documents and demo embeds</h2>
+
+          <div class="mt-6 space-y-5">
+            <article class="glass rounded-xl p-4">
+              <h3 class="font-semibold mb-3">Original SIP Document</h3>
+              <iframe class="embed-frame rounded-lg min-h-[560px]" src="https://1drv.ms/w/s!AmRIwSf-zJMKhP8UKcufA-E3MsOp-w?embed=1&em=2" title="SIP project document"></iframe>
+            </article>
+
+            <div class="grid lg:grid-cols-2 gap-5">
+              <article class="glass rounded-xl p-4">
+                <h3 class="font-semibold mb-3">Demo Video 01</h3>
+                <iframe class="embed-frame rounded-lg aspect-video" src="https://1drv.ms/v/s!AmRIwSf-zJMKhP9SRJ1fn_VAUhrp-g?embed=1" title="SIP demo video 1" allowfullscreen></iframe>
+              </article>
+
+              <article class="glass rounded-xl p-4">
+                <h3 class="font-semibold mb-3">Demo Video 02</h3>
+                <iframe class="embed-frame rounded-lg aspect-video" src="https://1drv.ms/v/s!AmRIwSf-zJMKhP9R9XM6XL-xp5fRqw?embed=1" title="SIP demo video 2" allowfullscreen></iframe>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="source" class="glass rounded-2xl p-6 md:p-8 fade-in delay-3">
+          <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Source Code</div>
+          <h2 class="mt-2 font-serif text-3xl">Code and build files</h2>
+          <p class="mt-3 text-[var(--muted)]">
+            Replace the placeholder links with GitHub repos, ZIP downloads, or hosted source files as the project grows.
+          </p>
+
+          <div class="mt-6 grid gap-4">
+            <article class="glass rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <div class="text-xs uppercase tracking-wide gold">Planned</div>
+                <h3 class="font-semibold">Cura Plugin</h3>
+                <p class="text-sm text-[var(--muted)]">Queue order, cooldown time, and robot clear-status communication.</p>
+              </div>
+              <a href="#" class="btn btn-primary text-center">Add Link</a>
+            </article>
+
+            <article class="glass rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <div class="text-xs uppercase tracking-wide gold">Planned</div>
+                <h3 class="font-semibold">Robot Control Code</h3>
+                <p class="text-sm text-[var(--muted)]">Movement, sensors, serial communication, and bed-clearing logic.</p>
+              </div>
+              <a href="#" class="btn btn-primary text-center">Add Link</a>
+            </article>
+
+            <article class="glass rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <div class="text-xs uppercase tracking-wide gold">Planned</div>
+                <h3 class="font-semibold">Documentation Files</h3>
+                <p class="text-sm text-[var(--muted)]">Diagrams, build notes, photos, and prototype logs.</p>
+              </div>
+              <a href="#" class="btn btn-primary text-center">Add Link</a>
+            </article>
+          </div>
+
+          <pre class="mt-6 glass rounded-xl p-5 overflow-x-auto text-sm text-[var(--muted)]"><code>/projects/SIP/
+  index.html
+  assets/
+    3dmodel.jpg
+    sketch.jpg
+  source/
+    cura-plugin/
+    robot-control/
+    documentation/</code></pre>
+        </section>
+
+        <section id="roadmap" class="glass rounded-2xl p-6 md:p-8 fade-in delay-3">
+          <div class="text-sm uppercase tracking-wide text-[var(--muted)]">Roadmap</div>
+          <h2 class="mt-2 font-serif text-3xl">Next updates</h2>
+
+          <div class="mt-6 grid md:grid-cols-2 gap-5">
+            <article class="glass rounded-xl p-5">
+              <div class="gold text-2xl font-semibold">01</div>
+              <h3 class="mt-2 font-semibold">Move assets into the SIP folder</h3>
+              <p class="mt-2 text-sm text-[var(--muted)]">Use <code>/projects/SIP/assets/</code> for images, screenshots, and future video thumbnails.</p>
+            </article>
+            <article class="glass rounded-xl p-5">
+              <div class="gold text-2xl font-semibold">02</div>
+              <h3 class="mt-2 font-semibold">Add each prototype</h3>
+              <p class="mt-2 text-sm text-[var(--muted)]">Every new part gets a card with photos, notes, and what changed.</p>
+            </article>
+            <article class="glass rounded-xl p-5">
+              <div class="gold text-2xl font-semibold">03</div>
+              <h3 class="mt-2 font-semibold">Connect source links</h3>
+              <p class="mt-2 text-sm text-[var(--muted)]">Add GitHub, ZIP, or hosted code links once each module is ready to share.</p>
+            </article>
+            <article class="glass rounded-xl p-5">
+              <div class="gold text-2xl font-semibold">04</div>
+              <h3 class="mt-2 font-semibold">Turn it into a live build log</h3>
+              <p class="mt-2 text-sm text-[var(--muted)]">Later, this can pull prototype/progress data from Firestore like your home page project cards.</p>
+            </article>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mt-10 border-t border-[var(--border)] relative" style="z-index:2">
+    <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-[var(--muted)] flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+      <div>© <span id="year"></span> Morrow Industries</div>
+      <div class="space-x-4"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    (function makeParticles() {
+      const wrap = document.getElementById('particles');
+      const count = 56;
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('span');
+        s.style.setProperty('--x', Math.random() * 100 + 'vw');
+        s.style.setProperty('--y', (100 + Math.random() * 40) + 'vh');
+        s.style.setProperty('--drift', (Math.random() * 20 - 10) + 'px');
+        s.style.setProperty('--dur', (1 + Math.random() * 14) + 's');
+        s.style.opacity = (0.08 + Math.random() * 0.15).toFixed(2);
+        wrap.appendChild(s);
+      }
+    })();
+
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      const installBtn = document.createElement('button');
+      installBtn.className = 'fab';
+      installBtn.textContent = 'Install App';
+      document.body.appendChild(installBtn);
+
+      installBtn.addEventListener('click', async () => {
+        installBtn.disabled = true;
+        deferredPrompt.prompt();
+
+        const choice = await deferredPrompt.userChoice;
+        console.log(choice.outcome === 'accepted' ? '✅ User accepted install' : '❌ User dismissed install');
+
+        deferredPrompt = null;
+        installBtn.remove();
+      });
+    });
+  </script>
+
+  <script src="/assets/js/firebase-auth.js" type="module"></script>
+  <script src="/assets/js/service-worker-reg.js"></script>
+  <script type="module" src="/auth/android-auth.js"></script>
+</body>
+
+</html>
 
