@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MorrowDrive — Coming Soon</title>
+  <link rel="icon" href="/morIcon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --bg:#000;
+      --gold:#d4af37;
+      --gold2:#c19144;
+      --text:#e9eef8;
+      --muted:#a9b0be;
+      --card:rgba(255,255,255,0.06);
+      --border:rgba(212,175,55,0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      background: radial-gradient(circle at top, #16120a 0%, #050505 45%, #000 100%);
+      color: var(--text);
+      font-family: 'Cinzel', system-ui, serif;
+      overflow-x: hidden;
+    }
+
+    #particles {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .page {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      animation: fadeIn 1.2s ease forwards;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 22px;
+      align-items: center;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(212,175,55,0.14), rgba(255,255,255,0.04));
+      box-shadow: 0 0 45px rgba(212,175,55,0.12);
+      backdrop-filter: blur(18px);
+    }
+
+    .logo {
+      width: 95px;
+      filter: drop-shadow(0 0 22px rgba(212,175,55,0.55));
+      animation: logoFade 1.5s ease forwards;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      letter-spacing: 4px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 6px 0;
+      font-size: clamp(2.1rem, 6vw, 4.2rem);
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .status-card,
+    .tile {
+      border: 1px solid var(--border);
+      background: var(--card);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+      box-shadow: 0 0 28px rgba(0,0,0,0.35);
+    }
+
+    .status-card {
+      padding: 18px;
+    }
+
+    .status-label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .status-value {
+      margin-top: 8px;
+      color: var(--gold);
+      font-size: 1.35rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .tile {
+      min-height: 145px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: 0.25s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .tile:hover {
+      transform: translateY(-4px) scale(1.015);
+      border-color: rgba(212,175,55,0.75);
+      box-shadow: 0 0 38px rgba(212,175,55,0.22);
+    }
+
+    .icon {
+      font-size: 2rem;
+    }
+
+    .tile-title {
+      color: var(--gold);
+      font-size: 1.25rem;
+      margin-top: 12px;
+    }
+
+    .tile-desc {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.4;
+      margin-top: 6px;
+    }
+
+    .footer {
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.85rem;
+      padding-bottom: 8px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(1.02); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes logoFade {
+      from { opacity: 0; transform: translateY(-16px) scale(0.85); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (max-width: 900px) {
+      .page {
+        padding: 18px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        justify-items: center;
+      }
+
+      .status-row,
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 520px) {
+      .status-row,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tile {
+        min-height: 120px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="particles"></canvas>
+
+  <main class="page">
+    <section class="hero">
+      <img src="/morIcon.png" alt="Morrow Industries Logo" class="logo" />
+
+      <div>
+        <div class="eyebrow">Morrow Industries Presents</div>
+        <h1>MorrowDrive</h1>
+        <p class="subtitle">
+          A personal Android Auto command hub for media, smart controls, printer status,
+          server tools, and Morrow Industries systems on the go.
+        </p>
+      </div>
+    </section>
+
+    <section class="status-row">
+      <div class="status-card">
+        <div class="status-label">System Status</div>
+        <div class="status-value">Coming Soon</div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-label">Mode</div>
+        <div class="status-value">Drive Hub Preview</div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-label">Access</div>
+        <div class="status-value">Private Build</div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <a class="tile" href="#">
+        <div>
+          <div class="icon">🎬</div>
+          <div class="tile-title">Jellyfin</div>
+          <div class="tile-desc">Stream your personal movie and TV library from anywhere.</div>
+        </div>
+      </a>
+
+      <a class="tile" href="#">
+        <div>
+          <div class="icon">🖨️</div>
+          <div class="tile-title">Printer Status</div>
+          <div class="tile-desc">View active prints, queue status, and machine updates.</div>
+        </div>
+      </a>
+
+      <a class="tile" href="#">
+        <div>
+          <div class="icon">📁</div>
+          <div class="tile-title">Morrow Vault</div>
+          <div class="tile-desc">Access files, dashboards, and private tools on the go.</div>
+        </div>
+      </a>
+
+      <a class="tile" href="#">
+        <div>
+          <div class="icon">🎚️</div>
+          <div class="tile-title">Audio Control</div>
+          <div class="tile-desc">Switch sound profiles, DSP modes, and car audio presets.</div>
+        </div>
+      </a>
+
+      <a class="tile" href="#">
+        <div>
+          <div class="icon">💡</div>
+          <div class="tile-title">Lights</div>
+          <div class="tile-desc">Future smart lighting controls for home, garage, or workspace.</div>
+        </div>
+      </a>
+
+      <a class="tile" href="#">
+        <div>
+          <div class="icon">🤖</div>
+          <div class="tile-title">MILO</div>
+          <div class="tile-desc">Robot status, modes, sensor updates, and future remote tools.</div>
+        </div>
+      </a>
+
+      <a class="tile" href="#">
+        <div>
+          <div class="icon">📡</div>
+          <div class="tile-title">Server Pulse</div>
+          <div class="tile-desc">Monitor Cloudflare tunnels, local services, and uptime.</div>
+        </div>
+      </a>
+
+      <a class="tile" href="#">
+        <div>
+          <div class="icon">🚘</div>
+          <div class="tile-title">Drive Tools</div>
+          <div class="tile-desc">Future car-friendly utilities built for quick access.</div>
+        </div>
+      </a>
+    </section>
+
+    <div class="footer">
+      MorrowDrive is currently under development. Built for parked, safe, personal use.
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("particles");
+    const ctx = canvas.getContext("2d");
+    let particles = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2 + 0.8;
+        this.speedY = Math.random() * 0.28 + 0.08;
+        this.alpha = Math.random() * 0.55 + 0.18;
+      }
+
+      update() {
+        this.y += this.speedY;
+        if (this.y > canvas.height) this.reset();
+      }
+
+      draw() {
+        const glow = ctx.createRadialGradient(
+          this.x,
+          this.y,
+          0,
+          this.x,
+          this.y,
+          this.size * 2.5
+        );
+
+        glow.addColorStop(0, `rgba(212,175,55,${this.alpha})`);
+        glow.addColorStop(1, `rgba(212,175,55,0)`);
+
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function initParticles() {
+      particles = [];
+      const count = window.innerWidth < 600 ? 60 : 120;
+      for (let i = 0; i < count; i++) particles.push(new Particle());
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animate);
+    }
+
+    initParticles();
+    animate();
+  </script>
+</body>
+</html>
